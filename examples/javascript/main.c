@@ -23,12 +23,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "jerryscript.h"
-#include "jerryscript-ext/handler.h"
+#include "js.h"
 
 /* include header generated from main.js */
 #include "main.js.h"
 
+// MZTODO REBASE VARIABLE
 int js_run(const jerry_char_t *script, size_t script_size)
 {
 
@@ -66,14 +66,25 @@ int js_run(const jerry_char_t *script, size_t script_size)
     return res;
 }
 
+static event_queue_t event_queue;
+
+
 int main(void)
 {
     printf("You are running RIOT on a(n) %s board.\n", RIOT_BOARD);
     printf("This board features a(n) %s MCU.\n", RIOT_MCU);
 
-    printf("Executing main.js:\n");
+    event_queue_init(&event_queue);
 
+    puts("Initializing jerryscript...");
+    js_event_queue = &event_queue;
+    js_init();
+
+    puts("Executing main.js...");
     js_run(main_js, main_js_len);
+
+    puts("Entering event loop...");
+    event_loop(&event_queue);
 
     return 0;
 }
