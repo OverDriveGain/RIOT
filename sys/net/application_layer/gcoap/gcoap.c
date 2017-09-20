@@ -808,11 +808,11 @@ int gcoap_req_init(coap_pkt_t *pdu, uint8_t *buf, size_t len,
                (GCOAP_TOKENLEN - i >= 4) ? 4 : GCOAP_TOKENLEN - i);
     }
     uint16_t msgid = (uint16_t)atomic_fetch_add(&_coap_state.next_message_id, 1);
-    ssize_t hdrlen = coap_build_hdr(pdu->hdr, COAP_TYPE_NON, &token[0], GCOAP_TOKENLEN,
+    ssize_t hdrlen = coap_build_hdr(pdu->hdr, COAP_TYPE_CON, &token[0], GCOAP_TOKENLEN,
                                     code, msgid);
 #else
     uint16_t msgid = (uint16_t)atomic_fetch_add(&_coap_state.next_message_id, 1);
-    ssize_t hdrlen = coap_build_hdr(pdu->hdr, COAP_TYPE_NON, NULL, GCOAP_TOKENLEN,
+    ssize_t hdrlen = coap_build_hdr(pdu->hdr, COAP_TYPE_CON, NULL, GCOAP_TOKENLEN,
                                     code, msgid);
 #endif
 
