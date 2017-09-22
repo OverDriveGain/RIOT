@@ -30,6 +30,7 @@ DEVELHELP ?= 1
 #ifneq ($(BOARD),native)
 # Set stack size to something (conservatively) enormous
 
+
 #CFLAGS += -DTHREAD_STACKSIZE_MAIN=9092
 #endif
 
@@ -37,7 +38,9 @@ DEVELHELP ?= 1
 
 include $(RIOTBASE)/Makefile.include
 
-CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096
+
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096 -g -fstack-usage -DGCOAP_STACK_SIZE=2048
+
 export JERRYHEAP=8
 
 USEMODULE += js
@@ -50,8 +53,14 @@ USEMODULE += gnrc_ipv6_router_default
 USEMODULE += gnrc_icmpv6_echo
 USEMODULE += gcoap
 
+<<<<<<< HEAD
 
 
+=======
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=512 -DGNRC_PKTBUF_SIZE=2048
+
+include $(CURDIR)/../../Makefile.include
+>>>>>>> WIP: buffer/stack size changes
 
 JS_PATH := $(BINDIR)/js/$(MODULE)
 # add directory of generated *.js.h files to include path

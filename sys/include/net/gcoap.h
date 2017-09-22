@@ -426,8 +426,12 @@ extern "C" {
  * @brief Stack size for module thread
  */
 #ifndef GCOAP_STACK_SIZE
-#define GCOAP_STACK_SIZE (THREAD_STACKSIZE_DEFAULT + DEBUG_EXTRA_STACKSIZE \
-                          + sizeof(coap_pkt_t))
+//<<<<<<< HEAD
+//#define GCOAP_STACK_SIZE (THREAD_STACKSIZE_DEFAULT + DEBUG_EXTRA_STACKSIZE \
+//                          + sizeof(coap_pkt_t))
+#define GCOAP_STACK_SIZE (THREAD_STACKSIZE_DEFAULT + GCOAP_PDU_BUF_SIZE + \
+                          DEBUG_EXTRA_STACKSIZE)
+
 #endif
 
 /**
