@@ -225,7 +225,11 @@
 //MZTODO REMOVE THIS LIBRARY
 #include <stdatomic.h>
 #include "clist.h"
+//MZTODO REMOVE THIS addr.h<<<<<<< HEAD
 //>>>>>>> sys: net: gcoap: make use of clist
+//=======
+#include "net/ipv6/addr.h"
+//>>>>>>> pkg: nanocoap: bump to rework_option_handling branch
 #include "net/sock/udp.h"
 #include "net/nanocoap.h"
 #include "xtimer.h"
