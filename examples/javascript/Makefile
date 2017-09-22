@@ -53,14 +53,14 @@ USEMODULE += gnrc_ipv6_router_default
 USEMODULE += gnrc_icmpv6_echo
 USEMODULE += gcoap
 
-<<<<<<< HEAD
 
 
-=======
-CFLAGS += -DGCOAP_PDU_BUF_SIZE=512 -DGNRC_PKTBUF_SIZE=2048
 
-include $(CURDIR)/../../Makefile.include
->>>>>>> WIP: buffer/stack size changes
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=768 -DGNRC_PKTBUF_SIZE=2304
+
+#MZTODO THIS OR ONE IN LINE 39 above
+#include $(CURDIR)/../../Makefile.include
+
 
 JS_PATH := $(BINDIR)/js/$(MODULE)
 # add directory of generated *.js.h files to include path

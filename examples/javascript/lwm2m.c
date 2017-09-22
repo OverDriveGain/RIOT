@@ -44,6 +44,53 @@ static char device_id[10];
 extern char script[];
 extern void js_restart(void);
 
+ssize_t _blockwise_script_handler(coap_pkt_t* pkt, uint8_t *buf, size_t len)
+{
+    printf("_blockwise_script_handler()\n");
+
+    uint32_t result = COAP_CODE_204;
+    uint32_t blknum;
+    unsigned szx;
+    int res = coap_get_blockopt(pkt, COAP_OPT_BLOCK1, &blknum, &szx);
+    if (res >= 0) {
+        printf("blknum=%u blksize=%u more=%u\n", (unsigned)blknum, coap_szx2size(szx), res);
+        size_t offset = blknum << (szx + 4);
+        printf("received bytes %u-%u\n", (unsigned)offset, (unsigned)offset+pkt->payload_len);
+
+        /* overwrite the current script with the new received script  */
+        memcpy(script + offset, (char *)pkt->payload, pkt->payload_len);
+        if (res) {
+            result = COAP_CODE_231;
+        }
+        else {
+            script[offset + pkt->payload_len] = '\0';
+            puts("script received (blockwise):");
+            puts("-----");
+            puts(script);
+            puts("-----");
+            puts("restarting js.");
+            js_restart();
+        }
+    }
+    else {
+        memcpy(script, (char *)pkt->payload, pkt->payload_len);
+        script[pkt->payload_len] = '\0';
+        puts("script received:");
+        puts("-----");
+        puts(script);
+        puts("-----");
+        puts("restarting js.");
+        js_restart();
+    }
+
+    ssize_t reply_len = coap_build_reply(pkt, result, buf, len, 0);
+    uint8_t *pkt_pos = (uint8_t*)pkt->hdr + reply_len;
+    if (res >= 0) {
+        pkt_pos += coap_put_option_block1(pkt_pos, 0, blknum, szx, res);
+    }
+    return pkt_pos - (uint8_t*)pkt->hdr;
+}
+
 static ssize_t _riot_script_handler(coap_pkt_t *pkt, uint8_t *buf, size_t len)
 {
     ssize_t rsp_len = 0;
@@ -60,13 +107,7 @@ static ssize_t _riot_script_handler(coap_pkt_t *pkt, uint8_t *buf, size_t len)
         case COAP_POST:
         case COAP_PUT:
         {
-            /* overwrite the current script with the new received script  */
-            memcpy(script, (char *)pkt->payload, pkt->payload_len);
-            script[pkt->payload_len] = '\0';
-            printf("new script:\"%s\"\n", script);
-            js_restart();
-            code = COAP_CODE_CHANGED;
-            break;
+            return _blockwise_script_handler(pkt, buf, len);
         }
     }
 
@@ -110,8 +151,10 @@ static void _resp_handler(unsigned req_state, coap_pkt_t *pdu)
            coap_get_code_detail(pdu));
 
     if (pdu->payload_len) {
-        if (pdu->content_type == COAP_FORMAT_TEXT
-            || pdu->content_type == COAP_FORMAT_LINK
+        unsigned content_type = coap_get_content_type(pdu);
+
+        if (content_type == COAP_FORMAT_TEXT
+            || content_type == COAP_FORMAT_LINK
             || coap_get_code_class(pdu) == COAP_CLASS_CLIENT_FAILURE
             || coap_get_code_class(pdu) == COAP_CLASS_SERVER_FAILURE) {
             /* Expecting diagnostic payload in failure cases */

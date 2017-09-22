@@ -107,6 +107,12 @@ saul.set_methods = function(saul_object) {
             result.avg /= n;
             return result;
         }
+        saul_object.set_value = function(value) {
+            this.write(value)
+        }
+        saul_object.get_value = function() {
+            return this.read()
+        }
     }
 }
 

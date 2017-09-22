@@ -73,8 +73,8 @@ int js_run(const jerry_char_t *script, size_t script_size)
 static event_queue_t event_queue;
 
 
+char script[2048];
 
-char script[512];
 
 #define MAIN_QUEUE_SIZE (4)
 static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
@@ -98,7 +98,7 @@ void js_start(event_t *unused)
         js_run((jerry_char_t*)script, script_len);
     }
     else {
-        puts("Emtpy script, not exetcuting.");
+        puts("Emtpy script, not executing.");
     }
 }
 
