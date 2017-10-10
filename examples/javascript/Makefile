@@ -49,6 +49,7 @@ export JERRYHEAP=7
 
 
 USEMODULE += js
+USEMODULE += shell_commands
 
 USEMODULE += gnrc_netdev_default
 USEMODULE += auto_init_gnrc_netif
