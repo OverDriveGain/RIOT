@@ -31,6 +31,7 @@ DEVELHELP ?= 1
 # Set stack size to something (conservatively) enormous
 
 
+
 #CFLAGS += -DTHREAD_STACKSIZE_MAIN=9092
 #endif
 
@@ -39,9 +40,13 @@ DEVELHELP ?= 1
 include $(RIOTBASE)/Makefile.include
 
 
-CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096 -g -fstack-usage -DGCOAP_STACK_SIZE=2048
+#CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096 -g -fstack-usage -DGCOAP_STACK_SIZE=2048
 
-export JERRYHEAP=8
+#export JERRYHEAP=8
+
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096 -g -DGCOAP_STACK_SIZE=2560
+export JERRYHEAP=7
+
 
 USEMODULE += js
 
@@ -53,10 +58,14 @@ USEMODULE += gnrc_ipv6_router_default
 USEMODULE += gnrc_icmpv6_echo
 USEMODULE += gcoap
 
+<<<<<<< HEAD
 
 
 
 CFLAGS += -DGCOAP_PDU_BUF_SIZE=768 -DGNRC_PKTBUF_SIZE=2304
+=======
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=1280 -DGNRC_PKTBUF_SIZE=2048
+>>>>>>> REMOVEME: 1280b CoAP PDU tweaks
 
 #MZTODO THIS OR ONE IN LINE 39 above
 #include $(CURDIR)/../../Makefile.include
