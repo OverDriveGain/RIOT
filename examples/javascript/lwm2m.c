@@ -91,8 +91,10 @@ ssize_t _blockwise_script_handler(coap_pkt_t* pkt, uint8_t *buf, size_t len)
     return pkt_pos - (uint8_t*)pkt->hdr;
 }
 
-static ssize_t _riot_script_handler(coap_pkt_t *pkt, uint8_t *buf, size_t len)
+static ssize_t _riot_script_handler(coap_pkt_t *pkt, uint8_t *buf, size_t len, void *context)
 {
+    (void)context;
+
     ssize_t rsp_len = 0;
     unsigned code = COAP_CODE_EMPTY;
 
@@ -122,7 +124,7 @@ static ssize_t _riot_script_handler(coap_pkt_t *pkt, uint8_t *buf, size_t len)
 
 /* CoAP resources */
 static const coap_resource_t _resources[] = {
-    { "/riot/script", COAP_GET | COAP_PUT | COAP_POST, _riot_script_handler },
+    { "/riot/script", COAP_GET | COAP_PUT | COAP_POST, _riot_script_handler, NULL },
 };
 static gcoap_listener_t _listener = {
     (coap_resource_t *)&_resources[0],
