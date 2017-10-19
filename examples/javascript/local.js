@@ -26,10 +26,3 @@ saul.get_by_name = function (name) {
     saul.set_methods(res);
     return res;
 }
-
-button = saul.get_by_name("button");
-
-coap = {
-    request : function(url, method, data) { print("fake COAP REQUEST SENT"); },
-    register_handler : function (url, method, callback) { button.on_threshold(0, callback, saul.op.EQ); }
-}
