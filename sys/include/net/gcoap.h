@@ -221,8 +221,11 @@
 #define NET_GCOAP_H
 
 #include <stdint.h>
-
 #include "net/ipv6/addr.h"
+//MZTODO REMOVE THIS LIBRARY
+#include <stdatomic.h>
+#include "clist.h"
+//>>>>>>> sys: net: gcoap: make use of clist
 #include "net/sock/udp.h"
 #include "net/nanocoap.h"
 #include "xtimer.h"
@@ -434,10 +437,18 @@ extern "C" {
  * @brief   A modular collection of resources for a server
  */
 typedef struct gcoap_listener {
+//MZTODO REBASE VARIABLES
+	//<<<<<<< HEAD
     const coap_resource_t *resources;   /**< First element in the array of
                                          *   resources; must order alphabetically */
     size_t resources_len;               /**< Length of array */
     struct gcoap_listener *next;        /**< Next listener in list */
+//=======
+//    coap_resource_t *resources;     /**< First element in the array of
+//                                     *   resources; must order alphabetically */
+//    size_t resources_len;           /**< Length of array */
+//    clist_node_t next;              /**< Next listener in list */
+//>>>>>>> sys: net: gcoap: make use of clist
 } gcoap_listener_t;
 
 /**
@@ -487,6 +498,27 @@ typedef struct {
 } gcoap_observe_memo_t;
 
 /**
+//MZTODO REBASE VARIABLE<<<<<<< HEAD
+=======
+// * @brief   Container for the state of gcoap itself
+// */
+//typedef struct {
+//    mutex_t lock;                       /**< Shares state attributes safely */
+//    clist_node_t listeners;             /**< List of registered listeners */
+//    gcoap_request_memo_t open_reqs[GCOAP_REQ_WAITING_MAX];
+                                        /**< Storage for open requests; if first
+                                             byte of an entry is zero, the entry
+                                             is available */
+//    atomic_uint next_message_id;        /**< Next message ID to use */
+//    sock_udp_ep_t observers[GCOAP_OBS_CLIENTS_MAX];
+                                        /**< Observe clients; allows reuse for
+                                             observe memos */
+//    gcoap_observe_memo_t observe_memos[GCOAP_OBS_REGISTRATIONS_MAX];
+                                        /**< Observed resource registrations */
+//} gcoap_state_t;
+
+/**
+//>>>>>>> sys: net: gcoap: make use of clist
  * @brief   Initializes the gcoap thread and device
  *
  * Must call once before first use.
@@ -503,6 +535,13 @@ kernel_pid_t gcoap_init(void);
  * @param[in] listener  Listener containing the resources.
  */
 void gcoap_register_listener(gcoap_listener_t *listener);
+
+/**
+ * @brief   Stops listening for resource paths
+ *
+ * @param[in] listener  Listener containing the resources.
+ */
+void gcoap_unregister_listener(gcoap_listener_t *listener);
 
 /**
  * @brief   Initializes a CoAP request PDU on a buffer.
