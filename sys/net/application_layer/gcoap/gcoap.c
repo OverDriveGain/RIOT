@@ -380,46 +380,6 @@ static size_t _handle_req(coap_pkt_t *pdu, uint8_t *buf, size_t len,
     return pdu_len;
 }
 
-
-struct _helper_args {
-    coap_pkt_t *pdu;
-    unsigned method_flag;
-    coap_resource_t *resource;
-    gcoap_listener_t *listener;
-};
-
-static int _find_resource_helper(clist_node_t *list_node, void *arg)
-{
-    struct _helper_args *args = arg;
-
-    gcoap_listener_t *listener = _node2listener(list_node);
-    coap_resource_t *resource = listener->resources;
-
-    for (size_t i = 0; i < listener->resources_len; i++) {
-        if (i) {
-            resource++;
-        }
-        if (! (resource->methods & args->method_flag)) {
-            continue;
-        }
-
-        int res = strcmp((char *)&args->pdu->url[0], resource->path);
-        if (res > 0) {
-            continue;
-        }
-        else if (res < 0) {
-            /* resources expected in alphabetical order */
-            break;
-        }
-        else {
-            args->resource = resource;
-            args->listener = listener;
-            return 1;
-        }
-    }
-    return 0;
-}
-
 /*
  * Searches listener registrations for the resource matching the path in a PDU.
  *
@@ -433,6 +393,7 @@ static int _find_resource_helper(clist_node_t *list_node, void *arg)
 static int _find_resource(coap_pkt_t *pdu, const coap_resource_t **resource_ptr,
                                             gcoap_listener_t **listener_ptr)
 {
+//<<<<<<!MZTODO REBASE VARIABLE HEAD
 //# MZTODO REBASE VARIABLE
 //<<<<<<< HEAD
     int ret = GCOAP_RESOURCE_NO_PATH;
@@ -482,6 +443,52 @@ static int _find_resource(coap_pkt_t *pdu, const coap_resource_t **resource_ptr,
 //    *resource_ptr = args.resource;
 //    *listener_ptr = args.listener;
 //>>>>>>> sys: net: gcoap: make use of clist```
+//!MZTODO REBASE VARIABLE
+//=======
+//    unsigned method_flag = coap_method2flag(coap_get_code_detail(pdu));
+//
+//    gcoap_listener_t *listener;
+//
+//    clist_node_t *node = _coap_state.listeners.next;
+//    if (! node) {
+//        goto out;
+//    }
+
+    /* Find path for CoAP msg among listener resources. */
+  //  do {
+    //    node = node->next;
+  //      listener = _node2listener(node);
+//
+  //      coap_resource_t *resource = listener->resources;
+//        for (size_t i = 0; i < listener->resources_len; i++) {
+        //    if (i) {
+      //          resource++;
+    //        }
+  //          if (! (resource->methods & method_flag)) {
+ //               continue;
+ //           }
+//
+//            int res = strcmp((char *)&pdu->url[0], resource->path);
+//            if (res > 0) {
+//                continue;
+//            }
+//            else if (res < 0) {
+//                /* resources expected in alphabetical order */
+//                break;
+//            }
+//            else {
+//                *resource_ptr = resource;
+//                *listener_ptr = listener;
+//                return;
+//            }
+//        }
+//    } while (node != _coap_state.listeners.next);
+
+//out:
+    /* resource not found */
+//    *resource_ptr = NULL;
+//    *listener_ptr = NULL;
+//>>>>>>> fixup! sys: net: gcoap: make use of clist
 }
 
 /*
