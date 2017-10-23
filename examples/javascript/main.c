@@ -27,6 +27,7 @@
 
 /* include headers generated from *.js */
 #include "lib.js.h"
+#include "local.js.h"
 #include "main.js.h"
 
 // MZTODO REBASE VARIABLE
@@ -83,6 +84,9 @@ int main(void)
 
     puts("Executing lib.js...");
     js_run(lib_js, lib_js_len);
+
+    puts("Executing local.js...");
+    js_run(local_js, local_js_len);
 
     puts("Executing main.js...");
     js_run(main_js, main_js_len);
