@@ -130,7 +130,7 @@ coap.method = {
 
 coap.code = {
     CREATED : ((2<<5) | 1),
-    CREATED : ((2<<5) | 2),
+    DELETED : ((2<<5) | 2),
     VALID   : ((2<<5) | 3),
     CHANGED : ((2<<5) | 4),
     CONTENT : ((2<<5) | 5)
