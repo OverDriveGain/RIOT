@@ -12,12 +12,6 @@
 
 static mutex_t _gcoap_mutex = MUTEX_INIT;
 
-static struct {
-    coap_pkt_t *pkt;
-    uint8_t *buf;
-    size_t len;
-} _gcoap_req;
-
 typedef struct {
     event_t event;
     coap_resource_t resource;
@@ -25,6 +19,12 @@ typedef struct {
     jerry_value_t callback;
     js_native_ref_t ref;
 } js_coap_handler_t;
+
+static struct {
+    coap_pkt_t *pkt;
+    uint8_t *buf;
+    size_t len;
+} _gcoap_req;
 
 static ssize_t _js_coap_resource_handler(coap_pkt_t *pkt, uint8_t *buf, size_t len, void *context)
 {
@@ -83,8 +83,10 @@ static void _js_coap_handler_event_cb(event_t *event)
         js_add_object(object, payload_val, "payload");
     }
 
-    jerry_value_t args[] = { methods_val, payload_val };
+    /* add coap resource handler to request object */
+    js_add_object(object, js_coap_handler->ref.object, "handler");
 
+    jerry_value_t args[] = { methods_val, payload_val };
     ret_val = jerry_call_function(js_coap_handler->callback, object, args, payload_val ? 2 : 1);
 
     if (jerry_value_has_error_flag(ret_val)) {
@@ -145,7 +147,9 @@ static void _js_coap_handler_freecb(void *native_p)
 
     js_coap_handler_t *js_coap_handler = (js_coap_handler_t *) native_p;
 
-    gcoap_unregister_listener(&js_coap_handler->listener);
+    if (js_coap_handler->listener.resources_len) {
+        gcoap_unregister_listener(&js_coap_handler->listener);
+    }
 
     free((void*)js_coap_handler->resource.path);
     free(js_coap_handler);
@@ -155,6 +159,26 @@ static const jerry_object_native_info_t js_coap_handler_object_native_info =
 {
     .free_cb = _js_coap_handler_freecb
 };
+
+static JS_EXTERNAL_HANDLER(coap_handler_unregister)
+{
+    (void)func_value;
+    (void)args_p;
+    (void)args_cnt;
+
+    DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
+
+    js_coap_handler_t *js_coap_handler = js_get_object_native_pointer(this_value, &js_coap_handler_object_native_info);
+    if (!js_coap_handler) {
+        DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
+        return jerry_create_undefined();
+    }
+
+    gcoap_unregister_listener(&js_coap_handler->listener);
+    js_coap_handler->listener.resources_len = 0;
+    js_native_ref_rem(&js_coap_handler->ref);
+    return 0;
+}
 
 static jerry_value_t js_coap_handler_create(jerry_value_t callback, const char *path, unsigned methods)
 {
@@ -167,13 +191,13 @@ static jerry_value_t js_coap_handler_create(jerry_value_t callback, const char *
     }
 
     js_add_object(object, callback, "_callback");
+    js_add_external_handler(object, "unregister", js_external_handler_coap_handler_unregister);
 
     memset(js_coap_handler, '\0', sizeof(*js_coap_handler));
 
     js_coap_handler->callback = callback;
 
-    js_coap_handler->event.callback = _js_coap_handler_event_cb;
-    js_coap_handler->event.callback = _js_coap_handler_event_cb;
+    js_coap_handler->event.handler = _js_coap_handler_event_cb;
 
     js_coap_handler->resource.path = path;
     js_coap_handler->resource.methods = methods;
