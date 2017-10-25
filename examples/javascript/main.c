@@ -105,7 +105,7 @@ void js_start(event_t *unused)
     }
 }
 
-static event_t js_start_event = { .callback=js_start };
+static event_t js_start_event = { .handler=js_start };
 
 void js_restart(void)
 {
@@ -115,24 +115,13 @@ void js_restart(void)
 
 int main(void)
 {
-    msg_init_queue(_main_msg_queue, MAIN_QUEUE_SIZE);
     printf("You are running RIOT on a(n) %s board.\n", RIOT_BOARD);
     printf("This board features a(n) %s MCU.\n", RIOT_MCU);
 
-    event_queue_init(&event_queue);
+    msg_init_queue(_main_msg_queue, MAIN_QUEUE_SIZE);
 
     puts("waiting for network config");
     xtimer_sleep(3);
-
-    puts("Initializing jerryscript...");
-    js_event_queue = &event_queue;
-    js_init();
-
-    puts("Executing lib.js...");
-    js_run(lib_js, lib_js_len);
-
-    puts("Executing local.js...");
-    js_run(local_js, local_js_len);
 
     /* print network addresses */
     puts("Configured network interfaces:");
