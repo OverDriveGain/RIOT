@@ -12,6 +12,10 @@
 #define ENABLE_DEBUG (1)
 #include "debug.h"
 
+#ifndef JS_COAP_INBOUND_MAXLEN
+#define JS_COAP_INBOUND_MAXLEN 64
+#endif
+
 static mutex_t _gcoap_mutex = MUTEX_INIT;
 
 typedef struct {
@@ -40,6 +44,10 @@ static ssize_t _js_coap_resource_handler(coap_pkt_t *pkt, uint8_t *buf, size_t l
     _gcoap_req.buf = buf;
     _gcoap_req.len = len;
 
+    if (js_coap_handler->event.list_node.next) {
+        DEBUG("%s:l%u:%s() event already queued\n", __FILE__, __LINE__, __func__);
+        return 0;
+    }
     event_post(js_event_queue, &js_coap_handler->event);
 
     mutex_lock(&_gcoap_mutex);
@@ -77,6 +85,11 @@ static void _js_coap_handler_event_cb(event_t *event)
     }
 
     if (_gcoap_req.pkt->payload_len) {
+        if (_gcoap_req.pkt->payload_len > JS_COAP_INBOUND_MAXLEN) {
+            DEBUG("%s():l%u %s inbound coap payload too large\n", __FILE__, __LINE__, __func__);
+            goto error;
+        }
+
         payload_val = jerry_create_string_sz((jerry_char_t *)_gcoap_req.pkt->payload, _gcoap_req.pkt->payload_len);
         if (jerry_value_has_error_flag(payload_val)) {
             DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
