@@ -58,6 +58,7 @@ USEMODULE += gnrc_ipv6_router_default
 # Additional networking modules that can be dropped if not needed
 USEMODULE += gnrc_icmpv6_echo
 USEMODULE += gcoap
+USEMODULE += sock_util
 
 <<<<<<< HEAD
 
