@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bitarithm.h"
 #include "mutex.h"
 #include "event.h"
 #include "js.h"
 #include "net/gcoap.h"
+#include "net/sock/util.h"
 
 #define ENABLE_DEBUG (1)
 #include "debug.h"
@@ -105,8 +107,8 @@ static void _js_coap_handler_event_cb(event_t *event)
         case COAP_CODE_DELETED:
         case COAP_CODE_VALID:
         case COAP_CODE_CHANGED:
-            break;
         case COAP_CODE_CONTENT:
+            break;
         default:
             DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
             reply_code = COAP_CODE_INTERNAL_SERVER_ERROR;
@@ -116,6 +118,7 @@ static void _js_coap_handler_event_cb(event_t *event)
     if ((reply_len = jerry_get_string_length(reply_payload_val))) {
         reply_buf = js_strdup(reply_payload_val);
         if (!reply_buf) {
+            DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
             reply_len = 0;
             if (reply_code == COAP_CODE_CONTENT) {
                 reply_code = COAP_CODE_INTERNAL_SERVER_ERROR;
@@ -248,8 +251,107 @@ static JS_EXTERNAL_HANDLER(coap_register_handler)
     return js_coap_handler_create(args_p[2], path, (unsigned)jerry_get_number_value(args_p[1]));
 }
 
+static mutex_t _gcoap_request_mutex;
+static unsigned _req_state;
+static coap_pkt_t* _pdu;
+
+static void _gcoap_req_resp_handler(unsigned req_state, coap_pkt_t* pdu, sock_udp_ep_t *remote)
+{
+    (void)remote;
+    DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
+    if (req_state != GCOAP_MEMO_WAIT) {
+        _req_state = req_state;
+        _pdu = pdu;
+        mutex_unlock(&_gcoap_request_mutex);
+    }
+}
+
+static JS_EXTERNAL_HANDLER(coap_request)
+{
+    (void)func_value;
+    (void)this_value;
+
+    DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
+
+    if (args_cnt < 2) {
+        puts("coap.request_sync(): not enough arguments");
+        return 0;
+    }
+
+    if (!jerry_value_is_string(args_p[0])) {
+        puts("coap.request_sync(): arg 0 not a string ");
+        return 0;
+    }
+    if (!jerry_value_is_number(args_p[1])) {
+        puts("coap.request_sync(): arg 1 not a number (expected or'ed coap methods)");
+        return 0;
+    }
+
+
+    coap_pkt_t pkt;
+    uint8_t buf[256];
+    unsigned urllen = jerry_string_to_char_buffer(args_p[0], buf, sizeof(buf));
+    buf[urllen] = '\0';
+
+    char hostport[SOCK_HOSTPORT_MAXLEN];
+    char urlpath[SOCK_URLPATH_MAXLEN];
+
+    if(sock_urlsplit((char*)buf, hostport, urlpath)) {
+        DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
+        return 0;
+    }
+
+    DEBUG("%s: sending to hostport=\"%s\" urlpath=\"%s\"\n", __func__, hostport, urlpath);
+
+    unsigned method = jerry_get_number_value(args_p[1]);
+    method = bitarithm_lsb(method) + 1;
+
+    unsigned len = 0;
+    gcoap_req_init(&pkt, buf, sizeof(buf), method, urlpath);
+    if (args_cnt > 2) {
+        if (!jerry_value_is_string(args_p[2])) {
+            puts("coap.request_sync(): arg 2 not a string");
+            return 0;
+        }
+        len = jerry_string_to_char_buffer(args_p[2], pkt.payload, pkt.payload_len);
+        if (!len) {
+            DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
+            return 0;
+        }
+    }
+    len = gcoap_finish(&pkt, len, len ? COAP_FORMAT_TEXT : COAP_FORMAT_NONE);
+
+    sock_udp_ep_t remote;
+    if (sock_udp_str2ep(&remote, hostport)) {
+        return 0;
+    }
+
+    if (!remote.port) {
+        remote.port = 5683;
+    }
+
+    mutex_init(&_gcoap_request_mutex);
+    mutex_lock(&_gcoap_request_mutex);
+    DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
+    size_t res = gcoap_req_send2(buf, len, &remote, _gcoap_req_resp_handler);
+    DEBUG("%s():l%u %s res=%i\n", __FILE__, __LINE__, __func__, (int)res);
+    mutex_lock(&_gcoap_request_mutex);
+    DEBUG("%s():l%u %s %u %p\n", __FILE__, __LINE__, __func__, _req_state, (void*)_pdu);
+    if (_req_state == GCOAP_MEMO_RESP) {
+        assert(_pdu);
+        if (!_pdu->payload_len) {
+            return jerry_create_boolean(1);
+        }
+        return jerry_create_string_sz(_pdu->payload, _pdu->payload_len);
+    }
+    else {
+        return jerry_create_boolean(0);
+    }
+}
+
 const js_native_method_t coap_methods[] = {
-    { "register_handler", js_external_handler_coap_register_handler }
+    { "register_handler", js_external_handler_coap_register_handler },
+    { "request_sync", js_external_handler_coap_request }
 };
 
 const unsigned coap_methods_len = sizeof(coap_methods) / sizeof(coap_methods[0]);
