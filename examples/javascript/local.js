@@ -27,10 +27,6 @@ saul.get_by_name = function (name) {
     return res;
 }
 
-coap.request = function() {
-        print("coap request stub");
-};
-
 coap._register_handler = coap.register_handler
 coap.register_handler = function(path, methods, callback) {
     var _callback = function(method) {
