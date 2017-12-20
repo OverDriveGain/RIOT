@@ -32,6 +32,7 @@ DEVELHELP ?= 1
 
 
 
+
 #CFLAGS += -DTHREAD_STACKSIZE_MAIN=9092
 #endif
 
@@ -48,6 +49,11 @@ CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096 -g -DGCOAP_STACK_SIZE=2560
 export JERRYHEAP=7
 
 
+
+
+
+
+
 USEMODULE += js
 USEMODULE += shell_commands
 
@@ -61,6 +67,7 @@ USEMODULE += gcoap
 USEMODULE += sock_util
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 
 
@@ -71,6 +78,9 @@ CFLAGS += -DGCOAP_PDU_BUF_SIZE=1280 -DGNRC_PKTBUF_SIZE=2048
 
 #MZTODO THIS OR ONE IN LINE 39 above
 #include $(CURDIR)/../../Makefile.include
+=======
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=128 -DGNRC_PKTBUF_SIZE=2048
+>>>>>>> examples/javascript/Makefile: use 128b CoAP mtu
 
 
 JS_PATH := $(BINDIR)/js/$(MODULE)
