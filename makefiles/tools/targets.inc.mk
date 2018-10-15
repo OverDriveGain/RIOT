@@ -4,23 +4,13 @@
 # (as `all`), so `all` will always be the first target defined and thereby the
 # default target when `make` is called without any further argument.
 
-.PHONY: mosquitto_rsmb
-
 # target for building the bossac binary
-$(RIOTTOOLS)/bossa/bossac:
+$(RIOTBASE)/dist/tools/bossa/bossac:
 	@echo "[INFO] bossac binary not found - building it from source"
-	@make -C $(RIOTTOOLS)/bossa
+	@make -C $(RIOTBASE)/dist/tools/bossa
 	@echo "[INFO] bossac binary successfully build!"
 
-$(RIOTTOOLS)/edbg/edbg: $(RIOTTOOLS)/edbg/Makefile
+$(RIOTBASE)/dist/tools/edbg/edbg:
 	@echo "[INFO] edbg binary not found - building it from source now"
-	CC= CFLAGS= make -C $(RIOTTOOLS)/edbg
+	CC= CFLAGS= make -C $(RIOTBASE)/dist/tools/edbg
 	@echo "[INFO] edbg binary successfully build!"
-
-$(RIOTTOOLS)/mosquitto_rsmb/mosquitto_rsmb:
-	@echo "[INFO] rsmb binary not found - building it from source now"
-	@make -C $(RIOTTOOLS)/mosquitto_rsmb
-	@echo "[INFO] rsmb binary successfully build!"
-
-mosquitto_rsmb: $(RIOTTOOLS)/mosquitto_rsmb/mosquitto_rsmb
-	@make -C $(RIOTTOOLS)/mosquitto_rsmb run

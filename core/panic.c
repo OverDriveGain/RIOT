@@ -29,6 +29,7 @@
 #include "cpu.h"
 #include "irq.h"
 #include "panic.h"
+#include "arch/panic_arch.h"
 #include "periph/pm.h"
 #include "log.h"
 

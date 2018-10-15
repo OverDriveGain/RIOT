@@ -1,6 +1,7 @@
 #!/bin/sh
 
-get_cmd_version() {
+gcc_version() {
+    local cc
     if [ -z "$1" ]; then
         return
     fi
@@ -16,9 +17,15 @@ get_cmd_version() {
             ver="error"
         fi
     else
-        ver="missing"
+        cc=$1-gcc
     fi
-
+    local ver=
+    if command -v "$cc" 2>&1 >/dev/null; then
+        ver=$("$cc" --version | head -n 1)
+    fi
+    if [ -z "$ver" ]; then
+        ver=missing/error
+    fi
     printf "%s" "$ver"
 }
 
@@ -29,7 +36,7 @@ get_define() {
         line=$(echo "$3" | "$cc" -x c -include "$2" -E -o - - 2>&1 | sed -e '/^[   ]*#/d' -e '/^[  ]*$/d')
     fi
     if [ -z "$line" ]; then
-        line=missing
+        line=missing/error
     fi
     printf "%s" "$line"
 }
@@ -54,22 +61,34 @@ get_os_info() {
 
 newlib_version() {
     if [ -z "$1" ]; then
-        printf "%s" "error"
+        cc=gcc
     else
-        local cc="$1"
-        printf "%s" "$(get_define "$cc" newlib.h _NEWLIB_VERSION)"
+        cc=$1-gcc
     fi
+    printf "%s" "$(get_define "$cc" newlib.h _NEWLIB_VERSION)"
 }
 
 avr_libc_version() {
     if [ -z "$1" ]; then
-        printf "%s" "error"
+        cc=gcc
     else
-        local cc="$1"
-        printf "%s (%s)" "$(get_define "$cc" avr/version.h __AVR_LIBC_VERSION_STRING__)" "$(get_define "$cc" avr/version.h __AVR_LIBC_DATE_STRING__)"
+        cc=$1-gcc
     fi
+    printf "%s (%s)" "$(get_define "$cc" avr/version.h __AVR_LIBC_VERSION_STRING__)" "$(get_define "$cc" avr/version.h __AVR_LIBC_DATE_STRING__)"
 }
 
+cppcheck_version() {
+    local cmd="cppcheck"
+    if command -v "$cmd" 2>&1 >/dev/null; then
+        ver=$("$cmd" --version | head -n 1)
+    else
+        ver="missing"
+    fi
+
+    printf "%s" "$ver"
+}
+
+<<<<<<< HEAD
 printf "\n"
 # print operating system information
 printf "%s\n" "Operating System Environment"
@@ -83,15 +102,37 @@ printf "%s\n" "-----------------------------"
 printf "%23s: %s\n" "native gcc" "$(get_cmd_version gcc)"
 for p in arm-none-eabi avr mips-mti-elf msp430 riscv-none-embed; do
     printf "%23s: %s\n" "$p-gcc" "$(get_cmd_version ${p}-gcc)"
+=======
+spatch_version() {
+    local cmd="spatch"
+    if command -v "$cmd" 2>&1 >/dev/null; then
+        ver=$("$cmd" --version | head -n 1)
+    else
+        ver="missing"
+    fi
+
+    printf "%s" "$ver"
+}
+
+printf "%s\n" "Installed toolchain versions"
+printf "%s\n" "----------------------------"
+VER=$(gcc --version | head -n 1)
+if [ -n "$VER" ]; then
+    printf "%20s: %s\n" "native gcc" "$VER"
+fi
+for p in msp430 avr arm-none-eabi mips-mti-elf; do
+    printf "%20s: %s\n" "$p-gcc" "$(gcc_version "$p")"
+>>>>>>> Fix dependencies, make javascript example run
 done
-printf "%23s: %s\n" "clang" "$(get_cmd_version clang)"
-printf "\n"
-printf "%s\n" "Installed compiler libs"
-printf "%s\n" "-----------------------"
-# platform specific newlib version
-for p in arm-none-eabi mips-mti-elf riscv-none-embed; do
-    printf "%23s: %s\n" "$p-newlib" "$(newlib_version ${p}-gcc)"
+VER=$(clang --version | head -n 1)
+if [ -n "$VER" ]; then
+    printf "%20s: %s\n" "clang" "$VER"
+fi
+
+for p in arm-none-eabi mips-mti-elf; do
+    printf "%20s: %s\n" "$p-newlib" "$(newlib_version "$p")"
 done
+<<<<<<< HEAD
 # avr libc version
 printf "%23s: %s\n" "avr-libc" "$(avr_libc_version avr-gcc)"
 # tools
@@ -100,7 +141,11 @@ printf "%s\n" "Installed development tools"
 printf "%s\n" "---------------------------"
 for c in cmake cppcheck doxygen flake8 git openocd python python2 python3; do
     printf "%23s: %s\n" "$c" "$(get_cmd_version $c)"
+=======
+for p in avr; do
+    printf "%20s: %s\n" "$p-libc" "$(avr_libc_version "$p")"
+>>>>>>> Fix dependencies, make javascript example run
 done
-printf "%23s: %s\n" "coccinelle" "$(get_cmd_version spatch)"
-
+printf "%20s: %s\n" "cppcheck" "$(cppcheck_version)"
+printf "%20s: %s\n" "coccinelle" "$(spatch_version)"
 exit 0

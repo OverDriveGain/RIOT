@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     cpu_native
+ * @ingroup     native_cpu
  *
  * @brief       Malloc header for use with native on OSX since there is no
  *              malloc.h file in the standard include path.

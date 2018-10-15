@@ -9,6 +9,7 @@
 
 /**
  * @ingroup     drivers_at86rf2xx
+ *
  * @{
  * @file
  * @brief       Default configuration for the AT86RF2xx driver
@@ -49,14 +50,12 @@ extern "C" {
 #define AT86RF2XX_PARAM_RESET       (GPIO_PIN(0, 3))
 #endif
 
-#ifndef AT86RF2XX_PARAMS
-#define AT86RF2XX_PARAMS            { .spi = AT86RF2XX_PARAM_SPI,         \
-                                      .spi_clk = AT86RF2XX_PARAM_SPI_CLK, \
-                                      .cs_pin = AT86RF2XX_PARAM_CS,       \
-                                      .int_pin = AT86RF2XX_PARAM_INT,     \
-                                      .sleep_pin = AT86RF2XX_PARAM_SLEEP, \
-                                      .reset_pin = AT86RF2XX_PARAM_RESET }
-#endif
+#define AT86RF2XX_PARAMS_DEFAULT    {.spi = AT86RF2XX_PARAM_SPI, \
+                                     .spi_clk = AT86RF2XX_PARAM_SPI_CLK, \
+                                     .cs_pin = AT86RF2XX_PARAM_CS, \
+                                     .int_pin = AT86RF2XX_PARAM_INT, \
+                                     .sleep_pin = AT86RF2XX_PARAM_SLEEP, \
+                                     .reset_pin = AT86RF2XX_PARAM_RESET}
 /**@}*/
 
 /**
@@ -64,7 +63,11 @@ extern "C" {
  */
 static const at86rf2xx_params_t at86rf2xx_params[] =
 {
-    AT86RF2XX_PARAMS
+#ifdef AT86RF2XX_PARAMS_BOARD
+    AT86RF2XX_PARAMS_BOARD,
+#else
+    AT86RF2XX_PARAMS_DEFAULT,
+#endif
 };
 
 #ifdef __cplusplus

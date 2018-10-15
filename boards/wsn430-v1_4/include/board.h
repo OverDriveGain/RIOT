@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2018 Freie Universität Berlin
+ * Copyright (C) 2013 Milan Babel <babel@inf.fu-berlin.de>
+ *               2015 Freie Universität Berlin
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -11,13 +12,19 @@
  * @ingroup     boards
  * @brief       Support for the Senslab WSN430 v1.4 board
  *
+ * <h2>Compontents</h2>
+ * \li MSP430
+ * \li CC2420
+ *
  * @{
  *
  * @file
- * @brief       Board specific definitions for the Senslab WSN430 v1.4 board
+ * @brief       Basic definitions for the Senslab WSN430 v1.4 board
  *
- * @author      Martine Lenders <m.lenders@fu-berlin.de>
+ * @author      Milan Babel <babel@inf.fu-berlin.de>
+ * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
+
 #ifndef BOARD_H
 #define BOARD_H
 
@@ -28,21 +35,29 @@ extern "C" {
 #endif
 
 /**
- * @name    Define the interface to the CC2420 radio
+ * @brief   Define the CPU model for the <msp430.h>
+ */
+#ifndef __MSP430F1611__
+#define __MSP430F1611__
+#endif
+
+/**
+ * @name    CPU core configuration
  * @{
  */
-#define CC2420_PARAMS_PIN_CS            (GPIO_PIN(P4, 2))
-#define CC2420_PARAMS_PIN_FIFO          (GPIO_PIN(P1, 3))
-#define CC2420_PARAMS_PIN_FIFOP         (GPIO_PIN(P1, 4))
-#define CC2420_PARAMS_PIN_CCA           (GPIO_PIN(P1, 6))
-#define CC2420_PARAMS_PIN_SFD           (GPIO_PIN(P1, 5))
-#define CC2420_PARAMS_PIN_VREFEN        (GPIO_PIN(P3, 0))
-#define CC2420_PARAMS_PIN_RESET         (GPIO_PIN(P1, 7))
+/** @todo   Move this to the periph_conf.h */
+#define MSP430_INITIAL_CPU_SPEED    800000uL
+#define F_CPU                       MSP430_INITIAL_CPU_SPEED
+#define F_RC_OSCILLATOR             32768
+#define MSP430_HAS_DCOR             0
+#define MSP430_HAS_EXTERNAL_CRYSTAL 1
 /** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
+#include <msp430x16x.h>
+
 /** @} */
+#endif /* BOARD_H */

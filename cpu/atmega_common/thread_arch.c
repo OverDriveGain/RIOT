@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2014 Freie Universität Berlin, Hinnerk van Bruinehsen
- *               2018 RWTH Aachen, Josua Arndt <jarndt@ias.rwth-aachen.de>
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -15,18 +14,44 @@
  * @brief       Implementation of the kernel's architecture dependent thread interface
  *
  * @author      Hinnerk van Bruinehsen <h.v.bruinehsen@fu-berlin.de>
- * @author      Josua Arndt <jarndt@ias.rwth-aachen.de>
  *
  * @}
  */
 
 #include <stdio.h>
 
+#include "arch/thread_arch.h"
 #include "thread.h"
 #include "sched.h"
 #include "irq.h"
 #include "cpu.h"
 #include "board.h"
+
+
+/**
+ * @brief AVR_CONTEXT_SWAP_INIT initialize the context swap trigger
+ * Called when threading is first started.
+ */
+#ifndef AVR_CONTEXT_SWAP_INIT
+#error AVR_CONTEXT_SWAP_INIT must be defined in board.h
+#endif
+
+/**
+ * @brief AVR_CONTEXT_SWAP_INTERRUPT_VECT Name of the ISR to use for context swapping
+ */
+#ifndef AVR_CONTEXT_SWAP_INTERRUPT_VECT
+#error AVR_CONTEXT_SWAP_INTERRUPT_VECT must be defined in board.h
+#endif
+
+/**
+ * @brief AVR_CONTEXT_SWAP_TRIGGER executed to start the context swap
+ * When executed, this should result in the interrupt named in
+ * AVR_CONTEXT_SWAP_INTERRUPT_VECT being called
+ */
+#ifndef AVR_CONTEXT_SWAP_TRIGGER
+#error ARV_CONTEXT_SWAP_TRIGGER must be defined in board.h
+#endif
+
 
 /*
  * local function declarations  (prefixed with __)
@@ -39,7 +64,7 @@ static void __enter_thread_mode(void);
  * @brief Since AVR doesn't support direct manipulation of the program counter we
  * model a stack like it would be left by __context_save().
  * The resulting layout in memory is the following:
- * ---------------thread_t (not created by thread_stack_init) ----------
+ * ---------------thread_t (not created by thread_arch_stack_init) ----------
  * local variables (a temporary value and the stackpointer)
  * -----------------------------------------------------------------------
  * a marker (AFFE) - for debugging purposes (helps finding the stack
@@ -67,8 +92,8 @@ static void __enter_thread_mode(void);
  * it inside of the programm counter of the MCU.
  * if task_func returns sched_task_exit gets popped into the PC
  */
-char *thread_stack_init(thread_task_func_t task_func, void *arg,
-                        void *stack_start, int stack_size)
+char *thread_arch_stack_init(thread_task_func_t task_func, void *arg,
+                             void *stack_start, int stack_size)
 {
     uint16_t tmp_adress;
     uint8_t *stk;
@@ -78,58 +103,59 @@ char *thread_stack_init(thread_task_func_t task_func, void *arg,
 
     /* put marker on stack */
     stk--;
-    *stk = (uint8_t)0xAF;
+    *stk = (uint8_t) 0xAF;
     stk--;
-    *stk = (uint8_t)0xFE;
+    *stk = (uint8_t) 0xFE;
 
     /* save sched_task_exit */
     stk--;
-    tmp_adress = (uint16_t)sched_task_exit;
-    *stk = (uint8_t)(tmp_adress & (uint16_t)0x00ff);
+    tmp_adress = (uint16_t) sched_task_exit;
+    *stk = (uint8_t)(tmp_adress & (uint16_t) 0x00ff);
     stk--;
     tmp_adress >>= 8;
-    *stk = (uint8_t)(tmp_adress & (uint16_t)0x00ff);
+    *stk = (uint8_t)(tmp_adress & (uint16_t) 0x00ff);
 
 #if FLASHEND > 0x1ffff
     /* Devices with more than 128kb FLASH use a 17 bit PC, we set whole the top byte forcibly to 0 */
     stk--;
-    *stk = (uint8_t)0x00;
+    *stk = (uint8_t) 0x00;
 #endif
 
     /* save address to task_func in place of the program counter */
     stk--;
-    tmp_adress = (uint16_t)task_func;
-    *stk = (uint8_t)(tmp_adress & (uint16_t)0x00ff);
+    tmp_adress = (uint16_t) task_func;
+    *stk = (uint8_t)(tmp_adress & (uint16_t) 0x00ff);
     stk--;
     tmp_adress >>= 8;
-    *stk = (uint8_t)(tmp_adress & (uint16_t)0x00ff);
+    *stk = (uint8_t)(tmp_adress & (uint16_t) 0x00ff);
 
 #if FLASHEND > 0x1ffff
     /* Devices with more than 128kb FLASH use a 17 bit PC, we set whole the top byte forcibly to 0 */
     stk--;
-    *stk = (uint8_t)0x00;
+    *stk = (uint8_t) 0x00;
 #endif
+
 
     /* r0 */
     stk--;
-    *stk = (uint8_t)0x00;
+    *stk = (uint8_t) 0x00;
 
     /* status register (with interrupts enabled) */
     stk--;
-    *stk = (uint8_t)0x80;
+    *stk = (uint8_t) 0x80;
 
 #if defined(EIND)
     stk--;
-    *stk = (uint8_t)0x00;
+    *stk = (uint8_t) 0x00;
 #endif
 #if defined(RAMPZ)
     stk--;
-    *stk = (uint8_t)0x00;
+    *stk = (uint8_t) 0x00;
 #endif
 
     /* r1 - has always to be 0 */
     stk--;
-    *stk = (uint8_t)0x00;
+    *stk = (uint8_t) 0x00;
     /*
      * Space for registers r2 -r23
      *
@@ -138,9 +164,9 @@ char *thread_stack_init(thread_task_func_t task_func, void *arg,
 
     int i;
 
-    for (i = 2; i <= 23; i++) {
+    for (i = 2; i <= 23 ; i++) {
         stk--;
-        *stk = (uint8_t)0;
+        *stk = (uint8_t) 0;
     }
 
     /*
@@ -148,35 +174,35 @@ char *thread_stack_init(thread_task_func_t task_func, void *arg,
      * r24 and r25
      * */
     stk--;
-    tmp_adress = (uint16_t)arg;
-    *stk = (uint8_t)(tmp_adress & (uint16_t)0x00ff);
+    tmp_adress = (uint16_t) arg;
+    *stk = (uint8_t)(tmp_adress & (uint16_t) 0x00ff);
     stk--;
     tmp_adress >>= 8;
-    *stk = (uint8_t)(tmp_adress & (uint16_t)0x00ff);
+    *stk = (uint8_t)(tmp_adress & (uint16_t) 0x00ff);
 
     /*
      * Space for registers r26-r31
      */
     for (i = 26; i <= 31; i++) {
         stk--;
-        *stk = (uint8_t)i;
+        *stk = (uint8_t) i;
     }
 
     stk--;
-    return (char *)stk;
+    return (char *) stk;
 }
 
 /**
- * @brief thread_stack_print prints the stack to stdout.
+ * @brief thread_arch_stack_print prints the stack to stdout.
  * It depends on getting the correct values for stack_start, stack_size and sp
  * from sched_active_thread.
  * Maybe it would be good to change that to way that is less dependant on
  * getting correct values elsewhere (since it is a debugging tool and in the
  * presence of bugs the data may be corrupted).
  */
-void thread_stack_print(void)
+void thread_arch_stack_print(void)
 {
-    uint8_t found_marker = 1;
+    uint8_t  found_marker = 1;
     uint8_t *sp = (uint8_t *)sched_active_thread->sp;
     uint16_t size = 0;
 
@@ -191,67 +217,62 @@ void thread_stack_print(void)
         if ((*sp == 0xFE) && (*(sp + 1) == 0xAF)) {
             found_marker = 0;
         }
-    } while (found_marker == 1);
+    }
+    while (found_marker == 1);
 
     printf("stack size: %u bytes\n", size);
 }
 
-void cpu_switch_context_exit(void) __attribute__((naked));
-void cpu_switch_context_exit(void)
+void thread_arch_start_threading(void) __attribute__((naked));
+void thread_arch_start_threading(void)
 {
     sched_run();
+    AVR_CONTEXT_SWAP_INIT;
     __enter_thread_mode();
 }
 
 /**
  * @brief Set the MCU into Thread-Mode and load the initial task from the stack and run it
  */
+
 void NORETURN __enter_thread_mode(void) __attribute__((naked));
 void NORETURN __enter_thread_mode(void)
 {
     irq_enable();
     __context_restore();
-    __asm__ volatile ("ret");
+    __asm__ volatile("ret");
 
     UNREACHABLE();
 }
 
-void thread_yield_higher(void)
-{
-    if (irq_is_in() == 0) {
-        __context_save();
-        sched_run();
-        __context_restore();
-        __asm__ volatile ("ret");
-    }
-    else {
-        sched_context_switch_request = 1;
-    }
+void thread_arch_yield(void) {
+    AVR_CONTEXT_SWAP_TRIGGER;
 }
 
-void thread_yield_isr(void)
-{
+
+// Use this interrupt to perform all context switches
+ISR(AVR_CONTEXT_SWAP_INTERRUPT_VECT, ISR_NAKED) {
     __context_save();
     sched_run();
     __context_restore();
-
-    __asm__ volatile ("reti");
+    __asm__ volatile("reti");
 }
+
 
 __attribute__((always_inline)) static inline void __context_save(void)
 {
-    __asm__ volatile (
-        "push __tmp_reg__                    \n\t"
-        "in   __tmp_reg__, __SREG__          \n\t"
+    __asm__ volatile(
+        "push r0                             \n\t"
+        "in   r0, __SREG__                   \n\t"
         "cli                                 \n\t"
-        "push __tmp_reg__                    \n\t"
+        "push r0                             \n\t"
 #if defined(RAMPZ)
-        "in     __tmp_reg__, __RAMPZ__       \n\t"
-        "push   __tmp_reg__                  \n\t"
+        "in     r0, __RAMPZ__                \n\t"
+        "push   r0                           \n\t"
 #endif
 #if defined(EIND)
-        "in     __tmp_reg__, 0x3c            \n\t"
-        "push   __tmp_reg__                  \n\t"
+        "in     r0, 0x3c                     \n\t"
+        "push   r0                           \n\t"
 #endif
         "push r1                             \n\t"
         "clr  r1                             \n\t"
@@ -287,15 +308,17 @@ __attribute__((always_inline)) static inline void __context_save(void)
         "push r31                            \n\t"
         "lds  r26, sched_active_thread       \n\t"
         "lds  r27, sched_active_thread + 1   \n\t"
-        "in   __tmp_reg__, __SP_L__          \n\t"
-        "st   x+, __tmp_reg__                \n\t"
-        "in   __tmp_reg__, __SP_H__          \n\t"
-        "st   x+, __tmp_reg__                \n\t");
+        "in   r0, __SP_L__                   \n\t"
+        "st   x+, r0                         \n\t"
+        "in   r0, __SP_H__                   \n\t"
+        "st   x+, r0                         \n\t"
+    );
+
 }
 
 __attribute__((always_inline)) static inline void __context_restore(void)
 {
-    __asm__ volatile (
+    __asm__ volatile(
         "lds  r26, sched_active_thread       \n\t"
         "lds  r27, sched_active_thread + 1   \n\t"
         "ld   r28, x+                        \n\t"
@@ -334,14 +357,15 @@ __attribute__((always_inline)) static inline void __context_restore(void)
         "pop  r2                             \n\t"
         "pop  r1                             \n\t"
 #if defined(EIND)
-        "pop    __tmp_reg__                  \n\t"
-        "out    0x3c, __tmp_reg__            \n\t"
+        "pop    r0                           \n\t"
+        "out    0x3c, r0                     \n\t"
 #endif
 #if defined(RAMPZ)
-        "pop    __tmp_reg__                  \n\t"
-        "out    __RAMPZ__, __tmp_reg__       \n\t"
+        "pop    r0                           \n\t"
+        "out    __RAMPZ__, r0                \n\t"
 #endif
-        "pop  __tmp_reg__                    \n\t"
-        "out  __SREG__, __tmp_reg__          \n\t"
-        "pop  __tmp_reg__                    \n\t");
+        "pop  r0                             \n\t"
+        "out  __SREG__, r0                   \n\t"
+        "pop  r0                             \n\t"
+    );
 }

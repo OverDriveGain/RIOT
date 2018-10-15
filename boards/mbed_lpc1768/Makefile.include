@@ -5,7 +5,8 @@ export FLASHER = $(RIOTBOARD)/$(BOARD)/dist/flash.sh
 export DEBUGGER =
 export DEBUGSERVER =
 
-HEXFILE = $(BINFILE)
+export OFLAGS = -O binary
+export HEXFILE = $(ELFFILE:.elf=.bin)
 export FFLAGS =
 export DEBUGGER_FLAGS =
 

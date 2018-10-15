@@ -4,6 +4,7 @@ APPLICATION = riot_javascript
 # default BOARD environment
 BOARD ?= native
 
+#MZTODO ARE TTHESE PROJECT VARIABLES ? IS BOARD INSUFFICIENT FOR ALL PROGRAMS?
 # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= $(CURDIR)/../..
 
@@ -16,26 +17,36 @@ BOARD_INSUFFICIENT_MEMORY := airfy-beacon b-l072z-lrwan1 blackpill bluepill call
                              nucleo-f031k6 nucleo-f042k6 nucleo-f303k8 \
                              nucleo-l031k6 opencm904 spark-core stm32f0discovery \
                              yunjia-nrf51822
-
 BOARD_BLACKLIST := arduino-duemilanove arduino-mega2560 arduino-uno chronos \
-                   msb-430 msb-430h telosb waspmote-pro wsn430-v1_3b \
-                   wsn430-v1_4 z1 pic32-wifire pic32-clicker jiminy-mega256rfr2 \
-                   mega-xplained
+                   msb-430 msb-430h qemu-i386 telosb waspmote-pro wsn430-v1_3b \
+                   wsn430-v1_4 z1 pic32-wifire pic32-clicker
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:
-DEVELHELP ?= 1
+CFLAGS += -DDEVELHELP
 
-ifneq ($(BOARD),native)
 # Set stack size to something (conservatively) enormous
-CFLAGS += -DTHREAD_STACKSIZE_MAIN=9092
-endif
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096 -g -DGCOAP_STACK_SIZE=2560
+export JERRYHEAP=7
 
-# Add the package for Jerryscript
-USEPKG += jerryscript
+USEMODULE += js
+USEMODULE += shell_commands
 
-include $(RIOTBASE)/Makefile.include
+USEMODULE += shell
+
+USEMODULE += gnrc_netdev_default
+USEMODULE += auto_init_gnrc_netif
+# Specify the mandatory networking modules for IPv6 and UDP
+USEMODULE += gnrc_ipv6_router_default
+# Additional networking modules that can be dropped if not needed
+USEMODULE += gnrc_icmpv6_echo
+USEMODULE += gcoap
+USEMODULE += sock_util
+
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=1280 -DGNRC_PKTBUF_SIZE=2048
+
+include $(CURDIR)/../../Makefile.include
 
 JS_PATH := $(BINDIR)/js/$(MODULE)
 # add directory of generated *.js.h files to include path

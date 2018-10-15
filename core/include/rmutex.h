@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     core_sync
+ * @ingroup     core_sync Synchronization
  * @brief       Recursive Mutex for thread synchronization
  * @{
  *
@@ -21,7 +21,6 @@
 #ifndef RMUTEX_H
 #define RMUTEX_H
 
-#include <stdint.h>
 #include <stdatomic.h>
 
 #include "mutex.h"

@@ -34,9 +34,9 @@
 #include "net/ethernet.h"
 
 #ifdef USE_ETHOS_FOR_STDIO
-#include "stdio_uart.h"
+#include "uart_stdio.h"
 #include "isrpipe.h"
-extern isrpipe_t stdio_uart_isrpipe;
+extern isrpipe_t uart_stdio_isrpipe;
 #endif
 
 #define ENABLE_DEBUG (0)
@@ -102,7 +102,7 @@ static void _handle_char(ethos_t *dev, char c)
 #ifdef USE_ETHOS_FOR_STDIO
         case ETHOS_FRAME_TYPE_TEXT:
             dev->framesize++;
-            isrpipe_write_one(&stdio_uart_isrpipe, c);
+            isrpipe_write_one(&uart_stdio_isrpipe, c);
 #endif
     }
 }
@@ -189,11 +189,12 @@ static int _init(netdev_t *encdev)
     return 0;
 }
 
-static size_t iolist_count_total(const iolist_t *iolist)
+static size_t iovec_count_total(const struct iovec *vector, int count)
 {
     size_t result = 0;
-    for (const iolist_t *iol = iolist; iol; iol = iol->iol_next) {
-        result += iol->iol_len;
+    while(count--) {
+        result += vector->iov_len;
+        vector++;
     }
     return result;
 }
@@ -255,13 +256,13 @@ void ethos_send_frame(ethos_t *dev, const uint8_t *data, size_t len, unsigned fr
     }
 }
 
-static int _send(netdev_t *netdev, const iolist_t *iolist)
+static int _send(netdev_t *netdev, const struct iovec *vector, unsigned count)
 {
     ethos_t * dev = (ethos_t *) netdev;
     (void)dev;
 
     /* count total packet length */
-    size_t pktlen = iolist_count_total(iolist);
+    size_t pktlen = iovec_count_total(vector, count);
 
     /* lock line in order to prevent multiple writes */
     mutex_lock(&dev->out_mutex);
@@ -270,13 +271,14 @@ static int _send(netdev_t *netdev, const iolist_t *iolist)
     uint8_t frame_delim = ETHOS_FRAME_DELIMITER;
     uart_write(dev->uart, &frame_delim, 1);
 
-    /* send iolist */
-    for (const iolist_t *iol = iolist; iol; iol = iol->iol_next) {
-        size_t n = iol->iol_len;
-        uint8_t *ptr = iol->iol_base;
+    /* send iovec */
+    while(count--) {
+        size_t n = vector->iov_len;
+        uint8_t *ptr = vector->iov_base;
         while(n--) {
             _write_escaped(dev->uart, *ptr++);
         }
+        vector++;
     }
 
     uart_write(dev->uart, &frame_delim, 1);
@@ -298,7 +300,7 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void* info)
     ethos_t * dev = (ethos_t *) netdev;
 
     if (buf) {
-        if (len < dev->last_framesize) {
+        if (len < (int)dev->last_framesize) {
             DEBUG("ethos _recv(): receive buffer too small.\n");
             return -1;
         }
@@ -306,7 +308,7 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void* info)
         len = dev->last_framesize;
         dev->last_framesize = 0;
 
-        if ((tsrb_get(&dev->inbuf, buf, len) != (int)len)) {
+        if ((tsrb_get(&dev->inbuf, buf, len) != len)) {
             DEBUG("ethos _recv(): inbuf doesn't contain enough bytes.\n");
             return -1;
         }

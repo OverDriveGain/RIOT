@@ -9,7 +9,9 @@
  */
 
 /**
- * @ingroup     boards_pic32-clicker
+ * @defgroup    boards_pic32-clicker MikroE PIC32 Clicker
+ * @ingroup     boards
+ * @brief       peripheral configuration for the MikroE PIC32 Clicker
  * @{
  *
  * @file

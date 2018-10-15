@@ -8,7 +8,8 @@
  */
 
 /**
- * @ingroup     boards_remote-reva
+ * @defgroup    boards_remote
+ * @ingroup     boards
  * @{
  *
  * @file

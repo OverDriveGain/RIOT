@@ -15,43 +15,14 @@
  */
 
 #include <errno.h>
-#include <stdarg.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 #ifdef MODULE_VFS
-#include <fcntl.h>
 #include "vfs.h"
-#elif defined(MODULE_STDIO_UART)
-#include "stdio_uart.h"
+#elif defined(MODULE_UART_STDIO)
+#include "uart_stdio.h"
 #endif
-
-int open(const char *name, int flags, ...)
-{
-#ifdef MODULE_VFS
-    unsigned mode = 0;
-
-    if ((flags & O_CREAT)) {
-        va_list ap;
-        va_start(ap, flags);
-        mode = va_arg(ap, unsigned);
-        va_end(ap);
-    }
-
-    int fd = vfs_open(name, flags, mode);
-    if (fd < 0) {
-        /* vfs returns negative error codes */
-        errno = -fd;
-        return -1;
-    }
-    return fd;
-#else
-    (void)name;
-    (void)flags;
-    errno = ENODEV;
-    return -1;
-#endif
-}
 
 int close(int fd)
 {
@@ -87,15 +58,9 @@ off_t lseek(int fd, off_t off, int whence)
 #endif
 }
 
-int fcntl(int fd, int cmd, ...)
+int fcntl(int fd, int cmd, int arg)
 {
 #ifdef MODULE_VFS
-    unsigned long arg;
-    va_list ap;
-    va_start(ap, cmd);
-    arg = va_arg(ap, unsigned long);
-    va_end(ap);
-
     int res = vfs_fcntl(fd, cmd, arg);
     if (res < 0) {
         errno = -res;
@@ -105,6 +70,7 @@ int fcntl(int fd, int cmd, ...)
 #else
     (void)fd;
     (void)cmd;
+    (void)arg;
     errno = ENODEV;
     return -1;
 #endif
@@ -136,9 +102,9 @@ ssize_t read(int fd, void *dest, size_t count)
         return -1;
     }
     return res;
-#elif defined(MODULE_STDIO_UART)
+#elif defined(MODULE_UART_STDIO)
     if (fd == 0) {
-        return stdio_read(dest, count);
+        return uart_stdio_read(dest, count);
     }
     errno = EBADF;
     return -1;
@@ -160,9 +126,9 @@ ssize_t write(int fd, const void *src, size_t count)
         return -1;
     }
     return res;
-#elif defined(MODULE_STDIO_UART)
+#elif defined(MODULE_UART_STDIO)
     if (fd == 0) {
-        return stdio_write(src, count);
+        return uart_stdio_write(src, count);
     }
     errno = EBADF;
     return -1;

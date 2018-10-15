@@ -1,22 +1,17 @@
-# These tests hit an assert when used with gnrc_netif, but they exactly for
-# testing this netdev simulating framework, so I it's better if the assert is
-# ignored.
-CFLAGS += -DNDEBUG
+APPLICATION = netdev_test
 include ../Makefile.tests_common
 
-BOARD_INSUFFICIENT_MEMORY := arduino-duemilanove arduino-uno nucleo-f031k6
+BOARD_INSUFFICIENT_MEMORY := nucleo32-f031
 
 DISABLE_MODULE = auto_init
 
 USEMODULE += gnrc
 USEMODULE += gnrc_neterr
 USEMODULE += gnrc_netif
-USEMODULE += netdev_eth
+USEMODULE += gnrc_netdev
 USEMODULE += netdev_test
 USEMODULE += od
 
 CFLAGS += -DGNRC_PKTBUF_SIZE=200
-
-TEST_ON_CI_WHITELIST += all
 
 include $(RIOTBASE)/Makefile.include

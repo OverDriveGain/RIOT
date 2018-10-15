@@ -1,3 +1,4 @@
+APPLICATION = driver_io1_xplained
 include ../Makefile.tests_common
 
 USEMODULE += io1_xplained

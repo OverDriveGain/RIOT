@@ -16,7 +16,7 @@
 #include "vfs.h"
 
 /**
- * @ingroup     drivers_nvram
+ * @ingroup     nvram
  * @{
  *
  * @file

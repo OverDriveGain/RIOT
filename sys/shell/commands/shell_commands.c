@@ -37,11 +37,11 @@ extern int _heap_handler(int argc, char **argv);
 extern int _ps_handler(int argc, char **argv);
 #endif
 
-#ifdef MODULE_SHT1X
+#ifdef MODULE_SHT11
 extern int _get_temperature_handler(int argc, char **argv);
 extern int _get_humidity_handler(int argc, char **argv);
 extern int _get_weather_handler(int argc, char **argv);
-extern int _sht_config_handler(int argc, char **argv);
+extern int _set_offset_handler(int argc, char **argv);
 #endif
 
 #ifdef MODULE_LTC4150
@@ -57,8 +57,12 @@ extern int _at30tse75x_handler(int argc, char **argv);
 extern int _saul(int argc, char **argv);
 #endif
 
-#ifdef MODULE_PERIPH_RTC
+#if FEATURE_PERIPH_RTC
 extern int _rtc_handler(int argc, char **argv);
+#endif
+
+#ifdef CPU_X86
+extern int _x86_lspci(int argc, char **argv);
 #endif
 
 #ifdef MODULE_MCI
@@ -85,9 +89,14 @@ extern int _gnrc_ipv6_nib(int argc, char **argv);
 #endif
 
 #ifdef MODULE_GNRC_NETIF
-extern int _gnrc_netif_config(int argc, char **argv);
+extern int _netif_config(int argc, char **argv);
+extern int _netif_send(int argc, char **argv);
+#endif
+
+#ifdef MODULE_GNRC_NETIF2
+extern int _gnrc_netif2_config(int argc, char **argv);
 #ifdef MODULE_GNRC_TXTSND
-extern int _gnrc_netif_send(int argc, char **argv);
+extern int _gnrc_netif2_send(int argc, char **argv);
 #endif
 #endif
 
@@ -108,16 +117,12 @@ extern int _whitelist(int argc, char **argv);
 extern int _blacklist(int argc, char **argv);
 #endif
 
-#ifdef MODULE_GNRC_PKTBUF_CMD
-extern int _gnrc_pktbuf_cmd(int argc, char **argv);
-#endif
-
 #ifdef MODULE_GNRC_RPL
 extern int _gnrc_rpl(int argc, char **argv);
 #endif
 
 #ifdef MODULE_GNRC_SIXLOWPAN_CTX
-#ifdef MODULE_GNRC_IPV6_NIB_6LBR
+#ifdef MODULE_GNRC_SIXLOWPAN_ND_BORDER_ROUTER
 extern int _gnrc_6ctx(int argc, char **argv);
 #endif
 #endif
@@ -153,11 +158,11 @@ const shell_command_t _shell_command_list[] = {
 #ifdef MODULE_PS
     {"ps", "Prints information about running threads.", _ps_handler},
 #endif
-#ifdef MODULE_SHT1X
+#ifdef MODULE_SHT11
     {"temp", "Prints measured temperature.", _get_temperature_handler},
     {"hum", "Prints measured humidity.", _get_humidity_handler},
     {"weather", "Prints measured humidity and temperature.", _get_weather_handler},
-    {"sht-config", "Get/set SHT10/11/15 sensor configuration.", _sht_config_handler},
+    {"offset", "Set temperature offset.", _set_offset_handler},
 #endif
 #ifdef MODULE_LTC4150
     {"cur", "Prints current and average power consumption.", _get_current_handler},
@@ -182,20 +187,33 @@ const shell_command_t _shell_command_list[] = {
     { "random_init", "initializes the PRNG", _random_init },
     { "random_get", "returns 32 bit of pseudo randomness", _random_get },
 #endif
-#ifdef MODULE_PERIPH_RTC
+#if FEATURE_PERIPH_RTC
     {"rtc", "control RTC peripheral interface",  _rtc_handler},
+#endif
+#ifdef CPU_X86
+    {"lspci", "Lists PCI devices", _x86_lspci},
 #endif
 #ifdef MODULE_GNRC_IPV6_NIB
     {"nib", "Configure neighbor information base", _gnrc_ipv6_nib},
 #endif
-#ifdef MODULE_GNRC_NETIF
-    {"ifconfig", "Configure network interfaces", _gnrc_netif_config},
+#if defined(MODULE_GNRC_NETIF) && !defined(MODULE_GNRC_NETIF2)
+    {"ifconfig", "Configure network interfaces", _netif_config},
 #ifdef MODULE_GNRC_TXTSND
-    {"txtsnd", "Sends a custom string as is over the link layer", _gnrc_netif_send },
+    {"txtsnd", "Sends a custom string as is over the link layer", _netif_send },
+#endif
+#endif
+#ifdef MODULE_GNRC_NETIF2
+    {"ifconfig", "Configure network interfaces", _gnrc_netif2_config},
+#ifdef MODULE_GNRC_TXTSND
+    {"txtsnd", "Sends a custom string as is over the link layer", _gnrc_netif2_send },
 #endif
 #endif
 #ifdef MODULE_FIB
     {"fibroute", "Manipulate the FIB (info: 'fibroute [add|del]')", _fib_route_handler},
+#endif
+#ifdef MODULE_GNRC_IPV6_NC
+    {"ncache", "manage neighbor cache by hand", _ipv6_nc_manage },
+    {"routers", "IPv6 default router list", _ipv6_nc_routers },
 #endif
 #ifdef MODULE_GNRC_IPV6_WHITELIST
     {"whitelist", "whitelists an address for receival ('whitelist [add|del|help]')", _whitelist },
@@ -203,14 +221,11 @@ const shell_command_t _shell_command_list[] = {
 #ifdef MODULE_GNRC_IPV6_BLACKLIST
     {"blacklist", "blacklists an address for receival ('blacklist [add|del|help]')", _blacklist },
 #endif
-#ifdef MODULE_GNRC_PKTBUF_CMD
-    {"pktbuf", "prints internal stats of the packet buffer", _gnrc_pktbuf_cmd },
-#endif
 #ifdef MODULE_GNRC_RPL
     {"rpl", "rpl configuration tool ('rpl help' for more information)", _gnrc_rpl },
 #endif
 #ifdef MODULE_GNRC_SIXLOWPAN_CTX
-#ifdef MODULE_GNRC_IPV6_NIB_6LBR
+#ifdef MODULE_GNRC_SIXLOWPAN_ND_BORDER_ROUTER
     {"6ctx", "6LoWPAN context configuration tool", _gnrc_6ctx },
 #endif
 #endif
@@ -220,7 +235,7 @@ const shell_command_t _shell_command_list[] = {
 #ifdef MODULE_CCN_LITE_UTILS
     { "ccnl_open", "opens an interface or socket", _ccnl_open },
     { "ccnl_int", "sends an interest", _ccnl_interest },
-    { "ccnl_cs", "shows CS or creates content and populates it", _ccnl_content },
+    { "ccnl_cont", "create content and populated it", _ccnl_content },
     { "ccnl_fib", "shows or modifies the CCN-Lite FIB", _ccnl_fib },
 #endif
 #ifdef MODULE_SNTP

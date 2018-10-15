@@ -46,7 +46,7 @@ extern "C" {
 /**
  * Maximum number of interfaces which can be registered on DLL
  */
-#define CAN_DLL_NUMOF       (1)
+#define CAN_DLL_NUMOF       (1U)
 #endif
 
 /**

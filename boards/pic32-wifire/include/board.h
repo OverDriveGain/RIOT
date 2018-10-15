@@ -9,7 +9,9 @@
  */
 
 /**
- * @ingroup     boards_pic32-wifire
+ * @defgroup    boards_pic32-wifire Digilent PIC32 WiFire
+ * @ingroup     boards
+ * @brief       board configuration for the Digilent PIC32 WiFire
  * @details
  * See:
  * http://store.digilentinc.com/chipkit-wi-fire-wifi-enabled-mz-microcontroller-board/
@@ -46,7 +48,7 @@ extern "C" {
 #define EIC_IRQ      (1)
 
 /**
- * @name    LED pin configuration
+ * @brief   LED pin configuration
  * @{
  */
 #define LED1_PIN            GPIO_PIN(PORT_G, 6)

@@ -7,8 +7,8 @@
  */
 
 /**
- * @defgroup    pkg_lwip_opts   lwIP options
- * @ingroup     pkg_lwip
+ * @defgroup    lwip_opts   lwIP options
+ * @ingroup     lwip
  * @brief       Options for the lwIP stack
  * @{
  *

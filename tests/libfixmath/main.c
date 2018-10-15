@@ -190,6 +190,6 @@ int main(void)
     puts("Binary.");
     binary_ops();
 
-    puts("SUCCESS");
+    puts("Done.");
     return 0;
 }

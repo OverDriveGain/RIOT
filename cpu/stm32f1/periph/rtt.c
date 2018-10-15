@@ -23,6 +23,9 @@
 #include "periph/rtt.h"
 #include "periph_conf.h"
 
+/* guard file in case no RTT device was specified */
+#if RTT_NUMOF
+
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
@@ -151,7 +154,7 @@ void rtt_clear_alarm(void)
 
 void rtt_poweron(void)
 {
-    periph_clk_en(APB1, RCC_APB1ENR_BKPEN);  /* enable BKP, Clock */
+    periph_clk_en(APB1, (RCC_APB1ENR_BKPEN|RCC_APB1ENR_PWREN)); /* enable BKP and PWR, Clock */
     /* RTC clock source configuration */
     PWR->CR |= PWR_CR_DBP;                   /* Allow access to BKP Domain */
     RCC->BDCR |= RCC_BDCR_LSEON;             /* Enable LSE OSC */
@@ -164,7 +167,7 @@ void rtt_poweroff(void)
 {
     PWR->CR |= PWR_CR_DBP;                   /* Allow access to BKP Domain */
     RCC->BDCR &= ~RCC_BDCR_RTCEN;            /* disable RTC */
-    periph_clk_dis(APB1, RCC_APB1ENR_BKPEN); /* disable BKP, Clock */
+    periph_clk_dis(APB1, (RCC_APB1ENR_BKPEN|RCC_APB1ENR_PWREN)); /* disable BKP and PWR, Clock */
 }
 
 static inline void _rtt_enter_config_mode(void)
@@ -195,3 +198,5 @@ void RTT_ISR(void)
     }
     cortexm_isr_end();
 }
+
+#endif /* RTT_NUMOF */

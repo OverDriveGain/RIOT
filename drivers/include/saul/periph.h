@@ -19,22 +19,23 @@
 #ifndef SAUL_PERIPH_H
 #define SAUL_PERIPH_H
 
-#if MODULE_SAUL_GPIO || DOXYGEN
+#ifdef MODULE_SAUL_GPIO
 #include "periph/gpio.h"
 #endif /* MODULE_SAUL_GPIO */
 
-#if MODULE_SAUL_ADC || DOXYGEN
+#ifdef MODULE_SAUL_ADC
 #include "periph/adc.h"
 #endif /* MODULE_SAUL_ADC */
+
+#ifdef MODULE_SAUL_PWM
+#include "periph/pwm.h"
+#endif /* MODULE_SAUL_PWM */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if MODULE_SAUL_GPIO || DOXYGEN
-/**
- * @brief SAUL GPIO configuration flags
- */
+#ifdef MODULE_SAUL_GPIO
 typedef enum {
     SAUL_GPIO_INVERTED   = (1 << 0),  /**< pin is used as inverted */
     SAUL_GPIO_INIT_CLEAR = (1 << 1),  /**< set pin inactive after init */
@@ -52,7 +53,7 @@ typedef struct {
 } saul_gpio_params_t;
 #endif /* MODULE_SAUL_GPIO */
 
-#if MODULE_SAUL_ADC || DOXYGEN
+#ifdef MODULE_SAUL_ADC
 /**
  * @brief   Direct mapped ADC configuration values
  */
@@ -61,6 +62,20 @@ typedef struct {
     adc_t line;             /**< ADC line to initialize and expose */
     adc_res_t res;          /**< ADC resolution */
 } saul_adc_params_t;
+#endif /* MODULE_SAUL_ADC */
+
+#ifdef MODULE_SAUL_PWM
+/**
+ * @brief   Direct mapped PWM configuration values
+ */
+typedef struct {
+    const char *name;       /**< name of the device connected to this pin */
+    pwm_t line;             /**< PWM line to initialize and expose */
+    pwm_mode_t mode;        /**< PWM mode */
+    uint32_t freq;          /**< PWM frequency */
+    uint16_t res;           /**< PWM resolution */
+    uint8_t channel;        /**< PWM channel */
+} saul_pwm_params_t;
 #endif /* MODULE_SAUL_ADC */
 
 #ifdef __cplusplus

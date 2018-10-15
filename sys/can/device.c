@@ -49,6 +49,24 @@ static void pm_cb(void *arg);
 static void pm_reset(candev_dev_t *candev_dev, uint32_t value);
 #endif
 
+static inline enum can_msg _can_event_error_to_msg(candev_event_t error)
+{
+    switch (error) {
+    case CANDEV_EVENT_TX_ERROR:
+        return CAN_MSG_TX_ERROR;
+    case CANDEV_EVENT_RX_ERROR:
+        return CAN_MSG_RX_ERROR;
+    case CANDEV_EVENT_BUS_OFF:
+        return CAN_MSG_BUS_OFF;
+    case CANDEV_EVENT_ERROR_PASSIVE:
+        return CAN_MSG_ERROR_PASSIVE;
+    case CANDEV_EVENT_ERROR_WARNING:
+        return CAN_MSG_ERROR_WARNING;
+    default:
+        return 0;
+    }
+}
+
 static void _can_event(candev_t *dev, candev_event_t event, void *arg)
 {
     msg_t msg;
@@ -185,18 +203,6 @@ static void pm_reset(candev_dev_t *candev_dev, uint32_t value)
 }
 #endif
 
-static void wake_up(candev_dev_t *candev_dev)
-{
-    candev_t *dev = candev_dev->dev;
-    if (dev->state == CAN_STATE_BUS_OFF || dev->state == CAN_STATE_SLEEPING) {
-        DEBUG("can device: waking up driver\n");
-        power_up(candev_dev);
-    }
-#ifdef MODULE_CAN_PM
-    pm_reset(candev_dev, candev_dev->tx_wakeup_timeout);
-#endif
-}
-
 static void *_can_device_thread(void *args)
 {
     candev_dev_t *candev_dev = (candev_dev_t *) args;
@@ -256,9 +262,14 @@ static void *_can_device_thread(void *args)
             break;
         case CAN_MSG_SEND_FRAME:
             DEBUG("can device: CAN_MSG_SEND_FRAME received\n");
-            wake_up(candev_dev);
-            /* read incoming pkt */
             pkt = (can_pkt_t *) msg.content.ptr;
+            if (dev->state == CAN_STATE_BUS_OFF || dev->state == CAN_STATE_SLEEPING) {
+                DEBUG("can device: waking up driver\n");
+                power_up(candev_dev);
+            }
+#ifdef MODULE_CAN_PM
+            pm_reset(candev_dev, candev_dev->tx_wakeup_timeout);
+#endif
             dev->driver->send(dev, &pkt->frame);
             break;
         case CAN_MSG_SET:
@@ -285,7 +296,6 @@ static void *_can_device_thread(void *args)
             break;
         case CAN_MSG_SET_FILTER:
             DEBUG("can device: CAN_MSG_SET_FILTER received\n");
-            wake_up(candev_dev);
             /* set filter for device driver */
             res = dev->driver->set_filter(dev, msg.content.ptr);
             /* send reply to calling thread */
@@ -295,7 +305,6 @@ static void *_can_device_thread(void *args)
             break;
         case CAN_MSG_REMOVE_FILTER:
             DEBUG("can device: CAN_MSG_REMOVE_FILTER received\n");
-            wake_up(candev_dev);
             /* set filter for device driver */
             res = dev->driver->remove_filter(dev, msg.content.ptr);
             /* send reply to calling thread */
@@ -473,10 +482,11 @@ int can_device_calc_bittiming(uint32_t clock, const struct can_bittiming_const *
     uint32_t spt_error;
     uint32_t min_spt_error = UINT32_MAX;
     uint32_t best_brp = 0;
-    uint32_t tseg = 0;
-    uint32_t tseg1 = 0;
-    uint32_t tseg2 = 0;
+    uint32_t tseg;
+    uint32_t tseg1;
+    uint32_t tseg2;
     uint32_t best_tseg = 0;
+    uint32_t rate;        /* current bitrate */
     uint32_t rate_error;
     uint32_t min_rate_error;
 
@@ -514,8 +524,8 @@ int can_device_calc_bittiming(uint32_t clock, const struct can_bittiming_const *
             DEBUG("invalid brp\n");
             continue;
         }
-        /* current bitrate */
-        uint32_t rate = clock / (brp * nbt);
+
+        rate = clock / (brp * nbt);
         rate_error = max(timing->bitrate, rate) - min(timing->bitrate, rate);
         if (rate_error > min_rate_error) {
             DEBUG("timing->rate=%" PRIu32 ", rate=%" PRIu32 ", rate_error=%" PRIu32 " > min_rate_error=%" PRIu32 ", continuing\n",

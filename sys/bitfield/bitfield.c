@@ -7,6 +7,7 @@
  */
 
 /**
+ * @ingroup     sys_util
  * @{
  *
  * @file

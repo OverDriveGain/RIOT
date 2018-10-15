@@ -8,7 +8,7 @@
  */
 
 /*
- * @ingroup     sys_auto_init_saul
+ * @ingroup     auto_init_saul
  * @{
  *
  * @file
@@ -29,7 +29,7 @@
 /**
  * @brief   Define the number of configured sensors
  */
-#define LSM303DLHC_NUM    (sizeof(lsm303dlhc_params) / sizeof(lsm303dlhc_params[0]))
+#define LSM303DLHC_NUM    (sizeof(lsm303dlhc_params)/sizeof(lsm303dlhc_params[0]))
 
 /**
  * @brief   Allocate memory for the device descriptors
@@ -42,12 +42,7 @@ static lsm303dlhc_t lsm303dlhc_devs[LSM303DLHC_NUM];
 static saul_reg_t saul_entries[LSM303DLHC_NUM * 2];
 
 /**
- * @brief   Define the number of saul info
- */
-#define LSM303DLHC_INFO_NUM    (sizeof(lsm303dlhc_saul_info) / sizeof(lsm303dlhc_saul_info[0]))
-
-/**
- * @name    Reference the driver structs
+ * @brief   Reference the driver structs
  * @{
  */
 extern saul_driver_t lsm303dlhc_saul_acc_driver;
@@ -56,12 +51,16 @@ extern saul_driver_t lsm303dlhc_saul_mag_driver;
 
 void auto_init_lsm303dlhc(void)
 {
-    assert(LSM303DLHC_NUM == LSM303DLHC_INFO_NUM);
-
     for (unsigned int i = 0; i < LSM303DLHC_NUM; i++) {
+        const lsm303dlhc_params_t *p = &lsm303dlhc_params[i];
+
         LOG_DEBUG("[auto_init_saul] initializing lsm303dlhc #%u\n", i);
 
-        if (lsm303dlhc_init(&lsm303dlhc_devs[i], &lsm303dlhc_params[i]) < 0) {
+        int res = lsm303dlhc_init(&lsm303dlhc_devs[i], p->i2c,
+                                  p->acc_pin, p->mag_pin,
+                                  p->acc_addr, p->acc_rate, p->acc_scale,
+                                  p->mag_addr, p->mag_rate, p->mag_gain);
+        if (res < 0) {
             LOG_ERROR("[auto_init_saul] error initializing lsm303dlhc #%u\n", i);
             continue;
         }

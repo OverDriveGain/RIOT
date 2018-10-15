@@ -7,7 +7,9 @@
  */
 
 /**
- * @ingroup     boards_nrf51dongle
+ * @defgroup    boards_nrf51dongle nRF51 Dongle
+ * @ingroup     boards
+ * @brief       Board specific files for the Nordic nRF51 Dongle
  * @{
  *
  * @file
@@ -27,7 +29,7 @@ extern "C" {
 #endif
 
 /**
- * @name    Xtimer configuration
+ * @brief   Xtimer configuration
  * @{
  */
 #define XTIMER_WIDTH                (24)
@@ -35,7 +37,7 @@ extern "C" {
 /** @} */
 
 /**
- * @name    LED pin definitions and handlers
+ * @brief   LED pin definitions and handlers
  * @{
  */
 #define LED0_PIN            GPIO_PIN(0, 21)

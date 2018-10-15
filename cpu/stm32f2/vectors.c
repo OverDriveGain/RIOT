@@ -185,15 +185,16 @@ ISR_VECTOR(1) const isr_t vector_cpu[CPU_IRQ_NUMOF] = {
     [76] = isr_otg_hs_wkup,          /* [76] USB OTG HS Wakeup through EXTI interrupt */
     [77] = isr_otg_hs,               /* [77] USB OTG HS global interrupt */
 
-#if defined(CPU_LINE_STM32F207xx)
+#if defined(CPU_MODEL_STM32F207ZG)
     [61] = isr_eth,                  /* [61] Ethernet global Interrupt */
     [62] = isr_eth_wkup,             /* [62] Ethernet Wakeup through EXTI line Interrupt */
     [78] = isr_dcmi,                 /* [78] DCMI global interrupt */
     [80] = isr_hash_rng,             /* [80] Hash and RNG global interrupt */
-#elif defined(CPU_LINE_STM32F215xx)
+#elif defined(CPU_MODEL_STM32F215RG) || defined(CPU_MODEL_STM32F215VE) || \
+    defined(CPU_MODEL_STM32F215VG)
     [79] = isr_cryp,                 /* [79] CRYP crypto global interrupt */
     [80] = isr_hash_rng,             /* [80] Hash and RNG global interrupt */
-#elif defined(CPU_LINE_STM32F217xx)
+#elif defined(CPU_MODEL_STM32F217ZG)
     [61] = isr_eth,                  /* [61] Ethernet global Interrupt */
     [62] = isr_eth_wkup,             /* [62] Ethernet Wakeup through EXTI line Interrupt */
     [78] = isr_dcmi,                 /* [78] DCMI global interrupt */

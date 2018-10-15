@@ -114,7 +114,6 @@ void spi_init_pins(spi_t bus)
 
 int spi_acquire(spi_t bus, spi_cs_t cs, spi_mode_t mode, spi_clk_t clk)
 {
-    (void) cs;
     /* get exclusive access to the device */
     mutex_lock(&locks[bus]);
     /* power on the device */
@@ -137,7 +136,7 @@ int spi_acquire(spi_t bus, spi_cs_t cs, spi_mode_t mode, spi_clk_t clk)
     dev(bus)->CTRLA.reg = (SERCOM_SPI_CTRLA_MODE(0x3) |     /* 0x3 -> master */
                            SERCOM_SPI_CTRLA_DOPO(spi_config[bus].mosi_pad) |
                            SERCOM_SPI_CTRLA_DIPO(spi_config[bus].miso_pad) |
-                           (mode <<  SERCOM_SPI_CTRLA_CPHA_Pos));
+                           (mode <<  SERCOM_SPI_CTRLA_CPOL_Pos));
     /* also no synchronization needed here, as CTRLA is write-synchronized */
 
     /* finally enable the device */

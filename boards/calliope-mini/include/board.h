@@ -7,7 +7,9 @@
  */
 
 /**
- * @ingroup     boards_calliope-mini
+ * @defgroup    boards_calliope-mini Calliope mini
+ * @ingroup     boards
+ * @brief       Board specific files for the Calliope mini
  *
  * This board is for calliope-mini revision 1.0.
  * @{

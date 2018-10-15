@@ -1,7 +1,10 @@
+APPLICATION = driver_at86rf2xx
 include ../Makefile.tests_common
 
 # exclude boards with insufficient memory
-BOARD_INSUFFICIENT_MEMORY := arduino-duemilanove arduino-uno nucleo-f031k6
+BOARD_INSUFFICIENT_MEMORY := nucleo32-f031
+
+FEATURES_REQUIRED = periph_spi periph_gpio
 
 DISABLE_MODULE += auto_init
 
@@ -26,5 +29,7 @@ DRIVER ?= at86rf231
 
 # include the selected driver
 USEMODULE += $(DRIVER)
+
+CFLAGS += -DDEVELHELP
 
 include $(RIOTBASE)/Makefile.include

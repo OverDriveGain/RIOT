@@ -43,7 +43,7 @@ typedef struct __TestFixture    TestFixture;
 typedef struct __TestFixture*   TestFixtureRef;/*downward compatible*/
 
 struct __TestFixture {
-    const char *name;
+    char *name;
     void(*test)(void);
 };
 
@@ -54,7 +54,7 @@ typedef struct __TestCaller*    TestCallerRef;/*downward compatible*/
 
 struct __TestCaller {
     TestImplement* isa;
-    const char *name;
+    char *name;
     void(*setUp)(void);
     void(*tearDown)(void);
     int numberOfFixtuers;

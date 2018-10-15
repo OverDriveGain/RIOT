@@ -40,14 +40,10 @@ extern "C" {
 #ifndef DHT_PARAM_PULL
 #define DHT_PARAM_PULL              (GPIO_IN_PU)
 #endif
-#ifndef DHT_PARAMS
-#define DHT_PARAMS                  { .pin     = DHT_PARAM_PIN,  \
-                                      .type    = DHT_PARAM_TYPE, \
-                                      .in_mode = DHT_PARAM_PULL }
-#endif
-#ifndef DHT_SAULINFO
-#define DHT_SAULINFO                { .name = "dht" }
-#endif
+
+#define DHT_PARAMS_DEFAULT          {.pin     = DHT_PARAM_PIN, \
+                                     .type    = DHT_PARAM_TYPE, \
+                                     .in_mode = DHT_PARAM_PULL}
 /**@}*/
 
 /**
@@ -55,16 +51,27 @@ extern "C" {
  */
 static const dht_params_t dht_params[] =
 {
-    DHT_PARAMS
+#ifdef DHT_PARAMS_BOARD
+    DHT_PARAMS_BOARD,
+#else
+    DHT_PARAMS_DEFAULT,
+#endif
 };
 
 /**
+ * @brief   Get the number of configured DHT devices
+ */
+#define DHT_NUMOF       (sizeof(dht_params) / sizeof(dht_params[0]))
+
+#ifdef MODULE_SAUL_REG
+/**
  * @brief   Allocate and configure entries to the SAUL registry
  */
-static const saul_reg_info_t dht_saul_info[] =
+static const saul_reg_info_t dht_saul_reg_info[] =
 {
-    DHT_SAULINFO
+    { .name = "dht" }
 };
+#endif
 
 #ifdef __cplusplus
 }

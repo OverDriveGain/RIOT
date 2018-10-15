@@ -59,20 +59,15 @@ extern "C" {
 #define LSM303DLHC_PARAM_MAG_GAIN       (LSM303DLHC_MAG_GAIN_450_400_GAUSS)
 #endif
 
-#ifndef LSM303DLHC_PARAMS
-#define LSM303DLHC_PARAMS               { .i2c       = LSM303DLHC_PARAM_I2C,       \
-                                          .acc_addr  = LSM303DLHC_PARAM_ACC_ADDR,  \
-                                          .acc_pin   = LSM303DLHC_PARAM_ACC_PIN,   \
-                                          .acc_rate  = LSM303DLHC_PARAM_ACC_RATE,  \
+#define LSM303DLHC_PARAMS_DEFAULT       { .i2c       = LSM303DLHC_PARAM_I2C, \
+                                          .acc_addr  = LSM303DLHC_PARAM_ACC_ADDR, \
+                                          .acc_pin   = LSM303DLHC_PARAM_ACC_PIN, \
+                                          .acc_rate  = LSM303DLHC_PARAM_ACC_RATE, \
                                           .acc_scale = LSM303DLHC_PARAM_ACC_SCALE, \
-                                          .mag_addr  = LSM303DLHC_PARAM_MAG_ADDR,  \
-                                          .mag_pin   = LSM303DLHC_PARAM_MAG_PIN,   \
-                                          .mag_rate  = LSM303DLHC_PARAM_MAG_RATE,  \
+                                          .mag_addr  = LSM303DLHC_PARAM_MAG_ADDR, \
+                                          .mag_pin   = LSM303DLHC_PARAM_MAG_PIN, \
+                                          .mag_rate  = LSM303DLHC_PARAM_MAG_RATE, \
                                           .mag_gain  = LSM303DLHC_PARAM_MAG_GAIN }
-#endif
-#ifndef LSM303DLHC_SAUL_INFO
-#define LSM303DLHC_SAUL_INFO            { .name = "lsm303dlhc" }
-#endif
 /**@}*/
 
 /**
@@ -80,7 +75,11 @@ extern "C" {
  */
 static const lsm303dlhc_params_t lsm303dlhc_params[] =
 {
-    LSM303DLHC_PARAMS
+#ifdef LSM303DLHC_PARAMS_CUSTOM
+    LSM303DLHC_PARAMS_CUSTOM,
+#else
+    LSM303DLHC_PARAMS_DEFAULT,
+#endif
 };
 
 /**
@@ -88,7 +87,7 @@ static const lsm303dlhc_params_t lsm303dlhc_params[] =
  */
 static const saul_reg_info_t lsm303dlhc_saul_info[] =
 {
-    LSM303DLHC_SAUL_INFO
+    { .name = "lsm303dlhc" }
 };
 
 #ifdef __cplusplus

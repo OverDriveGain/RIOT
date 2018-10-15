@@ -21,14 +21,12 @@
 
 from __future__ import print_function
 
-from collections import defaultdict
+import re
 from itertools import groupby
-from os import devnull, environ
+from os import devnull, environ, listdir
 from os.path import abspath, dirname, isfile, join
 from subprocess import CalledProcessError, check_call, check_output, PIPE, Popen
-from sys import argv, exit, stdout
-
-
+from sys import exit, stdout, argv, exc_info
 try:
     # Python 2.x
     from StringIO import StringIO
@@ -37,7 +35,6 @@ except ImportError:
     from io import StringIO
 from itertools import tee
 
-
 class Termcolor:
     red = '\033[1;31m'
     green = '\033[1;32m'
@@ -45,7 +42,6 @@ class Termcolor:
     blue = '\033[1;34m'
     purple = '\033[1;35m'
     end = '\033[0m'
-
 
 def is_tracked(application_folder):
     if not isfile(join(application_folder, 'Makefile')):
@@ -57,7 +53,6 @@ def is_tracked(application_folder):
         return False
     else:
         return True
-
 
 def get_results_and_output_from(fd):
     read_more_output = True
@@ -88,34 +83,12 @@ def get_results_and_output_from(fd):
         elif read_more_output:
             output.write(line)
 
-
-def get_app_dirs():
-    return check_output(["make", "-f", "makefiles/app_dirs.inc.mk", "info-applications"]) \
-            .decode("utf-8", errors="ignore")\
-            .split()
-
-
-def split_apps_by_dir(app_dirs):
-    """ creates a dictionary as follows:
-    { "examples": ["hello_world", "gnrc_networking" ],
-      "tests": ["minimal", "fmt_print" ]
-      }
-    """
-    res = defaultdict(list)
-    for app_dir in app_dirs:
-        folder, app = app_dir.split("/", 1)
-        res[folder].append(app)
-
-    return res
-
-
 def build_all():
     riotbase = environ.get('RIOTBASE') or abspath(join(dirname(abspath(__file__)), '../' * 3))
-    app_folders = split_apps_by_dir(get_app_dirs())
-    for folder in sorted(app_folders):
+    for folder in ('examples', 'tests'):
         print('Building all applications in: {}'.format(colorize_str(folder, Termcolor.blue)))
 
-        applications = app_folders[folder]
+        applications = listdir(join(riotbase, folder))
         applications = filter(lambda app: is_tracked(join(riotbase, folder, app)), applications)
         applications = sorted(applications)
 
@@ -124,15 +97,12 @@ def build_all():
         subprocess_env['BUILDTEST_VERBOSE'] = '1'
 
         for nth, application in enumerate(applications, 1):
-            stdout.write('\tBuilding application: {} ({}/{}) '.format(
-                colorize_str(application, Termcolor.blue),
-                nth, len(applications)))
+            stdout.write('\tBuilding application: {} ({}/{}) '.format(colorize_str(application, Termcolor.blue), nth, len(applications)))
             stdout.flush()
             try:
-                app_dir = join(riotbase, folder, application)
                 subprocess = Popen(('make', 'buildtest'),
                                    bufsize=1, stdin=null, stdout=PIPE, stderr=null,
-                                   cwd=app_dir,
+                                   cwd=join(riotbase, folder, application),
                                    env=subprocess_env)
 
                 results, results_with_output = tee(get_results_and_output_from(subprocess.stdout))
@@ -140,10 +110,6 @@ def build_all():
                 results_with_output = list(filter(lambda res: res[2].getvalue(), results_with_output))
                 failed_with_output = list(filter(lambda res: 'failed' in res[0], results_with_output))
                 success_with_output = list(filter(lambda res: 'success' in res[0], results_with_output))
-                # check if bin-directory isn't in system's PATH to not accidentally
-                # delete some valuable system executable ;-)
-                if join(app_dir, "bin") not in environ.get("PATH", "/bin:/usr/bin:/usr/local/bin:"):
-                    check_call(["rm", "-rf", join(app_dir, "bin")])
                 print()
                 for group, result in results:
                     print('\t\t{}: {}'.format(group, ', '.join(sorted(board for outcome, board, output in result))))
@@ -163,23 +129,20 @@ def build_all():
             finally:
                 try:
                     subprocess.kill()
-                except Exception:
+                except:
                     pass
-
 
 def colorize_str(string, color):
     return '%s%s%s' % (color, string, Termcolor.end)
-
 
 def print_output_for(buf, name, color):
     if buf:
         print('%s:' % name)
         for application, details in buf:
-            for _, board, output in details:
+            for outcome, board, output in details:
                 print()
                 print(colorize_str('%s:%s:' % (application, board), color))
-                print('%s' % output.getvalue())
-
+                print('%s'  % output.getvalue())
 
 def print_outcome(outputListDescription):
     print()
@@ -188,7 +151,6 @@ def print_outcome(outputListDescription):
         applications = group
         if applications:
             print('\t{}{}{}: {}'.format(color, name, Termcolor.end, ', '.join(applications)))
-
 
 def print_num_of_errors_and_warnings():
     stdout.write('Errors: ')

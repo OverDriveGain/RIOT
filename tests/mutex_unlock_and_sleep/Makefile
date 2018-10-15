@@ -1,7 +1,8 @@
+APPLICATION = mutex_unlock_and_sleep
 include ../Makefile.tests_common
 
-DISABLE_MODULE += auto_init
+BOARD_INSUFFICIENT_MEMORY := nucleo32-f031
 
-TEST_ON_CI_WHITELIST += all
+DISABLE_MODULE += auto_init
 
 include $(RIOTBASE)/Makefile.include

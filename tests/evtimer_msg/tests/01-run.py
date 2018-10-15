@@ -7,11 +7,14 @@
 # directory for more details.
 
 from __future__ import print_function
+import os
 import sys
-from testrunner import run
+import time
+
+sys.path.append(os.path.join(os.environ['RIOTBASE'], 'dist/tools/testrunner'))
+import testrunner
 
 ACCEPTED_ERROR = 20
-
 
 def testfunc(child):
     child.expect(r"Testing generic evtimer \(start time = (\d+) ms\)")
@@ -21,6 +24,7 @@ def testfunc(child):
 
     for i in range(numof):
         child.expect(r'At \s*(\d+) ms received msg %i: "supposed to be (\d+)"' % i)
+        stop = int(time.time() * 1000)
         # check if output is correct
         exp = int(child.match.group(2)) + timer_offset
         assert(int(child.match.group(1)) in range(exp - ACCEPTED_ERROR, exp + ACCEPTED_ERROR + 1))
@@ -28,6 +32,5 @@ def testfunc(child):
     print("")
     print("All tests successful")
 
-
 if __name__ == "__main__":
-    sys.exit(run(testfunc))
+    sys.exit(testrunner.run(testfunc, echo=False))

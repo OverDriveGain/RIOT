@@ -1,7 +1,5 @@
 /*
  * Copyright (C) 2016 Phytec Messtechnik GmbH
-                 2017 HAW Hamburg
-                 2017 SKF AB
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -15,9 +13,7 @@
  * @file
  * @brief       Netdev interface for kw2xrf drivers
  *
- * @author      Johann Fischer  <j.fischer@phytec.de>
- * @author      Peter Kietzmann <peter.kietzmann@haw-hamburg.de>
- * @author      Joakim Nohlgård <joakim.nohlgard@eistec.se>
+ * @author      Johann Fischer <j.fischer@phytec.de>
  */
 
 #include <string.h>
@@ -25,7 +21,6 @@
 #include <errno.h>
 
 #include "log.h"
-#include "thread_flags.h"
 #include "net/eui64.h"
 #include "net/ieee802154.h"
 #include "net/netdev.h"
@@ -46,36 +41,20 @@
 
 #define _MACACKWAITDURATION         (864 / 16) /* 864us * 62500Hz */
 
-#define KW2XRF_THREAD_FLAG_ISR      (1 << 8)
-
-static volatile unsigned int num_irqs_queued = 0;
-static volatile unsigned int num_irqs_handled = 0;
-static unsigned int spinning_for_irq = 0;
 static uint8_t _send_last_fcf;
-
-static void _isr(netdev_t *netdev);
 
 static void _irq_handler(void *arg)
 {
-    netdev_t *netdev = (netdev_t *) arg;
-    kw2xrf_t *dev = (kw2xrf_t *)netdev;
+    netdev_t *dev = (netdev_t *) arg;
 
-    thread_flags_set(dev->thread, KW2XRF_THREAD_FLAG_ISR);
-
-    /* We use this counter to avoid filling the message queue with redundant ISR events */
-    if (num_irqs_queued == num_irqs_handled) {
-        ++num_irqs_queued;
-        if (netdev->event_callback) {
-            netdev->event_callback(netdev, NETDEV_EVENT_ISR);
-        }
+    if (dev->event_callback) {
+        dev->event_callback(dev, NETDEV_EVENT_ISR);
     }
 }
 
 static int _init(netdev_t *netdev)
 {
     kw2xrf_t *dev = (kw2xrf_t *)netdev;
-
-    dev->thread = (thread_t *)thread_get(thread_getpid());
 
     /* initialize SPI and GPIOs */
     if (kw2xrf_init(dev, &_irq_handler)) {
@@ -103,7 +82,7 @@ static size_t kw2xrf_tx_load(uint8_t *pkt_buf, uint8_t *buf, size_t len, size_t 
 
 static void kw2xrf_tx_exec(kw2xrf_t *dev)
 {
-    if ((dev->netdev.flags & KW2XRF_OPT_ACK_REQ) &&
+    if ((dev->netdev.flags & KW2XRF_OPT_AUTOACK) &&
         (_send_last_fcf & IEEE802154_FCF_ACK_REQ)) {
         kw2xrf_set_sequence(dev, XCVSEQ_TX_RX);
     }
@@ -112,54 +91,33 @@ static void kw2xrf_tx_exec(kw2xrf_t *dev)
     }
 }
 
-static void kw2xrf_wait_idle(kw2xrf_t *dev)
-{
-    /* make sure any ongoing T or TR sequence is finished */
-    if (kw2xrf_can_switch_to_idle(dev) == 0) {
-        DEBUG("[kw2xrf] TX already in progress\n");
-        num_irqs_handled = num_irqs_queued;
-        spinning_for_irq = 1;
-        thread_flags_clear(KW2XRF_THREAD_FLAG_ISR);
-        while (1) {
-            /* TX in progress */
-            /* Handle any outstanding IRQ first */
-            _isr((netdev_t *)dev);
-            /* _isr() will switch the transceiver back to idle after
-             * handling the TX complete IRQ */
-            if (kw2xrf_can_switch_to_idle(dev)) {
-                break;
-            }
-            /* Block until we get another IRQ */
-            thread_flags_wait_any(KW2XRF_THREAD_FLAG_ISR);
-            DEBUG("[kw2xrf] waited ISR\n");
-        }
-        spinning_for_irq = 0;
-        DEBUG("[kw2xrf] previous TX done\n");
-    }
-}
-
-static int _send(netdev_t *netdev, const iolist_t *iolist)
+static int _send(netdev_t *netdev, const struct iovec *vector, unsigned count)
 {
     kw2xrf_t *dev = (kw2xrf_t *)netdev;
+    const struct iovec *ptr = vector;
     uint8_t *pkt_buf = &(dev->buf[1]);
     size_t len = 0;
 
-    /* wait for ongoing transmissions to finish */
-    kw2xrf_wait_idle(dev);
-
     /* load packet data into buffer */
-    for (const iolist_t *iol = iolist; iol; iol = iol->iol_next) {
+    for (unsigned i = 0; i < count; i++, ptr++) {
         /* current packet data + FCS too long */
-        if ((len + iol->iol_len + IEEE802154_FCS_LEN) > KW2XRF_MAX_PKT_LENGTH) {
+        if ((len + ptr->iov_len + IEEE802154_FCS_LEN) > KW2XRF_MAX_PKT_LENGTH) {
             LOG_ERROR("[kw2xrf] packet too large (%u byte) to be send\n",
                   (unsigned)len + IEEE802154_FCS_LEN);
             return -EOVERFLOW;
         }
-        len = kw2xrf_tx_load(pkt_buf, iol->iol_base, iol->iol_len, len);
+        len = kw2xrf_tx_load(pkt_buf, ptr->iov_base, ptr->iov_len, len);
     }
 
-    kw2xrf_set_sequence(dev, XCVSEQ_IDLE);
-    dev->pending_tx++;
+    /* make sure ongoing t or tr sequenz are finished */
+    if (kw2xrf_can_switch_to_idle(dev)) {
+        kw2xrf_set_sequence(dev, XCVSEQ_IDLE);
+        dev->pending_tx++;
+    }
+    else {
+        /* do not wait, this can lead to a dead lock */
+        return 0;
+    }
 
     /*
      * Nbytes = FRAME_LEN - 2 -> FRAME_LEN = Nbytes + 2
@@ -211,7 +169,7 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
     if (info != NULL) {
         netdev_ieee802154_rx_info_t *radio_info = info;
         radio_info->lqi = ((uint8_t*)buf)[pkt_len];
-        radio_info->rssi = kw2xrf_get_rssi(radio_info->lqi);
+        radio_info->rssi = (uint8_t)kw2xrf_get_rssi(radio_info->lqi);
     }
 
     /* skip FCS and LQI */
@@ -239,7 +197,6 @@ static int _set_state(kw2xrf_t *dev, netopt_state_t state)
         case NETOPT_STATE_OFF:
             /* TODO: Replace with powerdown (set reset input low) */
             kw2xrf_set_power_mode(dev, KW2XRF_HIBERNATE);
-            break;
         default:
             return -ENOTSUP;
     }
@@ -274,16 +231,6 @@ int _get(netdev_t *netdev, netopt_t opt, void *value, size_t len)
             }
             *((netopt_state_t *)value) = _get_state(dev);
             return sizeof(netopt_state_t);
-
-        case NETOPT_AUTOACK:
-            if (dev->netdev.flags & KW2XRF_OPT_AUTOACK) {
-                *((netopt_enable_t *)value) = NETOPT_ENABLE;
-            }
-            else {
-                *((netopt_enable_t *)value) = NETOPT_DISABLE;
-            }
-            return sizeof(netopt_enable_t);
-
 
         case NETOPT_PRELOADING:
             if (dev->netdev.flags & KW2XRF_OPT_PRELOADING) {
@@ -462,7 +409,6 @@ static int _set(netdev_t *netdev, netopt_t opt, const void *value, size_t len)
             /* Set up HW generated automatic ACK after Receive */
             kw2xrf_set_option(dev, KW2XRF_OPT_AUTOACK,
                               ((bool *)value)[0]);
-            res = sizeof(netopt_enable_t);
             break;
 
         case NETOPT_ACK_REQ:
@@ -743,9 +689,6 @@ static void _isr(netdev_t *netdev)
 {
     uint8_t dregs[MKW2XDM_PHY_CTRL4 + 1];
     kw2xrf_t *dev = (kw2xrf_t *)netdev;
-    if (!spinning_for_irq) {
-        num_irqs_handled = num_irqs_queued;
-    }
 
     kw2xrf_read_dregs(dev, MKW2XDM_IRQSTS1, dregs, MKW2XDM_PHY_CTRL4 + 1);
     kw2xrf_mask_irq_b(dev);

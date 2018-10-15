@@ -1,9 +1,8 @@
+APPLICATION = thread_msg_block_wo_queue
 include ../Makefile.tests_common
 
-BOARD_INSUFFICIENT_MEMORY := nucleo-f031k6
+BOARD_INSUFFICIENT_MEMORY := nucleo32-f031
 
 DISABLE_MODULE += auto_init
-
-TEST_ON_CI_WHITELIST += all
 
 include $(RIOTBASE)/Makefile.include

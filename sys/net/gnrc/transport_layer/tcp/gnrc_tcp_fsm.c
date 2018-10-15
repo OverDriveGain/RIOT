@@ -17,11 +17,8 @@
  * @}
  */
 
-#include <utlist.h>
-#include <errno.h>
 #include "random.h"
 #include "net/af.h"
-#include "net/gnrc.h"
 #include "internal/common.h"
 #include "internal/pkt.h"
 #include "internal/option.h"
@@ -278,7 +275,7 @@ static int _fsm_call_send(gnrc_tcp_tcb_t *tcb, void *buf, size_t len)
         /* Calculate payload size for this segment */
         gnrc_pktsnip_t *out_pkt = NULL;
         uint16_t seq_con = 0;
-        _pkt_build(tcb, &out_pkt, &seq_con, MSK_ACK | MSK_PSH, tcb->snd_nxt, tcb->rcv_nxt, buf, payload);
+        _pkt_build(tcb, &out_pkt, &seq_con, MSK_ACK, tcb->snd_nxt, tcb->rcv_nxt, buf, payload);
         _pkt_setup_retransmit(tcb, out_pkt, false);
         _pkt_send(tcb, out_pkt, seq_con, false);
         return payload;

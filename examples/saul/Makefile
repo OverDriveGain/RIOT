@@ -1,13 +1,11 @@
 # name of your application
-APPLICATION = saul_example
+APPLICATION = saul
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= native
 
 # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= $(CURDIR)/../..
-
-BOARD_INSUFFICIENT_MEMORY := arduino-duemilanove arduino-uno
 
 # we want to use SAUL:
 USEMODULE += saul_default
@@ -20,7 +18,7 @@ USEMODULE += ps
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:
-DEVELHELP ?= 1
+CFLAGS += -DDEVELHELP
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1

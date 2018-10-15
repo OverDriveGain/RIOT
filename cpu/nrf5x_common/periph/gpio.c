@@ -47,13 +47,23 @@ static gpio_isr_ctx_t exti_chan;
 static inline NRF_GPIO_Type* port(gpio_t pin)
 {
 #if (CPU_FAM_NRF51)
-    (void) pin;
     return NRF_GPIO;
 #elif defined(CPU_MODEL_NRF52832XXAA)
-    (void) pin;
     return NRF_P0;
 #else
     return (pin & PORT_BIT) ? NRF_P1 : NRF_P0;
+#endif
+}
+
+/**
+ * @brief   Get a pin's offset
+ */
+static inline int pin_num(gpio_t pin)
+{
+#ifdef CPU_MODEL_NRF52840XXAA
+    return (pin & PIN_MASK);
+#else
+    return (int)pin;
 #endif
 }
 

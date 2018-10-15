@@ -7,9 +7,11 @@
 # General Public License v2.1. See the file LICENSE in the top level
 # directory for more details.
 
+import os
 import sys
-from testrunner import run
 
+sys.path.append(os.path.join(os.environ['RIOTBASE'], 'dist/tools/testrunner'))
+import testrunner
 
 def testfunc(child):
     # 1st 6LoWPAN fragment
@@ -17,7 +19,7 @@ def testfunc(child):
     child.expect_exact("~~ SNIP  0 - size:  74 byte, type: NETTYPE_SIXLOWPAN (1)")
     child.expect_exact("Fragmentation Header (first)")
     child.expect_exact("datagram size: 148")
-    child.expect_exact("tag: 0x0001")
+    child.expect_exact("tag: 0x1")
     child.expect_exact("IPHC dispatch")
     child.expect_exact("TF: traffic class and flow label elided")
     child.expect_exact("NH: LOWPAN_NHC")
@@ -30,8 +32,8 @@ def testfunc(child):
     child.expect_exact("~~ SNIP  0 - size:  57 byte, type: NETTYPE_SIXLOWPAN (1)")
     child.expect_exact("Fragmentation Header (subsequent)")
     child.expect_exact("datagram size: 148")
-    child.expect_exact("tag: 0x0001")
-    child.expect_exact("offset: 12")
+    child.expect_exact("tag: 0x1")
+    child.expect_exact("offset: 0x12")
 
     # IPv6
     child.expect_exact("PKTDUMP: data received:")
@@ -74,6 +76,5 @@ def testfunc(child):
     child.expect_exact("source address: fe80::ff:fe00:2")
     child.expect_exact("destination address: fd01::1")
 
-
 if __name__ == "__main__":
-    sys.exit(run(testfunc))
+    sys.exit(testrunner.run(testfunc))

@@ -28,8 +28,7 @@
 #include "msg.h"
 #include "ringbuffer.h"
 #include "periph/uart.h"
-#include "stdio_uart.h"
-#include "xtimer.h"
+#include "uart_stdio.h"
 
 #define SHELL_BUFSIZE       (128U)
 #define UART_BUFSIZE        (128U)
@@ -37,10 +36,8 @@
 #define PRINTER_PRIO        (THREAD_PRIORITY_MAIN - 1)
 #define PRINTER_TYPE        (0xabcd)
 
-#define POWEROFF_DELAY      (250U * US_PER_MS)      /* quarter of a second */
-
-#ifndef STDIO_UART_DEV
-#define STDIO_UART_DEV      (UART_UNDEF)
+#ifndef UART_STDIO_DEV
+#define UART_STDIO_DEV      (UART_UNDEF)
 #endif
 
 typedef struct {
@@ -60,7 +57,7 @@ static int parse_dev(char *arg)
         printf("Error: Invalid UART_DEV device specified (%u).\n", dev);
         return -1;
     }
-    else if (UART_DEV(dev) == STDIO_UART_DEV) {
+    else if (UART_DEV(dev) == UART_STDIO_DEV) {
         printf("Error: The selected UART_DEV(%u) is used for the shell!\n", dev);
         return -2;
     }
@@ -91,11 +88,11 @@ static void *printer(void *arg)
         uart_t dev = (uart_t)msg.content.value;
         char c;
 
-        printf("Success: UART_DEV(%i) RX: [", dev);
+        printf("UART_DEV(%i) RX: ", dev);
         do {
             c = (int)ringbuffer_get_one(&(ctx[dev].rx_buf));
             if (c == '\n') {
-                puts("]\\n");
+                puts("\\n");
             }
             else if (c >= ' ' && c <= '~') {
                 printf("%c", c);
@@ -108,15 +105,6 @@ static void *printer(void *arg)
 
     /* this should never be reached */
     return NULL;
-}
-
-static void sleep_test(int num, uart_t uart)
-{
-    printf("UARD_DEV(%i): test uart_poweron() and uart_poweroff()  ->  ", num);
-    uart_poweroff(uart);
-    xtimer_usleep(POWEROFF_DELAY);
-    uart_poweron(uart);
-    puts("[OK]");
 }
 
 static int cmd_init(int argc, char **argv)
@@ -145,12 +133,7 @@ static int cmd_init(int argc, char **argv)
         puts("Error: Unable to initialize UART device\n");
         return 1;
     }
-    printf("Success: Successfully initialized UART_DEV(%i)\n", dev);
-
-    /* also test if poweron() and poweroff() work (or at least don't break
-     * anything) */
-    sleep_test(dev, UART_DEV(dev));
-
+    printf("Successfully initialized UART_DEV(%i)\n", dev);
     return 0;
 }
 
@@ -195,15 +178,9 @@ int main(void)
          "being printed to STDOUT\n\n"
          "NOTE: all strings need to be '\\n' terminated!\n");
 
-    /* do sleep test for UART used as STDIO. There is a possibility that the
-     * value given in STDIO_UART_DEV is not a numeral (depends on the CPU
-     * implementation), so we rather break the output by printing a
-     * non-numerical value instead of breaking the UART device descriptor */
-    sleep_test(STDIO_UART_DEV, STDIO_UART_DEV);
-
-    puts("\nUART INFO:");
+    puts("UART INFO:");
     printf("Available devices:               %i\n", UART_NUMOF);
-    printf("UART used for STDIO (the shell): UART_DEV(%i)\n\n", STDIO_UART_DEV);
+    printf("UART used for STDIO (the shell): UART_DEV(%i)\n\n", UART_STDIO_DEV);
 
     /* initialize ringbuffers */
     for (unsigned i = 0; i < UART_NUMOF; i++) {

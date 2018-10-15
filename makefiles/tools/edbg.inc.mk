@@ -1,6 +1,8 @@
-RIOT_EDBG = $(RIOTTOOLS)/edbg/edbg
+RIOT_EDBG = $(RIOTBASE)/dist/tools/edbg/edbg
 EDBG ?= $(RIOT_EDBG)
 FLASHER ?= $(EDBG)
+#MZTODO COMPILE
+#<<<<<<< HEAD
 HEXFILE = $(BINFILE)
 # Use USB serial number to select device when more than one is connected
 # Use /dist/tools/usb-serial/list-ttys.sh to find out serial number.
@@ -15,9 +17,12 @@ endif
 EDBG_ARGS += $(if $(IMAGE_OFFSET),--offset $(IMAGE_OFFSET))
 
 FFLAGS ?= $(EDBG_ARGS) -t $(EDBG_DEVICE_TYPE) -b -v -p -f $(HEXFILE)
+#=======
+#OFLAGS ?= -O binary
+#HEXFILE = $(ELFFILE:.elf=.bin)
+#FFLAGS ?= $(EDBG_ARGS) -t $(EDBG_DEVICE_TYPE) -b -e -v -p -f $(HEXFILE)
+#>>>>>>> Fix dependencies, make javascript example run
 
 ifeq ($(RIOT_EDBG),$(FLASHER))
   FLASHDEPS += $(RIOT_EDBG)
 endif
-RESET ?= $(EDBG)
-RESET_FLAGS ?= $(EDBG_ARGS) -t $(EDBG_DEVICE_TYPE)

@@ -53,7 +53,6 @@ export DOCKER_ENV_VARS = \
   PREFIX \
   QUIET \
   WERROR \
-  RIOT_CI_BUILD \
   RIOT_VERSION \
   SCANBUILD_ARGS \
   SCANBUILD_OUTPUTDIR \
@@ -80,9 +79,6 @@ DOCKER_OVERRIDE_CMDLINE := $(foreach varname,$(DOCKER_ENV_VARS), \
     ))
 DOCKER_OVERRIDE_CMDLINE := $(strip $(DOCKER_OVERRIDE_CMDLINE))
 
-# Overwrite if you want to use `docker` with sudo
-DOCKER ?= docker
-
 # This will execute `make $(DOCKER_MAKECMDGOALS)` inside a Docker container.
 # We do not push the regular $(MAKECMDGOALS) to the container's make command in
 # order to only perform building inside the container and defer executing any
@@ -91,8 +87,8 @@ DOCKER ?= docker
 # The `flash`, `term`, `debugserver` etc. targets usually require access to
 # hardware which may not be reachable from inside the container.
 ..in-docker-container:
-	@$(COLOR_ECHO) '$(COLOR_GREEN)Launching build container using image "$(DOCKER_IMAGE)".$(COLOR_RESET)'
-	$(DOCKER) run $(DOCKER_FLAGS) -t -u "$$(id -u)" \
+	@$(COLOR_ECHO) '${COLOR_GREEN}Launching build container using image "$(DOCKER_IMAGE)".${COLOR_RESET}'
+	docker run $(DOCKER_FLAGS) -i -t -u "$$(id -u)" \
 	    -v '$(RIOTBASE):$(DOCKER_BUILD_ROOT)/riotbase' \
 	    -v '$(RIOTCPU):$(DOCKER_BUILD_ROOT)/riotcpu' \
 	    -v '$(RIOTBOARD):$(DOCKER_BUILD_ROOT)/riotboard' \

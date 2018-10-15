@@ -56,26 +56,26 @@ static void _usage_nib_neigh(char **argv)
 {
     printf("usage: %s %s [show|add|del|help]\n", argv[0], argv[1]);
     printf("       %s %s add <iface> <ipv6 addr> [<l2 addr>]\n", argv[0], argv[1]);
-    printf("       %s %s del <iface> <ipv6 addr>\n", argv[0], argv[1]);
-    printf("       %s %s show [iface]\n", argv[0], argv[1]);
+    printf("       %s %s del <ipv6 addr>\n", argv[0], argv[1]);
+    printf("       %s %s show <ipv6 addr>\n", argv[0], argv[1]);
 }
 
 static void _usage_nib_prefix(char **argv)
 {
     printf("usage: %s %s [show|add|del|help]\n", argv[0], argv[1]);
-    printf("       %s %s add <iface> <prefix>[/<prefix_len>] [<valid in sec>] [<pref in sec>]\n",
+    printf("       %s %s add <iface> <prefix>[/<prefix_len>] [<valid in ms>] [<pref in ms>]\n",
            argv[0], argv[1]);
     printf("       %s %s del <iface> <prefix>[/<prefix_len>]\n", argv[0], argv[1]);
-    printf("       %s %s show [iface]\n", argv[0], argv[1]);
+    printf("       %s %s show <iface>\n", argv[0], argv[1]);
 }
 
 static void _usage_nib_route(char **argv)
 {
     printf("usage: %s %s [show|add|del|help]\n", argv[0], argv[1]);
-    printf("       %s %s add <iface> <prefix>[/<prefix_len>] <next_hop> [<ltime in sec>]\n",
+    printf("       %s %s add <iface> <prefix>[/<prefix_len>] <next_hop>\n",
            argv[0], argv[1]);
     printf("       %s %s del <iface> <prefix>[/<prefix_len>]\n", argv[0], argv[1]);
-    printf("       %s %s show [iface]\n", argv[0], argv[1]);
+    printf("       %s %s show <iface>\n", argv[0], argv[1]);
 }
 
 static int _nib_neigh(int argc, char **argv)
@@ -106,7 +106,8 @@ static int _nib_neigh(int argc, char **argv)
             return 1;
         }
         if ((argc > 5) && /* TODO also check if interface supports link-layers or not */
-            (l2addr_len = gnrc_netif_addr_from_str(argv[5], l2addr)) == 0) {
+            (l2addr_len = gnrc_netif_addr_from_str(l2addr, sizeof(l2addr),
+                                                   argv[5])) == 0) {
             _usage_nib_neigh(argv);
             return 1;
         }
@@ -114,13 +115,12 @@ static int _nib_neigh(int argc, char **argv)
     }
     else if ((argc > 3) && (strcmp(argv[2], "del") == 0)) {
         ipv6_addr_t ipv6_addr;
-        unsigned iface = atoi(argv[3]);
 
         if (ipv6_addr_from_str(&ipv6_addr, argv[4]) == NULL) {
             _usage_nib_neigh(argv);
             return 1;
         }
-        gnrc_ipv6_nib_nc_del(&ipv6_addr, iface);
+        gnrc_ipv6_nib_nc_del(&ipv6_addr);
     }
     else {
         _usage_nib_neigh(argv);
@@ -150,23 +150,17 @@ static int _nib_prefix(int argc, char **argv)
         ipv6_addr_t pfx;
         unsigned iface = atoi(argv[3]);
         unsigned pfx_len = ipv6_addr_split_prefix(argv[4]);
-        uint32_t valid_ltime = UINT32_MAX, pref_ltime = UINT32_MAX;
+        unsigned valid_ltime = UINT32_MAX, pref_ltime = UINT32_MAX;
 
         if (ipv6_addr_from_str(&pfx, argv[4]) == NULL) {
             _usage_nib_prefix(argv);
             return 1;
         }
         if (argc > 5) {
-            uint32_t ltime_ms = atoi(argv[5]);
-            valid_ltime = (ltime_ms > UINT32_MAX / MS_PER_SEC) ?
-                          UINT32_MAX - 1 :
-                          ltime_ms * MS_PER_SEC;
+            valid_ltime = atoi(argv[5]);
         }
         if (argc > 6) {
-            uint32_t ltime_ms = atoi(argv[6]);
-            pref_ltime = (ltime_ms > UINT32_MAX / MS_PER_SEC) ?
-                         UINT32_MAX - 1 :
-                         ltime_ms * MS_PER_SEC;
+            pref_ltime = atoi(argv[6]);
         }
         gnrc_ipv6_nib_pl_set(iface, &pfx, pfx_len, valid_ltime, pref_ltime);
     }
@@ -209,7 +203,6 @@ static int _nib_route(int argc, char **argv)
         ipv6_addr_t pfx = IPV6_ADDR_UNSPECIFIED, next_hop;
         unsigned iface = atoi(argv[3]);
         unsigned pfx_len = ipv6_addr_split_prefix(argv[4]);
-        uint16_t ltime = 0;
 
         if (ipv6_addr_from_str(&pfx, argv[4]) == NULL) {
             /* check if string equals "default"
@@ -223,10 +216,7 @@ static int _nib_route(int argc, char **argv)
             _usage_nib_route(argv);
             return 1;
         }
-        if (argc > 6) {
-            ltime = (uint16_t)atoi(argv[6]);
-        }
-        gnrc_ipv6_nib_ft_add(&pfx, pfx_len, &next_hop, iface, ltime);
+        gnrc_ipv6_nib_ft_add(&pfx, pfx_len, &next_hop, iface);
     }
     else if ((argc > 4) && (strcmp(argv[2], "del") == 0)) {
         ipv6_addr_t pfx;

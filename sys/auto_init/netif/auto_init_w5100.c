@@ -8,7 +8,7 @@
  */
 
 /**
- * @ingroup     sys_auto_init_gnrc_netif
+ * @ingroup     auto_init_gnrc_netif
  * @{
  *
  * @file
@@ -22,14 +22,23 @@
 #include "log.h"
 #include "w5100.h"
 #include "w5100_params.h"
-#include "net/gnrc/netif/ethernet.h"
+#ifdef MODULE_GNRC_NETIF2
+#include "net/gnrc/netif2/ethernet.h"
+#else
+#include "net/gnrc/netdev.h"
+#include "net/gnrc/netdev/eth.h"
+#endif
 
 /**
  * @brief   Define stack parameters for the MAC layer thread
  * @{
  */
 #define MAC_STACKSIZE   (THREAD_STACKSIZE_DEFAULT)
-#define MAC_PRIO        (GNRC_NETIF_PRIO)
+#ifdef MODULE_GNRC_NETIF2
+#define MAC_PRIO        (GNRC_NETIF2_PRIO)
+#else
+#define MAC_PRIO        (THREAD_PRIORITY_MAIN - 4)
+#endif
 /*** @} */
 
 /**
@@ -42,6 +51,9 @@
  * @{
  */
 static w5100_t dev[W5100_NUM];
+#ifndef MODULE_GNRC_NETIF2
+static gnrc_netdev_t gnrc_adpt[W5100_NUM];
+#endif
 /** @} */
 
 /**
@@ -58,8 +70,15 @@ void auto_init_w5100(void)
         /* setup netdev device */
         w5100_setup(&dev[i], &w5100_params[i]);
         /* initialize netdev <-> gnrc adapter state */
-        gnrc_netif_ethernet_create(stack[i], MAC_STACKSIZE, MAC_PRIO, "w5100",
-                                   (netdev_t *)&dev[i]);
+#ifdef MODULE_GNRC_NETIF2
+    gnrc_netif2_ethernet_create(stack[i], MAC_STACKSIZE, MAC_PRIO, "w5100",
+                                (netdev_t *)&dev[i]);
+#else
+        gnrc_netdev_eth_init(&gnrc_adpt[i], (netdev_t *)&dev[i]);
+        /* start gnrc netdev thread */
+        gnrc_netdev_init(stack[i], MAC_STACKSIZE, MAC_PRIO,
+                         "gnrc_w5100", &gnrc_adpt[i]);
+#endif
     }
 }
 

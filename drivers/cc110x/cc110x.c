@@ -96,7 +96,7 @@ uint8_t cc110x_set_address(cc110x_t *dev, uint8_t address)
 {
     DEBUG("%s:%s:%u setting address %u\n", RIOT_FILE_RELATIVE, __func__,
             __LINE__, (unsigned)address);
-    if (!(address < MIN_UID)) {
+    if (!(address < MIN_UID) || (address > MAX_UID)) {
         if (dev->radio_state != RADIO_UNKNOWN) {
             cc110x_write_register(dev, CC110X_ADDR, address);
             dev->radio_address = address;
@@ -151,7 +151,7 @@ void cc110x_switch_to_rx(cc110x_t *dev)
 
     dev->radio_state = RADIO_RX;
 
-    cc110x_write_reg(dev, CC110X_IOCFG2, CC110X_GDO_HIGH_ON_SYNC_WORD);
+    cc110x_write_reg(dev, CC110X_IOCFG2, 0x6);
     cc110x_strobe(dev, CC110X_SRX);
 
     gpio_irq_enable(dev->params.gdo2);

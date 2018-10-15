@@ -17,7 +17,6 @@
  * @author      Peter Kietzmann <peter.kietzmann@haw-hamburg.de>
  * @author      Zakaria Kasmi <zkasmi@inf.fu-berlin.de>
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
- * @author      Kevin Weiss <kevin.weiss@haw-hamburg.de>
  *
  * @}
  */
@@ -45,12 +44,7 @@ static srf02_t dev;
 static void sample(void)
 {
     uint16_t distance = srf02_get_distance(&dev, TEST_MODE);
-    if (distance != 0xFFFF) {
-        printf("distance = %3i cm\n", distance);
-    }
-    else {
-        printf("Sample failed!\n");
-    }
+    printf("distance = %3i cm\n", distance);
 }
 
 static int cmd_init(int argc, char **argv)
@@ -110,13 +104,9 @@ static int cmd_set_addr(int argc, char **argv)
     }
 
     new_addr = atoi(argv[1]);
-    if (srf02_set_addr(&dev, new_addr) == 0) {
-        printf("Set address to %i\n", (int)new_addr);
-        return 0;
-    }
-
-    printf("Set address failed\n");
-    return 1;
+    srf02_set_addr(&dev, new_addr);
+    printf("Set address to %i\n", (int)new_addr);
+    return 0;
 }
 
 static const shell_command_t shell_commands[] = {

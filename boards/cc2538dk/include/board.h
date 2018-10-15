@@ -7,7 +7,9 @@
  */
 
 /**
- * @ingroup     boards_cc2538dk
+ * @defgroup    boards_cc2538dk CC2538DK
+ * @ingroup     boards
+ * @brief       Support for the Texas Instruments CC2538DK board.
  * @{
  *
  * @file

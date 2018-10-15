@@ -1,5 +1,5 @@
 MODULE = board
 
-DIRS = $(RIOTBOARD)/common/msba2
+DIRS = $(RIOTBOARD)/msba2-common
 
 include $(RIOTBASE)/Makefile.base

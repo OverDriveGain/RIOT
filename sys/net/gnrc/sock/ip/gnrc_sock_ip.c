@@ -52,7 +52,7 @@ int sock_ip_create(sock_ip_t *sock, const sock_ip_ep_t *local,
         if (gnrc_ep_addr_any(remote)) {
             return -EINVAL;
         }
-        gnrc_ep_set(&sock->remote, remote, sizeof(sock_ip_ep_t));
+        memcpy(&sock->remote, remote, sizeof(sock_ip_ep_t));
     }
     gnrc_sock_create(&sock->reg, GNRC_NETTYPE_IPV6,
                      proto);
@@ -141,8 +141,7 @@ ssize_t sock_ip_send(sock_ip_t *sock, const void *data, size_t len,
         return -EINVAL;
     }
     if ((remote == NULL) &&
-        /* cppcheck-suppress nullPointerRedundantCheck
-         * (reason: sock can't be NULL as per the check above) */
+        /* sock can't be NULL as per assertion above */
         (sock->remote.family == AF_UNSPEC)) {
         return -ENOTCONN;
     }
@@ -167,7 +166,7 @@ ssize_t sock_ip_send(sock_ip_t *sock, const void *data, size_t len,
         memcpy(&rem, &sock->remote, sizeof(rem));
     }
     else {
-        gnrc_ep_set(&rem, remote, sizeof(rem));
+        memcpy(&rem, remote, sizeof(rem));
     }
     if ((remote != NULL) && (remote->family == AF_UNSPEC) &&
         (sock->remote.family != AF_UNSPEC)) {

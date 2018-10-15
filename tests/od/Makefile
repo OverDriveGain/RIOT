@@ -1,14 +1,15 @@
+# name of your application
+APPLICATION = od
 include ../Makefile.tests_common
 
 USEMODULE += od
-# USEMODULE += od_string
 
-TEST_ON_CI_WHITELIST += all
-
-ifeq (,$(filter od_string,$(USEMODULE)))
-  TESTS=$(APPDIR)/tests/01-run.py
-else
-  TESTS=$(APPDIR)/tests/02-run.py
-endif
+# Comment this out to disable code in RIOT that does safety checking
+# which is not needed in a production environment but helps in the
+# development process:
+CFLAGS += -DDEVELHELP
 
 include $(RIOTBASE)/Makefile.include
+
+test:
+	tests/01-run.py

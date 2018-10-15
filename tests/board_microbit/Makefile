@@ -1,3 +1,4 @@
+APPLICATION = board_microbit
 include ../Makefile.tests_common
 
 BOARD = microbit

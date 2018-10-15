@@ -9,7 +9,6 @@
 /**
  * @defgroup    drivers_jc42 JC42 compliant temperature sensor driver
  * @ingroup     drivers_sensors
- * @ingroup     drivers_saul
  *
  * @brief       JC42 compliant temperature sensor driver
  *
@@ -21,7 +20,6 @@
  * temperature from these sensors. The sensors support a alarm wire, but this
  * is not supported by this driver.
  *
- * This driver provides @ref drivers_saul capabilities.
  * @{
  *
  * @file

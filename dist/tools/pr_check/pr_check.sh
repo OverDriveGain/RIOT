@@ -7,13 +7,8 @@
 # directory for more details.
 #
 
-: "${RIOTBASE:=$(cd $(dirname $0)/../../../; pwd)}"
-cd $RIOTBASE
-
-: "${RIOTTOOLS:=${RIOTBASE}/dist/tools}"
-. "${RIOTTOOLS}"/pr_check/check_labels.sh
-
 EXIT_CODE=0
+source ./dist/tools/pr_check/check_labels.sh
 
 if tput colors &> /dev/null && [ $(tput colors) -ge 8 ]; then
     CERROR="\e[1;31m"
@@ -30,7 +25,7 @@ else
 fi
 
 SQUASH_COMMITS="$(git log $(git merge-base HEAD "${RIOT_MASTER}")...HEAD --pretty=format:"    %h %s" | \
-                  grep -i -e "^    [0-9a-f]\+ .\{0,2\}SQUASH" -e "^    [0-9a-f]\+ .\{0,2\}FIX")"
+                  grep -i -e "^    [0-9a-f]\{7\} .\{0,2\}SQUASH" -e "^    [0-9a-f]\{7\} .\{0,2\}FIX")"
 
 if [ -n "${SQUASH_COMMITS}" ]; then
     echo -e "${CERROR}Pull request needs squashing:${CRESET}" 1>&2

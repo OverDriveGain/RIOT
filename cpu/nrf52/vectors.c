@@ -24,6 +24,9 @@
 #include "cpu.h"
 #include "vectors_cortexm.h"
 
+/* get the start of the ISR stack as defined in the linkerscript */
+extern uint32_t _estack;
+
 /* define a local dummy handler as it needs to be in the same compilation unit
  * as the alias definition */
 void dummy_handler(void) {
@@ -59,10 +62,10 @@ WEAK_DEFAULT void isr_swi0(void);
  * the softdevice ISRs leads to a crash. This workaround
  * uses swi0 as trampoline.
  */
-extern void thread_yield_higher(void);
+extern void thread_arch_yield(void);
 void isr_swi0(void)
 {
-    thread_yield_higher();
+    thread_arch_yield();
 }
 #endif
 

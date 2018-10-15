@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     sys_auto_init
+ * @ingroup auto_init
  * @{
  * @file
  * @brief       initializes native can device

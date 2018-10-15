@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     cpu_native
+ * @ingroup     native_cpu
  * @{
  *
  * @file

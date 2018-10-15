@@ -42,14 +42,12 @@ extern "C" {
 /** @} */
 
 /**
- * @brief   Check the transceiver version
+ * @brief   Tests the transceiver version type.
  *
  * @param[in] dev                      The sx127x device descriptor
- *
- * @return 0 when a valid device version is found
- * @return -1 when no valid device version is found
+ * @return true if test passed, false otherwise
  */
-int sx127x_check_version(const sx127x_t *dev);
+bool sx127x_test(const sx127x_t *dev);
 
 /**
  * @brief   Writes the radio register at specified address.
@@ -111,16 +109,6 @@ void sx127x_write_fifo(const sx127x_t *dev, uint8_t *buffer, uint8_t size);
 void sx127x_read_fifo(const sx127x_t *dev, uint8_t *buffer, uint8_t size);
 
 /**
- * @brief   Reads the current RSSI value.
- *
- * @param[in] dev                      The sx127x device descriptor
- *
- * @return current value of RSSI in [dBm]
- */
-int16_t sx127x_read_rssi(const sx127x_t *dev);
-
-#if defined(MODULE_SX1276)
-/**
  * @brief   Performs the Rx chain calibration for LF and HF bands
  *
  *          Must be called just after the reset so all registers are at their
@@ -128,8 +116,16 @@ int16_t sx127x_read_rssi(const sx127x_t *dev);
  *
  * @param[in] dev                      The sx127x device structure pointer
  */
-void sx1276_rx_chain_calibration(sx127x_t *dev);
-#endif
+void sx127x_rx_chain_calibration(sx127x_t *dev);
+
+/**
+ * @brief   Reads the current RSSI value.
+ *
+ * @param[in] dev                      The sx127x device descriptor
+ *
+ * @return current value of RSSI in [dBm]
+ */
+int16_t sx127x_read_rssi(const sx127x_t *dev);
 
 #ifdef __cplusplus
 }

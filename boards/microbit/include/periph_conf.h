@@ -102,8 +102,7 @@ static const i2c_conf_t i2c_config[] = {
         .dev     = NRF_TWI0,
         .pin_scl = 0,
         .pin_sda = 30,
-        .ppi     = 0,
-        .speed   = I2C_SPEED_NORMAL,
+        .ppi     = 0
     }
 };
 
@@ -117,6 +116,16 @@ static const i2c_conf_t i2c_config[] = {
  * @{
  */
 #define ADC_NUMOF          (0)
+/** @} */
+
+/**
+ * @name   Radio device configuration
+ *
+ * The radio is not guarded by a NUMOF define, as the radio is selected by its
+ * own module in the build system.
+ * @{
+ */
+#define RADIO_IRQ_PRIO      1
 /** @} */
 
 #ifdef __cplusplus

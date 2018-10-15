@@ -10,7 +10,7 @@
  */
 
 /**
- * @defgroup    drivers_netdev_api Netdev - Network Device Driver API
+ * @defgroup    drivers_netdev_api Network Device Driver API
  * @ingroup     drivers_netdev
  * @brief       This is a generic low-level network driver interface
  * @{
@@ -195,8 +195,8 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <sys/uio.h>
 
-#include "iolist.h"
 #include "net/netopt.h"
 
 #ifdef MODULE_NETSTATS_L2
@@ -211,7 +211,6 @@ enum {
     NETDEV_TYPE_RAW,
     NETDEV_TYPE_ETHERNET,
     NETDEV_TYPE_IEEE802154,
-    NETDEV_TYPE_BLE,
     NETDEV_TYPE_CC110X,
     NETDEV_TYPE_LORA,
     NETDEV_TYPE_NRFMIN,
@@ -247,7 +246,7 @@ typedef enum {
  * May be different for certain radios.
  */
 struct netdev_radio_rx_info {
-    int16_t rssi;       /**< RSSI of a received packet in dBm */
+    uint8_t rssi;       /**< RSSI of a received packet */
     uint8_t lqi;        /**< LQI of a received packet */
 };
 
@@ -276,9 +275,6 @@ struct netdev {
     const struct netdev_driver *driver;     /**< ptr to that driver's interface. */
     netdev_event_cb_t event_callback;       /**< callback for device events */
     void* context;                          /**< ptr to network stack context */
-#ifdef MODULE_NETDEV_LAYER
-    netdev_t *lower;                        /**< ptr to the lower netdev layer */
-#endif
 #ifdef MODULE_NETSTATS_L2
     netstats_t stats;                       /**< transceiver's statistics */
 #endif
@@ -297,7 +293,9 @@ typedef struct netdev_driver {
     /**
      * @brief Send frame
      *
-     * @pre `(dev != NULL) && (iolist != NULL`
+     * @pre `(dev != NULL)`
+     * @pre `(count == 0) || (vector != NULL)`
+     *      (`(count != 0) => (vector != NULL)`)
      *
      * @param[in] dev       Network device descriptor. Must not be NULL.
      * @param[in] iolist    io vector list to send
@@ -305,7 +303,7 @@ typedef struct netdev_driver {
      * @return negative errno on error
      * @return number of bytes sent
      */
-    int (*send)(netdev_t *dev, const iolist_t *iolist);
+    int (*send)(netdev_t *dev, const struct iovec *vector, unsigned count);
 
     /**
      * @brief Get a received frame

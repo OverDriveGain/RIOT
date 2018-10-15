@@ -9,7 +9,9 @@
  */
 
 /**
- * @ingroup     boards_mips-malta
+ * @defgroup    boards_mips-malta MIPS MALTA
+ * @ingroup     boards
+ * @brief       peripheral configuration for the MIPS Malta FPGA system
  * @{
  *
  * @file
@@ -32,6 +34,12 @@ extern "C" {
 #define TIMER_NUMOF         (1)
 #define TIMER_0_CHANNELS    (3)
 /** @} */
+
+/**
+ * @brief   No UART driver for this board currently
+ *          Note this value must be set though (to 0)
+ */
+#define UART_NUMOF          (0)
 
 #ifdef __cplusplus
 }

@@ -9,7 +9,7 @@
  */
 
 /**
- * @ingroup     cpu_cortexm_common
+ * @ingroup     cortex-m_common
  * @{
  *
  * @file

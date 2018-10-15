@@ -1,3 +1,4 @@
+APPLICATION = driver_bmx280
 include ../Makefile.tests_common
 
 DRIVER ?= bme280

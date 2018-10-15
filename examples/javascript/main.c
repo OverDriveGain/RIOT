@@ -20,60 +20,93 @@
  * @}
  */
 
+#include "shell.h"
 #include <stdio.h>
 #include <string.h>
 
-#include "jerryscript.h"
-#include "jerryscript-ext/handler.h"
+#include "msg.h"
+#include "xtimer.h"
+#include "lwm2m.h"
+#include "js.h"
 
-/* include header generated from main.js */
-#include "main.js.h"
+/* include headers generated from *.js */
+#include "lib.js.h"
+#include "local.js.h"
 
-int js_run(const jerry_char_t *script, size_t script_size)
+static event_queue_t event_queue;
+
+char script[2048];
+
+#define MAIN_QUEUE_SIZE (4)
+static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
+
+/* import "ifconfig" shell command, used for printing addresses */
+extern int _netif_config(int argc, char **argv);
+
+void js_start(event_t *unused)
 {
+    (void)unused;
 
-    jerry_value_t parsed_code, ret_value;
-    int res = 0;
+    size_t script_len = strlen(script);
+    if (script_len) {
+        puts("(re)initializing jerryscript engine...");
+        js_init();
+        js_run(lib_js, lib_js_len);
+        js_run(local_js, local_js_len);
 
-    /* Initialize engine, no flags, default configuration */
-
-    jerry_init(JERRY_INIT_EMPTY);
-
-    /* Register the print function in the global object. */
-
-    jerryx_handler_register_global((const jerry_char_t *) "print",
-                                   jerryx_handler_print);
-
-    /* Setup Global scope code */
-
-    parsed_code = jerry_parse(NULL, 0, script, script_size, JERRY_PARSE_NO_OPTS);
-
-    if (!jerry_value_is_error(parsed_code)) {
-        /* Execute the parsed source code in the Global scope */
-        ret_value = jerry_run(parsed_code);
-        if (jerry_value_is_error(ret_value)) {
-            printf("js_run(): Script Error!");
-            res = -1;
-        }
-        jerry_release_value(ret_value);
+        puts("Executing script...");
+        js_run((jerry_char_t*)script, script_len);
     }
-
-    jerry_release_value(parsed_code);
-
-    /* Cleanup engine */
-    jerry_cleanup();
-
-    return res;
+    else {
+        puts("Emtpy script, nothing to execute yet.");
+    }
 }
 
+static event_t js_start_event = { .handler=js_start };
+
+void js_restart(void)
+{
+    js_shutdown(&js_start_event);
+}
+
+int starter(int argc, char **argv)
+{
+    msg_init_queue(_main_msg_queue, MAIN_QUEUE_SIZE);
+    printf("Printing unused valuse :) %i %s" , argc, argv[0]);
+    puts("waiting for network config");
+        
+    xtimer_sleep(3);
+
+    /* print network addresses */
+    puts("Configured network interfaces:");
+    _netif_config(0, NULL);
+
+    /* register to LWM2M server */
+    puts("initializing coap, registering at lwm2m server");
+    lwm2m_init();
+    lwm2m_register();
+
+    puts("setting up event queue");
+    event_queue_init(&event_queue);
+    js_event_queue = &event_queue;
+
+    puts("Entering event loop...");
+    event_loop(&event_queue);
+    return 0 ;
+}
+
+
+static const shell_command_t commands[] = {
+    { "w", "command description", starter },
+    { NULL, NULL, NULL }
+};
 int main(void)
 {
     printf("You are running RIOT on a(n) %s board.\n", RIOT_BOARD);
     printf("This board features a(n) %s MCU.\n", RIOT_MCU);
-
-    printf("Executing main.js:\n");
-
-    js_run(main_js, main_js_len);
-
-    return 0;
+    char target[]= "this is our target array, we wanna read this."; 
+    char line_buf[SHELL_DEFAULT_BUFSIZE];
+    shell_run(commands, line_buf, SHELL_DEFAULT_BUFSIZE);
+    printf("%s\n", target);
+    return 0;    
 }

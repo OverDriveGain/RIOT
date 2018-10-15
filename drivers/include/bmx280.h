@@ -10,7 +10,6 @@
 /**
  * @defgroup    drivers_bmx280 BMP280/BME280 temperature, pressure and humidity sensor
  * @ingroup     drivers_sensors
- * @ingroup     drivers_saul
  * @brief       Device driver interface for the Bosch BMP280 and BME280 sensors.
  *
  * BMP280 and BME280 measure temperature in centi °C and pressure in Pa. BME280
@@ -185,8 +184,9 @@ typedef struct {
  */
 enum {
     BMX280_OK           =  0,     /**< everything was fine */
-    BMX280_ERR_NODEV    = -1,     /**< did not detect BME280 or BMP280 */
-    BMX280_ERR_NOCAL    = -2,     /**< could not read calibration data */
+    BMX280_ERR_I2C      = -1,     /**< error initializing the I2C bus */
+    BMX280_ERR_NODEV    = -2,     /**< did not detect BME280 or BMP280 */
+    BMX280_ERR_NOCAL    = -3,     /**< could not read calibration data */
 };
 
 /**

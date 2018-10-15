@@ -7,7 +7,9 @@
  */
 
 /**
- * @ingroup     boards_waspmote-pro
+ * @defgroup    boards_waspmote-pro Waspmote PRO v1.2
+ * @ingroup     boards
+ * @brief       Board specific files for the Waspmote PRO v1.2 board.
  * @{
  *
  * @file
@@ -31,7 +33,7 @@ extern "C" {
 * @brief   As the CPU is too slow to handle 115200 baud, we set the default
 *          baudrate to 9600 for this board
 */
-#define STDIO_UART_BAUDRATE  (9600U)
+#define UART_STDIO_BAUDRATE  (9600U)
 
 /**
  * @brief   Use the UART 0 for STDIO on this board, if the XBee socket is not
@@ -39,9 +41,9 @@ extern "C" {
  */
 #ifdef XBEE_UART
 #if XBEE_UART == 0
-#define STDIO_UART_DEV       (UART_DEV(1))
+#define UART_STDIO_DEV       (UART_DEV(1))
 #else
-#define STDIO_UART_DEV       (UART_DEV(0))
+#define UART_STDIO_DEV       (UART_DEV(0))
 #endif
 #endif
 
@@ -142,6 +144,21 @@ extern "C" {
                                      MUX_USB_XBEE_ENABLE_PORT; \
                                      MUX_USB_XBEE_ON
 /** @} */
+
+/**
+ * @brief Context swap defines
+ * Setup to use PB5 which is pin change interrupt 5
+ * This emulates a software triggered interrupt
+ **/
+#define AVR_CONTEXT_SWAP_INIT do { \
+    DDRB |= (1 << PB5); \
+    PCICR |= (1 << PCIE0); \
+    PCMSK0 |= (1 << PCINT5); \
+} while (0)
+/** @cond INTERNAL */
+#define AVR_CONTEXT_SWAP_INTERRUPT_VECT  PCINT0_vect
+#define AVR_CONTEXT_SWAP_TRIGGER   PORTB ^= (1 << PB5)
+/** @endcond */
 
 /**
  * @name    xtimer configuration values

@@ -60,16 +60,6 @@ static err_t _ieee802154_link_output(struct netif *netif, struct pbuf *p);
 static void _event_cb(netdev_t *dev, netdev_event_t event);
 static void *_event_loop(void *arg);
 
-static void _configure_netdev(netdev_t *dev)
-{
-    /* Enable RX-complete interrupts */
-    static const netopt_enable_t enable = NETOPT_ENABLE;
-    int res = dev->driver->set(dev, NETOPT_RX_END_IRQ, &enable, sizeof(enable));
-    if (res < 0) {
-        DEBUG("lwip_netdev: enable NETOPT_RX_END_IRQ failed: %d\n", res);
-    }
-}
-
 err_t lwip_netdev_init(struct netif *netif)
 {
     LWIP_ASSERT("netif != NULL", (netif != NULL));
@@ -91,7 +81,6 @@ err_t lwip_netdev_init(struct netif *netif)
     /* initialize netdev and netif */
     netdev = (netdev_t *)netif->state;
     netdev->driver->init(netdev);
-    _configure_netdev(netdev);
     netdev->event_callback = _event_cb;
     if (netdev->driver->get(netdev, NETOPT_DEVICE_TYPE, &dev_type,
                             sizeof(dev_type)) < 0) {
@@ -196,24 +185,15 @@ static err_t _eth_link_output(struct netif *netif, struct pbuf *p)
     pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
 #endif
     LL_COUNT(p, q, count);
-    iolist_t iolist[count];
-
-    /* make last point to the last entry of iolist[] */
-    iolist_t *last = &iolist[count];
-    last--;
-
+    struct iovec pkt[count];
     for (q = p, count = 0; q != NULL; q = q->next, count++) {
-        iolist_t *iol = &iolist[count];
-
-        iol->iol_next = (iol == last) ? NULL : &iolist[count + 1];
-
-        iol->iol_base = q->payload;
-        iol->iol_len = (size_t)q->len;
+        pkt[count].iov_base = q->payload;
+        pkt[count].iov_len = (size_t)q->len;
     }
 #if ETH_PAD_SIZE
     pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
 #endif
-    return (netdev->driver->send(netdev, iolist) > 0) ? ERR_OK : ERR_BUF;
+    return (netdev->driver->send(netdev, pkt, count) > 0) ? ERR_OK : ERR_BUF;
 }
 #endif
 
@@ -222,12 +202,12 @@ static err_t _ieee802154_link_output(struct netif *netif, struct pbuf *p)
 {
     LWIP_ASSERT("p->next == NULL", p->next == NULL);
     netdev_t *netdev = (netdev_t *)netif->state;
-    iolist_t pkt = {
-        .iol_base = p->payload,
-        .iol_len = (p->len - IEEE802154_FCS_LEN),   /* FCS is written by driver */
+    struct iovec pkt = {
+        .iov_base = p->payload,
+        .iov_len = (p->len - IEEE802154_FCS_LEN),   /* FCS is written by driver */
     };
 
-    return (netdev->driver->send(netdev, &pkt) > 0) ? ERR_OK : ERR_BUF;
+    return (netdev->driver->send(netdev, &pkt, 1) > 0) ? ERR_OK : ERR_BUF;
 }
 #endif
 

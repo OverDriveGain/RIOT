@@ -9,7 +9,7 @@
 
 /**
  * @ingroup     cpu_cc2538
- * @ingroup     drivers_periph_hwrng
+ * @ingroup     drivers_periph_hwng
  * @{
  *
  * @file
@@ -21,16 +21,8 @@
  * @}
  */
 
-#include "vendor/hw_memmap.h"
-#include "vendor/hw_soc_adc.h"
-
 #include "cpu.h"
 #include "periph/hwrng.h"
-
-#define ENABLE_DEBUG (0)
-#include "debug.h"
-
-static cc2538_soc_adc_t *soc_adc = (cc2538_soc_adc_t *)SOC_ADC_BASE;
 
 void hwrng_init(void)
 {
@@ -38,14 +30,13 @@ void hwrng_init(void)
     int i;
 
     /* Make sure the RNG is on */
-    uint32_t reg32 = soc_adc->ADCCON1 & ~(SOC_ADC_ADCCON1_RCTRL_M);
-    soc_adc->ADCCON1 = reg32;
+    SOC_ADC->cc2538_adc_adccon1.ADCCON1bits.RCTRL = 0;
 
     /* Enable clock for the RF Core */
     SYS_CTRL_RCGCRFC = 1;
 
     /* Wait for the clock ungating to take effect */
-    while (SYS_CTRL_RCGCRFC != 1) {}
+    while (SYS_CTRL_RCGCRFC != 1);
 
     /* Infinite RX - FRMCTRL0[3:2] = 10. This will mess with radio operation */
     RFCORE_XREG_FRMCTRL0 = 0x00000008;
@@ -72,8 +63,8 @@ void hwrng_init(void)
     }
 
     /* Seed the high byte first: */
-    soc_adc->RNDH = (seed >> 8) & 0xff;
-    soc_adc->RNDL = seed & 0xff;
+    SOC_ADC_RNDL = (seed >> 8) & 0xff;
+    SOC_ADC_RNDL = seed & 0xff;
 
     /* Turn RF off: */
     RFCORE_SFR_RFST = ISRFOFF;
@@ -81,16 +72,16 @@ void hwrng_init(void)
 
 void hwrng_read(void *buf, unsigned int num)
 {
+    unsigned count;
     uint8_t *b = (uint8_t *)buf;
 
-    for (unsigned count = 0; count < num; count++) {
+    for (count = 0; count < num; ) {
         /* Clock the RNG LSFR once: */
-        soc_adc->ADCCON1 = soc_adc->ADCCON1 | (1UL << SOC_ADC_ADCCON1_RCTRL_S);
+        SOC_ADC->cc2538_adc_adccon1.ADCCON1bits.RCTRL = 1;
+
         /* Read up to 2 bytes of hwrng data: */
-        b[count] = soc_adc->RNDL;
-        count++;
-        if (count < num) {
-            b[count] = soc_adc->RNDH;
-        }
+        b[count++] = SOC_ADC_RNDL;
+        if (count >= num) break;
+        b[count++] = SOC_ADC_RNDH;
     }
 }

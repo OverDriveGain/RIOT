@@ -44,14 +44,9 @@ extern "C" {
 #define BMP180_PARAM_OVERSAMPLING    BMP180_ULTRALOWPOWER
 #endif
 
-#ifndef BMP180_PARAMS
-#define BMP180_PARAMS                { .i2c_dev      = BMP180_PARAM_I2C_DEV,  \
+#define BMP180_PARAMS_DEFAULT        { .i2c_dev      = BMP180_PARAM_I2C_DEV,  \
                                        .i2c_addr     = BMP180_PARAM_I2C_ADDR, \
                                        .oversampling = BMP180_PARAM_OVERSAMPLING }
-#endif
-#ifndef BMP180_SAUL_INFO
-#define BMP180_SAUL_INFO             { .name = "bmp180" }
-#endif
 /**@}*/
 
 /**
@@ -59,15 +54,19 @@ extern "C" {
  */
 static const bmp180_params_t bmp180_params[] =
 {
-    BMP180_PARAMS
+#ifdef BMP180_PARAMS_BOARD
+    BMP180_PARAMS_BOARD,
+#else
+    BMP180_PARAMS_DEFAULT,
+#endif
 };
 
 /**
  * @brief   Configure SAUL registry entries
  */
-static const saul_reg_info_t bmp180_saul_info[] =
+static const saul_reg_info_t bmp180_saul_reg_info[] =
 {
-    BMP180_SAUL_INFO
+    { .name = "bmp180" }
 };
 
 #ifdef __cplusplus

@@ -8,14 +8,13 @@
  */
 
 /**
- * @defgroup  sys_div   Integer division functions
- * @ingroup   sys_math
+ * @brief     Integer division functions
  *
  * This header provides some integer division functions that can be used
  * to prevent linking in compiler-generated ones, which are often larger.
  *
  * @file
- * @ingroup   sys_div
+ * @ingroup   sys_util
  * @author    Kaspar Schleiser <kaspar@schleiser.de>
  * @author    Joakim Nohlgård <joakim.nohlgard@eistec.se>
  * @{

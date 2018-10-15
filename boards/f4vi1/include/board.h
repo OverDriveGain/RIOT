@@ -7,7 +7,9 @@
  */
 
 /**
- * @ingroup     boards_f4vi1
+ * @defgroup    boards_f4vi1  F4VI1
+ * @ingroup     boards
+ * @brief       Board specific files for the F4VI1 board
  * @{
  *
  * @file

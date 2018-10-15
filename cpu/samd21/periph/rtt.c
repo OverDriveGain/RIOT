@@ -24,6 +24,9 @@
 #include "periph/rtt.h"
 #include "periph_conf.h"
 
+/* guard file in case no RTT device was specified */
+#if RTT_NUMOF
+
 /* if RTT_PRESCALER is not set, then set it to DIV1 */
 #ifndef RTT_PRESCALER
 #define RTT_PRESCALER       RTC_MODE0_CTRL_PRESCALER_DIV1
@@ -208,3 +211,6 @@ void RTT_ISR(void)
 
     cortexm_isr_end();
 }
+
+
+#endif /* RTT_NUMOF */

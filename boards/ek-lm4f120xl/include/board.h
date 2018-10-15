@@ -7,7 +7,9 @@
  */
 
 /**
- * @ingroup     boards_ek-lm4f120xl
+ * @defgroup    boards_ek-lm4f120xl EK-LM4F120XL
+ * @ingroup     boards
+ * @brief       Board specific files for the Stellaris Launchpad LM4F120 board
  * @{
  *
  * @file

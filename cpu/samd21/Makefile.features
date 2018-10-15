@@ -1,3 +1,1 @@
-FEATURES_PROVIDED += puf_sram
-
--include $(RIOTCPU)/sam0_common/Makefile.features
+FEATURES_PROVIDED += periph_pm

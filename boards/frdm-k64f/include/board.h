@@ -8,7 +8,9 @@
  */
 
 /**
- * @ingroup     boards_frdm-k64f
+ * @defgroup    boards_frdm-k64f Freescale FRDM-K64F Board
+ * @ingroup     boards
+ * @brief       Board specific implementations for the FRDM-K64F
  * @{
  *
  * @file
@@ -51,14 +53,6 @@ extern "C"
 #define LED2_ON            (GPIOB->PCOR = LED2_MASK)
 #define LED2_OFF           (GPIOB->PSOR = LED2_MASK)
 #define LED2_TOGGLE        (GPIOB->PTOR = LED2_MASK)
-/** @} */
-
-/**
- * @name    FXOS8700CQ 3-axis accelerometer and magnetometer bus configuration
- * @{
- */
-#define FXOS8700_PARAM_I2C          I2C_DEV(0)
-#define FXOS8700_PARAM_ADDR         0x1E
 /** @} */
 
 /**

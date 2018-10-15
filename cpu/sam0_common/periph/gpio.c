@@ -93,11 +93,8 @@ int gpio_init(gpio_t pin, gpio_mode_t mode)
     port->PINCFG[pin_pos].reg = (mode & MODE_PINCFG_MASK);
 
     /* and set pull-up/pull-down if applicable */
-    if (mode == GPIO_IN_PU) {
+    if (mode == 0x7) {
         port->OUTSET.reg = pin_mask;
-    }
-    else if (mode == GPIO_IN_PD) {
-        port->OUTCLR.reg = pin_mask;
     }
 
     return 0;
@@ -225,7 +222,7 @@ void gpio_irq_disable(gpio_t pin)
 
 void isr_eic(void)
 {
-    for (unsigned i = 0; i < NUMOF_IRQS; i++) {
+    for (int i = 0; i < NUMOF_IRQS; i++) {
         if (EIC->INTFLAG.reg & (1 << i)) {
             EIC->INTFLAG.reg = (1 << i);
             gpio_config[i].cb(gpio_config[i].arg);

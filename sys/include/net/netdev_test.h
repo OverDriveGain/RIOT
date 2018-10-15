@@ -33,10 +33,11 @@
  * static uint32_t sum = 0;
  * static mutex_t wait = MUTEX_INIT;
  *
- * int _send_timer(netdev_t *dev, const iolist_t *iolist)
+ * int _send_timer(netdev_t *dev, const struct iovec *vector, int count)
  * {
  *     (void)dev;
- *     (void)iolist;
+ *     (void)vector;
+ *     (void)count;
  *
  *     sum += (xtimer_now_usec() - last_start);
  *     mutex_unlock(&wait);
@@ -94,12 +95,15 @@ extern "C" {
  * @brief   Callback type to handle send command
  *
  * @param[in] dev       network device descriptor
- * @param[in] iolist    io vector list to send
+ * @param[in] vector    io vector array to send
+ * @param[in] count     number of entries in vector
  *
  * @return  number of bytes sent
  * @return  <= 0 on error
  */
-typedef int (*netdev_test_send_cb_t)(netdev_t *dev, const iolist_t *iolist);
+typedef int (*netdev_test_send_cb_t)(netdev_t *dev,
+                                     const struct iovec *vector,
+                                     int count);
 
 /**
  * @brief   Callback type to handle receive command

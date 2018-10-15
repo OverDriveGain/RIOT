@@ -7,7 +7,9 @@
  */
 
 /**
- * @ingroup     boards_openmote-cc2538
+ * @defgroup    boards_openmote-cc2538 OpenMote-cc2538
+ * @ingroup     boards
+ * @brief       Support for the OpenMote-cc2538 board
  * @{
  *
  * @file

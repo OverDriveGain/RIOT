@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup pkg_lwip_sock
+ * @addtogroup pkg_lwip_sokc
  * @{
  *
  * @file

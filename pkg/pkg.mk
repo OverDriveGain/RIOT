@@ -4,11 +4,6 @@
 PKG_DIR?=$(CURDIR)
 PKG_BUILDDIR?=$(PKGDIRBASE)/$(PKG_NAME)
 
-# allow overriding package source with local folder (useful during development)
-ifneq (,$(PKG_SOURCE_LOCAL))
-  include $(RIOTBASE)/pkg/local.mk
-else
-
 .PHONY: prepare git-download clean
 
 prepare: git-download
@@ -19,6 +14,7 @@ else
 git-download: $(PKG_BUILDDIR)/.git-downloaded
 endif
 
+#MZTODO COMPILE LOOK AT THE DIFFERENCE. 
 GITFLAGS ?= -c user.email=buildsystem@riot -c user.name="RIOT buildsystem"
 GITAMFLAGS ?= --no-gpg-sign --ignore-whitespace
 
@@ -33,6 +29,7 @@ $(PKG_BUILDDIR)/.git-downloaded:
 	rm -Rf $(PKG_BUILDDIR)
 	mkdir -p $(PKG_BUILDDIR)
 	$(GITCACHE) clone "$(PKG_URL)" "$(PKG_VERSION)" "$(PKG_BUILDDIR)"
+	$(GIT_APPLY_PATCHES)
 	touch $@
 
 clean::
@@ -46,5 +43,3 @@ clean::
 
 distclean::
 	rm -rf "$(PKG_BUILDDIR)"
-
-endif

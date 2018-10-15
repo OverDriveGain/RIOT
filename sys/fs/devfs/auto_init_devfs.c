@@ -8,7 +8,7 @@
  */
 
 /**
- * @ingroup     sys_auto_init
+ * @ingroup     auto_init_fs
  * @{
  *
  * @file

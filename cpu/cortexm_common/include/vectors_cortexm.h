@@ -61,6 +61,8 @@ typedef struct {
     isr_t vectors[CPU_NONISR_EXCEPTIONS];   /**< shared Cortex-M vectors */
 } cortexm_base_t;
 
+/* get the start of the ISR stack as defined in the linkerscript */
+extern uint32_t _estack;
 /**
  * @brief   This function is the default entry point after a system reset
  *

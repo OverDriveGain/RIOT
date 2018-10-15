@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Cenk Gündoğan <cenk.guendogan@haw-hamburg.de>
+ * Copyright (C) 2016 Cenk Gündoğan <mail@cgundogan.de>
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -8,13 +8,13 @@
  */
 
 /*
- * @ingroup net_gnrc_rpl
+ * @ingroup gnrc_rpl
  * @{
  *
  * @file
  * @brief   Auto initialization for gnrc_rpl
  *
- * @author  Cenk Gündoğan <cenk.guendogan@haw-hamburg.de>
+ * @author  Cenk Gündoğan <mail@cgundogan.de>
  */
 
 #ifdef MODULE_AUTO_INIT_GNRC_RPL
@@ -28,14 +28,13 @@
 void auto_init_gnrc_rpl(void)
 {
 #if (GNRC_NETIF_NUMOF == 1)
-    gnrc_netif_t *netif = gnrc_netif_iter(NULL);
-    assert(netif != NULL);
-    DEBUG("auto_init_gnrc_rpl: initializing RPL on interface %" PRIkernel_pid "\n",
-          netif->pid);
-    gnrc_rpl_init(netif->pid);
+    kernel_pid_t ifs[GNRC_NETIF_NUMOF];
+    gnrc_netif_get(ifs);
+    DEBUG("auto_init_gnrc_rpl: initializing RPL on interface %" PRIkernel_pid "\n", ifs[0]);
+    gnrc_rpl_init(ifs[0]);
     return;
 #elif defined(GNRC_RPL_DEFAULT_NETIF)
-    if (gnrc_netif_get_by_pid(GNRC_RPL_DEFAULT_NETIF) != NULL) {
+    if (gnrc_netif_exist(GNRC_RPL_DEFAULT_NETIF)) {
         DEBUG("auto_init_gnrc_rpl: initializing RPL on interface %" PRIkernel_pid "\n",
               GNRC_RPL_DEFAULT_NETIF);
         gnrc_rpl_init(GNRC_RPL_DEFAULT_NETIF);

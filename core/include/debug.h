@@ -52,7 +52,7 @@ extern "C" {
 #include "cpu_conf.h"
 #define DEBUG_PRINT(...) \
     do { \
-        if ((sched_active_thread == NULL) || (sched_active_thread->stack_size >= THREAD_EXTRA_STACKSIZE_PRINTF)) { \
+        if ((sched_active_thread == NULL) || (sched_active_thread->stack_size > THREAD_EXTRA_STACKSIZE_PRINTF)) { \
             printf(__VA_ARGS__); \
         } \
         else { \
@@ -67,9 +67,7 @@ extern "C" {
  * @name Debugging defines
  * @{
  */
-#ifndef ENABLE_DEBUG
-#define ENABLE_DEBUG (0)
-#endif
+#if ENABLE_DEBUG
 
 /**
  * @def DEBUG_FUNC
@@ -94,7 +92,10 @@ extern "C" {
  *
  * @note Another name for ::DEBUG_PRINT
  */
-#define DEBUG(...) if (ENABLE_DEBUG) DEBUG_PRINT(__VA_ARGS__)
+#define DEBUG(...) DEBUG_PRINT(__VA_ARGS__)
+#else
+#define DEBUG(...)
+#endif
 /** @} */
 
 /**

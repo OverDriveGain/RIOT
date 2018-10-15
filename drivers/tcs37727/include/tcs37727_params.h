@@ -46,9 +46,6 @@ extern "C" {
                                       .addr  = TCS37727_PARAM_ADDR, \
                                       .atime = TCS37727_PARAM_ATIME }
 #endif
-#ifndef TCS37727_SAUL_INFO
-#define TCS37727_SAUL_INFO          { .name = "tcs37727" }
-#endif
 /**@}*/
 
 /**
@@ -64,7 +61,7 @@ static const tcs37727_params_t tcs37727_params[] =
  */
 static const saul_reg_info_t tcs37727_saul_info[] =
 {
-    TCS37727_SAUL_INFO
+    { .name = "tcs37727" }
 };
 
 #ifdef __cplusplus

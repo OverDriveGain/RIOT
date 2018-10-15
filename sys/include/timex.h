@@ -56,7 +56,7 @@ extern "C" {
 /**
  * @brief The number of nanoseconds per microsecond
  */
-#define NS_PER_US  (1000U)
+#define NS_PER_US  (1000)
 
 /**
  * @brief The maximum length of the string representation of a timex timestamp

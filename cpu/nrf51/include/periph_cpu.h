@@ -55,31 +55,6 @@ typedef enum {
 /** @} */
 
 /**
- * @name    Use the shared I2C functions
- * @{
- */
-/** Use read reg function from periph common */
-#define PERIPH_I2C_NEED_READ_REG
-/** Use write reg function from periph common */
-#define PERIPH_I2C_NEED_WRITE_REG
-/** @} */
-
-/**
- * @brief   Override ADC resolution values
- * @{
- */
-#define HAVE_ADC_RES_T
-typedef enum {
-    ADC_RES_6BIT  = 0xf0,   /**< ADC resolution: 6 bit (not supported) */
-    ADC_RES_8BIT  = 0x00,   /**< ADC resolution: 8 bit */
-    ADC_RES_10BIT = 0x02,   /**< ADC resolution: 10 bit */
-    ADC_RES_12BIT = 0xf1,   /**< ADC resolution: 12 bit (not supported) */
-    ADC_RES_14BIT = 0xf2,   /**< ADC resolution: 14 bit (not supported) */
-    ADC_RES_16BIT = 0xf3    /**< ADC resolution: 16 bit (not supported) */
-} adc_res_t;
-/** @} */
-
-/**
  * @brief   I2C (TWI) configuration options
  */
 typedef struct {
@@ -87,7 +62,6 @@ typedef struct {
     uint8_t pin_scl;            /**< SCL pin */
     uint8_t pin_sda;            /**< SDA pin */
     uint8_t ppi;                /**< PPI channel to use */
-    i2c_speed_t speed;          /**< bus speed */
 } i2c_conf_t;
 
 #ifdef __cplusplus

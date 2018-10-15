@@ -7,7 +7,9 @@
  */
 
 /**
- * @ingroup     boards_frdm-k22f
+ * @defgroup    boards_frdm-k22f NXP FRDM-K22F Board
+ * @ingroup     boards
+ * @brief       Board specific implementations for the FRDM-K22F
  * @{
  *
  * @file
@@ -39,25 +41,17 @@ extern "C"
 #define LED1_MASK           (1 <<  2)
 #define LED2_MASK           (1 <<  5)
 
-#define LED0_ON            (GPIOA->PCOR = LED0_MASK)
-#define LED0_OFF           (GPIOA->PSOR = LED0_MASK)
-#define LED0_TOGGLE        (GPIOA->PTOR = LED0_MASK)
+#define LED0_ON            (GPIOB->PCOR = LED0_MASK)
+#define LED0_OFF           (GPIOB->PSOR = LED0_MASK)
+#define LED0_TOGGLE        (GPIOB->PTOR = LED0_MASK)
 
-#define LED1_ON            (GPIOA->PCOR = LED1_MASK)
-#define LED1_OFF           (GPIOA->PSOR = LED1_MASK)
-#define LED1_TOGGLE        (GPIOA->PTOR = LED1_MASK)
+#define LED1_ON            (GPIOE->PCOR = LED1_MASK)
+#define LED1_OFF           (GPIOE->PSOR = LED1_MASK)
+#define LED1_TOGGLE        (GPIOE->PTOR = LED1_MASK)
 
-#define LED2_ON            (GPIOD->PCOR = LED2_MASK)
-#define LED2_OFF           (GPIOD->PSOR = LED2_MASK)
-#define LED2_TOGGLE        (GPIOD->PTOR = LED2_MASK)
-/** @} */
-
-/**
- * @name    FXOS8700CQ 3-axis accelerometer and magnetometer bus configuration
- * @{
- */
-#define FXOS8700_PARAM_I2C          I2C_DEV(0)
-#define FXOS8700_PARAM_ADDR         0x1C
+#define LED2_ON            (GPIOB->PCOR = LED2_MASK)
+#define LED2_OFF           (GPIOB->PSOR = LED2_MASK)
+#define LED2_TOGGLE        (GPIOB->PTOR = LED2_MASK)
 /** @} */
 
 /**

@@ -1,6 +1,7 @@
+APPLICATION = driver_pdc8544
 include ../Makefile.tests_common
 
-BOARD_INSUFFICIENT_MEMORY := arduino-duemilanove arduino-uno
+FEATURES_REQUIRED = periph_gpio periph_spi
 
 USEMODULE += shell
 USEMODULE += pcd8544

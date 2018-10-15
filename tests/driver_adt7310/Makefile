@@ -1,8 +1,9 @@
+APPLICATION = driver_adt7310
 include ../Makefile.tests_common
 
-BOARD_INSUFFICIENT_MEMORY := arduino-mega2560 \
-                             mega-xplained \
-                             waspmote-pro
+BOARD_INSUFFICIENT_MEMORY := arduino-mega2560 waspmote-pro
+
+FEATURES_REQUIRED = periph_spi periph_gpio
 
 USEMODULE += adt7310
 USEMODULE += xtimer

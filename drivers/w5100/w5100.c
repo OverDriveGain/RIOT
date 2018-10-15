@@ -34,6 +34,7 @@
 #define ENABLE_DEBUG        (0)
 #include "debug.h"
 
+
 #define SPI_CONF            SPI_MODE_0
 #define RMSR_DEFAULT_VALUE  (0x55)
 
@@ -193,7 +194,7 @@ static uint16_t tx_upload(w5100_t *dev, uint16_t start, void *data, size_t len)
     }
 }
 
-static int send(netdev_t *netdev, const iolist_t *iolist)
+static int send(netdev_t *netdev, const struct iovec *vector, unsigned count)
 {
     w5100_t *dev = (w5100_t *)netdev;
     int sum = 0;
@@ -209,10 +210,9 @@ static int send(netdev_t *netdev, const iolist_t *iolist)
         pos = S0_TX_BASE;
     }
 
-    for (const iolist_t *iol = iolist; iol; iol = iol->iol_next) {
-        size_t len = iol->iol_len;
-        pos = tx_upload(dev, pos, iol->iol_base, len);
-        sum += len;
+    for (unsigned i = 0; i < count; i++) {
+        pos = tx_upload(dev, pos, vector[i].iov_base, vector[i].iov_len);
+        sum += vector[i].iov_len;
     }
 
     waddr(dev, S0_TX_WR0, S0_TX_WR1, pos);
@@ -235,7 +235,7 @@ static int recv(netdev_t *netdev, void *buf, size_t len, void *info)
     (void)info;
     w5100_t *dev = (w5100_t *)netdev;
     uint8_t *in_buf = (uint8_t *)buf;
-    unsigned n = 0;
+    int n = 0;
 
     /* get access to the SPI bus for the duration of this function */
     spi_acquire(dev->p.spi, dev->p.cs, SPI_CONF, dev->p.clk);
@@ -255,7 +255,7 @@ static int recv(netdev_t *netdev, void *buf, size_t len, void *info)
         if (in_buf != NULL) {
             uint16_t pos = rp + 2;
             len = (n <= len) ? n : len;
-            for (unsigned i = 0; i < len; i++) {
+            for (int i = 0; i < (int)len; i++) {
                 in_buf[i] = rreg(dev, (S0_RX_BASE + ((pos++) & S0_MASK)));
             }
 
@@ -276,7 +276,7 @@ static int recv(netdev_t *netdev, void *buf, size_t len, void *info)
     /* release the SPI bus again */
     spi_release(dev->p.spi);
 
-    return (int)n;
+    return n;
 }
 
 static void isr(netdev_t *netdev)
@@ -284,21 +284,14 @@ static void isr(netdev_t *netdev)
     uint8_t ir;
     w5100_t *dev = (w5100_t *)netdev;
 
-    /* read interrupt register */
+    /* we only react on RX events, and if we see one, we read from the RX buffer
+     * until it is empty */
     spi_acquire(dev->p.spi, dev->p.cs, SPI_CONF, dev->p.clk);
     ir = rreg(dev, S0_IR);
     spi_release(dev->p.spi);
-
-    /* we only react on RX events, and if we see one, we read from the RX buffer
-     * until it is empty */
     while (ir & IR_RECV) {
         DEBUG("[w5100] netdev RX complete\n");
         netdev->event_callback(netdev, NETDEV_EVENT_RX_COMPLETE);
-
-        /* reread interrupt register */
-        spi_acquire(dev->p.spi, dev->p.cs, SPI_CONF, dev->p.clk);
-        ir = rreg(dev, S0_IR);
-        spi_release(dev->p.spi);
     }
 }
 

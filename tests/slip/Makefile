@@ -1,16 +1,16 @@
+APPLICATION = driver_slip
 include ../Makefile.tests_common
 
-BOARD_INSUFFICIENT_MEMORY := arduino-duemilanove arduino-mega2560 arduino-uno \
-                             msb-430 msb-430h nucleo-f031k6 nucleo-f042k6 \
-                             nucleo-l031k6 nucleo-f030r8 nucleo-f303k8 \
-                             nucleo-f334r8 nucleo-l053r8 stm32f0discovery \
-                             waspmote-pro
+BOARD_INSUFFICIENT_MEMORY := msb-430 msb-430h nucleo32-f031 nucleo32-f042 \
+                             nucleo32-l031 nucleo-f030 nucleo-f334 nucleo-l053 \
+                             stm32f0discovery
 
 BOARD_BLACKLIST += mips-malta
 
 USEMODULE += auto_init_gnrc_netif
 USEMODULE += gnrc
 USEMODULE += gnrc_pktdump
+USEMODULE += gnrc_netdev
 USEMODULE += gnrc_txtsnd
 USEMODULE += slipdev
 USEMODULE += shell

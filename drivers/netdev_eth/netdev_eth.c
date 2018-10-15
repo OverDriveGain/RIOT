@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     drivers_netdev_eth
+ * @ingroup     driver_netdev_eth
  * @{
  *
  * @file

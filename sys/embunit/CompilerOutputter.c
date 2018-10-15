@@ -35,9 +35,10 @@
 #include <stdio.h>
 #include "CompilerOutputter.h"
 
-static void CompilerOutputter_printHeader(OutputterRef self)
+static void CompilerOutputter_printHeader(OutputterRef self,TestRef test)
 {
     (void)self;
+    (void)test;
 }
 
 static void CompilerOutputter_printStartTest(OutputterRef self,TestRef test)

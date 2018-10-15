@@ -1,3 +1,4 @@
+APPLICATION = periph_adc
 BOARD ?= pba-d-01-kw2x
 include ../Makefile.tests_common
 

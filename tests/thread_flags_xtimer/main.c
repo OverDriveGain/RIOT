@@ -24,7 +24,7 @@
 #include "thread_flags.h"
 
 #define TIMEOUT         (100UL * US_PER_MS)
-#define REPEAT          (5U)
+#define REPEAT          (5)
 #define RUNTIME         (TIMEOUT * REPEAT)
 
 static void time_evt(void *arg)
@@ -34,30 +34,30 @@ static void time_evt(void *arg)
 
 int main(void)
 {
-    puts("START");
+
     xtimer_t timer;
     timer.callback = time_evt;
     timer.arg = (void *)sched_active_thread;
     uint32_t last = xtimer_now_usec();
 
-    puts("Test setting thread flags from (x)timer callback");
+    puts("\nTest setting thread flags from (x)timer callback");
     printf("You should see the message '+++ timeout XX +++' printed to the \n"
-           "screen %u times, once every %lu milliseconds\n\n",
+           "screen %i times, once every %lu milliseconds\n\n",
             REPEAT, (TIMEOUT / US_PER_MS));
 
-    for (unsigned i = 1; i <= REPEAT; i++) {
+    for (int i = 1; i <= REPEAT; i++) {
         xtimer_set(&timer, TIMEOUT);
         thread_flags_wait_any(0x1);
-        printf("+++ timeout %2u +++\n", i);
+        printf("+++ timeout %2i +++\n", i);
     }
 
     /* we consider the test successful, if the runtime was above 500ms */
     uint32_t runtime = xtimer_now_usec() - last;
     if (runtime > RUNTIME) {
-        puts("SUCCESS");
+        puts("Test finished: SUCCESS\n");
     }
     else {
-        puts("FAILURE");
+        puts("Test finished: FAILED\n");
     }
 
     return 0;

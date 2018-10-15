@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     drivers_netdev
+ * @ingroup     netdev
  * @brief       Low-level ethernet driver for native tap interfaces
  * @{
  *

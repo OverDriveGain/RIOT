@@ -31,8 +31,7 @@
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
 
-static int16_t temp_cached, hum_cached;
-static uint32_t last_read_time;
+#define I2C_SPEED                  I2C_SPEED_FAST
 
 int hdc1000_init(hdc1000_t *dev, const hdc1000_params_t *params)
 {
@@ -42,10 +41,16 @@ int hdc1000_init(hdc1000_t *dev, const hdc1000_params_t *params)
     /* write device descriptor */
     memcpy(&dev->p, params, sizeof(hdc1000_params_t));
 
-    /* try if we can interact with the device by reading its manufacturer ID */
+    /* initialize the I2C bus */
     i2c_acquire(dev->p.i2c);
+    if (i2c_init_master(dev->p.i2c, I2C_SPEED) < 0) {
+        i2c_release(dev->p.i2c);
+        return HDC1000_NOBUS;
+    }
+
+    /* try if we can interact with the device by reading its manufacturer ID */
     if (i2c_read_regs(dev->p.i2c, dev->p.addr,
-                      HDC1000_MANUFACTURER_ID, reg, 2, 0) < 0) {
+                      HDC1000_MANUFACTURER_ID, reg, 2) != 2) {
         i2c_release(dev->p.i2c);
         return HDC1000_NOBUS;
     }
@@ -61,17 +66,11 @@ int hdc1000_init(hdc1000_t *dev, const hdc1000_params_t *params)
     reg[0] = (tmp >> 8);
     reg[1] = tmp;
 
-    if (i2c_write_regs(dev->p.i2c, dev->p.addr, HDC1000_CONFIG, reg, 2, 0) < 0) {
+    if (i2c_write_regs(dev->p.i2c, dev->p.addr, HDC1000_CONFIG, reg, 2) != 2) {
         i2c_release(dev->p.i2c);
         return HDC1000_NOBUS;
     }
     i2c_release(dev->p.i2c);
-
-    /* initial read for caching operation */
-    if (hdc1000_read(dev, &temp_cached, &hum_cached) != HDC1000_OK) {
-        return HDC1000_BUSERR;
-    }
-    last_read_time = xtimer_now_usec();
 
     /* all set */
     return HDC1000_OK;
@@ -88,7 +87,7 @@ int hdc1000_trigger_conversion(const hdc1000_t *dev)
      * to the address 0x00 (HDC1000_TEMPERATURE).
      * Conversion Time is 6.50ms for each value for 14 bit resolution.
      */
-    if (i2c_write_byte(dev->p.i2c, dev->p.addr, HDC1000_TEMPERATURE, 0) < 0) {
+    if (i2c_write_byte(dev->p.i2c, dev->p.addr, HDC1000_TEMPERATURE) != 1) {
         status = HDC1000_BUSERR;
     }
 
@@ -105,7 +104,7 @@ int hdc1000_get_results(const hdc1000_t *dev, int16_t *temp, int16_t *hum)
 
     /* first we read the RAW results from the device */
     i2c_acquire(dev->p.i2c);
-    if (i2c_read_bytes(dev->p.i2c, dev->p.addr, buf, 4, 0) < 0) {
+    if (i2c_read_bytes(dev->p.i2c, dev->p.addr, buf, 4) != 4) {
         status = HDC1000_BUSERR;
     }
     i2c_release(dev->p.i2c);
@@ -132,27 +131,4 @@ int hdc1000_read(const hdc1000_t *dev, int16_t *temp, int16_t *hum)
     }
     xtimer_usleep(HDC1000_CONVERSION_TIME);
     return hdc1000_get_results(dev, temp, hum);
-}
-
-
-int hdc1000_read_cached(const hdc1000_t *dev, int16_t *temp, int16_t *hum)
-{
-    uint32_t now = xtimer_now_usec();
-
-    /* check if readings are outdated */
-    if (now - last_read_time > dev->p.renew_interval) {
-        /* update last_read_time */
-        if (hdc1000_read(dev, &temp_cached, &hum_cached) != HDC1000_OK) {
-            return HDC1000_BUSERR;
-        }
-        last_read_time = now;
-    }
-
-    if (temp) {
-        *temp = temp_cached;
-    }
-    if (hum) {
-        *hum = hum_cached;
-    }
-    return HDC1000_OK;
 }

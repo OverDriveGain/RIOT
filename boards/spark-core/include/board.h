@@ -7,7 +7,9 @@
  */
 
 /**
- * @ingroup     boards_spark-core
+ * @defgroup    boards_spark-core Spark-Core
+ * @ingroup     boards
+ * @brief       Board specific files for the spark-core board.
  * @{
  *
  * @file
@@ -34,7 +36,7 @@
 #define XTIMER_WIDTH        (16)
 
 /**
- * @name    Macros for controlling the on-board LEDs
+ * @brief   Macros for controlling the on-board LEDs
  * @{
  */
 #define LED0_PIN            GPIO_PIN(PORT_A, 9)
@@ -67,10 +69,8 @@
 
 /**
  * @name User button configuration
- * @{
  */
 #define BUTTON1             GPIO_PIN(PORT_B,2)
-/** @} */
 
 /**
  * @name CC3000 pin configuration

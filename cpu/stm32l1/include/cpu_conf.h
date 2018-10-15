@@ -71,7 +71,6 @@ extern "C" {
 #endif
 #define CPU_FLASH_BASE                  FLASH_BASE
 /** @} */
-
 /**
  * @name   Flash page configuration
  * @{
@@ -95,10 +94,10 @@ extern "C" {
 /* Writing should be always 4 bytes aligned */
 #define FLASHPAGE_RAW_ALIGNMENT    (4U)
 /** @} */
-
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* CPU_CONF_H */
+/** @} */
 /** @} */

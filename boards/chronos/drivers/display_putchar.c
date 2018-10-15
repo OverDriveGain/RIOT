@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup boards_chronos
+ * @ingroup chronos
  * @{
  */
 

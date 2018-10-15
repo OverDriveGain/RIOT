@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     drivers_mma8x5x
+ * @ingroup     driver_mma8x5x
  * @{
  *
  * @file

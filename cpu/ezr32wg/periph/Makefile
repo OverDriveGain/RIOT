@@ -1,1 +1,1 @@
-include $(RIOTMAKE)/periph.mk
+include $(RIOTBASE)/Makefile.base

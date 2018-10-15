@@ -15,12 +15,10 @@
 
 #include "periph/uart.h"
 #include "periph/timer.h"
-#include "periph/init.h"
-#include "panic.h"
+#include "arch/panic_arch.h"
 #include "kernel_init.h"
 #include "cpu.h"
 #include "board.h"
-
 
 void mips_start(void);
 
@@ -72,10 +70,4 @@ void panic_arch(void)
     assert(0);
     while (1) {
     }
-}
-
-void cpu_init(void)
-{
-    /* trigger static peripheral initialization */
-    periph_init();
 }

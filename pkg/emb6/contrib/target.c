@@ -20,9 +20,6 @@
 #include "mutex.h"
 #include "periph/gpio.h"
 #include "periph/hwrng.h"
-#ifdef MODULE_RANDOM
-#include "random.h"
-#endif
 #include "xtimer.h"
 
 #include "target.h"
@@ -48,12 +45,12 @@ int8_t hal_init(void)
 
 uint8_t hal_getrand(void)
 {
-#if defined(MODULE_PERIPH_HWRNG)
+#if RANDOM_NUMOF
     uint8_t res;
     hwnrg_read((char *)&res, sizeof(res));
     return res;
 #elif defined(MODULE_RANDOM)
-    return (uint8_t)(random_uint32() % UINT8_MAX);
+    return (uint8_t)(genrand_uint32() % UINT8_MAX);
 #else
     return 4;   /* keeping the meme alive ;-) */
 #endif

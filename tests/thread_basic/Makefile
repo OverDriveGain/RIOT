@@ -1,9 +1,11 @@
+APPLICATION = thread_basic
 include ../Makefile.tests_common
 
-BOARD_INSUFFICIENT_MEMORY := nucleo-f031k6
+BOARD_INSUFFICIENT_MEMORY := nucleo32-f031
 
 DISABLE_MODULE += auto_init
 
-TEST_ON_CI_WHITELIST += all
-
 include $(RIOTBASE)/Makefile.include
+
+test:
+	./tests/test_thread.py

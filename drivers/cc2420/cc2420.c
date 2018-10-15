@@ -49,7 +49,9 @@ int cc2420_init(cc2420_t *dev)
     uint16_t reg;
     uint8_t addr[8];
 
-    netdev_ieee802154_reset(&dev->netdev);
+    /* reset options and sequence number */
+    dev->netdev.seq = 0;
+    dev->netdev.flags = 0;
 
     /* set default address, channel, PAN ID, and TX power */
     luid_get(addr, sizeof(addr));
@@ -65,6 +67,18 @@ int cc2420_init(cc2420_t *dev)
     /* set default options */
     cc2420_set_option(dev, CC2420_OPT_AUTOACK, true);
     cc2420_set_option(dev, CC2420_OPT_CSMA, true);
+    cc2420_set_option(dev, CC2420_OPT_TELL_TX_START, true);
+    cc2420_set_option(dev, CC2420_OPT_TELL_RX_END, true);
+
+#ifdef MODULE_NETSTATS_L2
+    cc2420_set_option(dev, CC2420_OPT_TELL_RX_END, true);
+#endif
+    /* set default protocol*/
+#ifdef MODULE_GNRC_SIXLOWPAN
+    dev->netdev.proto = GNRC_NETTYPE_SIXLOWPAN;
+#elif MODULE_GNRC
+    dev->netdev.proto = GNRC_NETTYPE_UNDEF;
+#endif
 
     /* change default RX bandpass filter to 1.3uA (as recommended) */
     reg = cc2420_reg_read(dev, CC2420_REG_RXCTRL1);
@@ -100,9 +114,9 @@ bool cc2420_cca(cc2420_t *dev)
     return gpio_read(dev->params.pin_cca);
 }
 
-size_t cc2420_send(cc2420_t *dev, const iolist_t *iolist)
+size_t cc2420_send(cc2420_t *dev, const struct iovec *data, unsigned count)
 {
-    size_t n = cc2420_tx_prepare(dev, iolist);
+    size_t n = cc2420_tx_prepare(dev, data, count);
 
     if ((n > 0) && !(dev->options & CC2420_OPT_PRELOADING)) {
         cc2420_tx_exec(dev);
@@ -111,7 +125,7 @@ size_t cc2420_send(cc2420_t *dev, const iolist_t *iolist)
     return n;
 }
 
-size_t cc2420_tx_prepare(cc2420_t *dev, const iolist_t *iolist)
+size_t cc2420_tx_prepare(cc2420_t *dev, const struct iovec *data, unsigned count)
 {
     size_t pkt_len = 2;     /* include the FCS (frame check sequence) */
 
@@ -120,8 +134,8 @@ size_t cc2420_tx_prepare(cc2420_t *dev, const iolist_t *iolist)
     while (cc2420_get_state(dev) & NETOPT_STATE_TX) {}
 
     /* get and check the length of the packet */
-    for (const iolist_t *iol = iolist; iol; iol = iol->iol_next) {
-        pkt_len += iol->iol_len;
+    for (unsigned i = 0; i < count; i++) {
+        pkt_len += data[i].iov_len;
     }
     if (pkt_len >= CC2420_PKT_MAXLEN) {
         DEBUG("cc2420: tx_prep: unable to send, pkt too large\n");
@@ -133,8 +147,8 @@ size_t cc2420_tx_prepare(cc2420_t *dev, const iolist_t *iolist)
     /* push packet length to TX FIFO */
     cc2420_fifo_write(dev, (uint8_t *)&pkt_len, 1);
     /* push packet to TX FIFO */
-    for (const iolist_t *iol = iolist; iol; iol = iol->iol_next) {
-        cc2420_fifo_write(dev, iol->iol_base, iol->iol_len);
+    for (int i = 0; i < count; i++) {
+        cc2420_fifo_write(dev, (uint8_t *)data[i].iov_base, data[i].iov_len);
     }
     DEBUG("cc2420: tx_prep: loaded %i byte into the TX FIFO\n", (int)pkt_len);
 
@@ -161,8 +175,6 @@ void cc2420_tx_exec(cc2420_t *dev)
 
 int cc2420_rx(cc2420_t *dev, uint8_t *buf, size_t max_len, void *info)
 {
-    (void)info;
-
     uint8_t len;
     uint8_t crc_corr;
 
@@ -185,8 +197,8 @@ int cc2420_rx(cc2420_t *dev, uint8_t *buf, size_t max_len, void *info)
         DEBUG("cc2420: recv: reading %i byte of the packet\n", (int)len);
         cc2420_fifo_read(dev, buf, len);
 
-        int8_t rssi;
-        cc2420_fifo_read(dev, (uint8_t*)&rssi, 1);
+        uint8_t rssi;
+        cc2420_fifo_read(dev, &rssi, 1);
         DEBUG("cc2420: recv: RSSI is %i\n", (int)rssi);
 
         /* fetch and check if CRC_OK bit (MSB) is set */
@@ -195,11 +207,6 @@ int cc2420_rx(cc2420_t *dev, uint8_t *buf, size_t max_len, void *info)
             DEBUG("cc2420: recv: CRC_OK bit not set, dropping packet\n");
             /* drop the corrupted frame from the RXFIFO */
             len = 0;
-        }
-        if (info != NULL) {
-            netdev_ieee802154_rx_info_t *radio_info = info;
-            radio_info->rssi = CC2420_RSSI_OFFSET + rssi;
-            radio_info->lqi = crc_corr & CC2420_CRCCOR_COR_MASK;
         }
 
         /* finally flush the FIFO */

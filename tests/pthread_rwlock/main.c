@@ -53,32 +53,21 @@
 static pthread_rwlock_t rwlock;
 static volatile unsigned counter;
 
-static kernel_pid_t main_thread_pid;
-
-#define PRINTF(FMT, ...)                                \
-    printf("%c%" PRIkernel_pid " (prio=%u): " FMT "\n", \
-           __func__[0], sched_active_pid,               \
-           sched_active_thread->priority,               \
-           (int)__VA_ARGS__)
-
-static void _notify_main_thread(void)
-{
-    msg_t msg;
-    msg_send(&msg, main_thread_pid);
-}
+#define PRINTF(FMT, ...) \
+    printf("%c%" PRIkernel_pid " (prio=%u): " FMT "\n", __func__[0], sched_active_pid, sched_active_thread->priority, __VA_ARGS__)
 
 static void do_sleep(int factor)
 {
     uint32_t timeout_us = (random_uint32() % 100000) * factor;
-    PRINTF("sleep for % 8i µs.", timeout_us);
+    /* PRINTF("sleep for % 8i µs.", timeout_us); */
     xtimer_usleep(timeout_us);
 }
 
 static void *writer(void *arg)
 {
     (void) arg;
-    puts("start");
-    for (unsigned i = 0; i < NUM_ITERATIONS; ++i) {
+    /* PRINTF("%s", "start"); */
+    for (int i = 0; i < NUM_ITERATIONS; ++i) {
         pthread_rwlock_wrlock(&rwlock);
         unsigned cur = ++counter;
         do_sleep(3); /* simulate time that it takes to write the value */
@@ -86,16 +75,15 @@ static void *writer(void *arg)
         pthread_rwlock_unlock(&rwlock);
         do_sleep(2);
     }
-    puts("done");
-    _notify_main_thread();
+    /* PRINTF("%s", "done"); */
     return NULL;
 }
 
 static void *reader(void *arg)
 {
     (void) arg;
-    puts("start");
-    for (unsigned i = 0; i < NUM_ITERATIONS; ++i) {
+    /* PRINTF("%s", "start"); */
+    for (int i = 0; i < NUM_ITERATIONS; ++i) {
         pthread_rwlock_rdlock(&rwlock);
         unsigned cur = counter;
         do_sleep(1); /* simulate time that it takes to read the value */
@@ -103,9 +91,7 @@ static void *reader(void *arg)
         pthread_rwlock_unlock(&rwlock);
         do_sleep(1);
     }
-    puts("done");
-    _notify_main_thread();
-
+    /* PRINTF("%s", "done"); */
     return NULL;
 }
 
@@ -113,9 +99,7 @@ int main(void)
 {
     static char stacks[NUM_CHILDREN][THREAD_STACKSIZE_MAIN];
 
-    puts("START");
-    /* Get main thread pid */
-    main_thread_pid = thread_getpid();
+    puts("Main start.");
 
     for (unsigned i = 0; i < NUM_CHILDREN; ++i) {
         int prio;
@@ -148,13 +132,6 @@ int main(void)
                       fun, NULL, name);
     }
 
-    /* Block until all children threads are done */
-    for (unsigned i = 0; i < NUM_CHILDREN; ++i) {
-        msg_t msg;
-        msg_receive(&msg);
-    }
-
-    puts("SUCCESS");
-
+    puts("Main done.");
     return 0;
 }

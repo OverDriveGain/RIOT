@@ -29,7 +29,7 @@ extern "C" {
 
 /**
  * @name    Set default configuration parameters for the SX127X driver
- *          Pins are adapted to STM32 Nucleo-64 boards.
+ *          Pins are adapted to ST Nucleo boards.
  * @{
  */
 #ifndef SX127X_PARAM_SPI
@@ -97,7 +97,11 @@ extern "C" {
  */
 static const sx127x_params_t sx127x_params[] =
 {
-    SX127X_PARAMS
+#ifdef SX127X_PARAMS_BOARD
+    SX127X_PARAMS_BOARD,
+#else
+    SX127X_PARAMS_DEFAULT,
+#endif
 };
 
 #ifdef __cplusplus

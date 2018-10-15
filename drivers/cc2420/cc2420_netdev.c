@@ -38,9 +38,8 @@
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
 
-#define _MAX_MHR_OVERHEAD   (25)
 
-static int _send(netdev_t *netdev, const iolist_t *iolist);
+static int _send(netdev_t *netdev, const struct iovec *vector, unsigned count);
 static int _recv(netdev_t *netdev, void *buf, size_t len, void *info);
 static int _init(netdev_t *netdev);
 static void _isr(netdev_t *netdev);
@@ -151,10 +150,10 @@ static void _isr(netdev_t *netdev)
     netdev->event_callback(netdev, NETDEV_EVENT_RX_COMPLETE);
 }
 
-static int _send(netdev_t *netdev, const iolist_t *iolist)
+static int _send(netdev_t *netdev, const struct iovec *vector, unsigned count)
 {
     cc2420_t *dev = (cc2420_t *)netdev;
-    return (int)cc2420_send(dev, iolist);
+    return (int)cc2420_send(dev, vector, count);
 }
 
 static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
@@ -187,11 +186,6 @@ static int _get(netdev_t *netdev, netopt_t opt, void *val, size_t max_len)
             assert(max_len >= 8);
             cc2420_get_addr_long(dev, val);
             return 8;
-
-        case NETOPT_MAX_PACKET_SIZE:
-            assert(max_len >= sizeof(int16_t));
-            *((uint16_t *)val) = CC2420_PKT_MAXLEN - _MAX_MHR_OVERHEAD;
-            return sizeof(int16_t);
 
         case NETOPT_NID:
             assert(max_len >= sizeof(uint16_t));

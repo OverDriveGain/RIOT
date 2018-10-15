@@ -46,7 +46,9 @@ void mrf24j40_reset(mrf24j40_t *dev)
 
     mrf24j40_init(dev);
 
-    netdev_ieee802154_reset(&dev->netdev);
+    /* reset options and sequence number */
+    dev->netdev.seq = 0;
+    dev->netdev.flags = 0;
 
     /* get an 8-byte unique ID to use as hardware address */
     luid_get(addr_long.uint8, IEEE802154_LONG_ADDRESS_LEN);
@@ -68,6 +70,18 @@ void mrf24j40_reset(mrf24j40_t *dev)
     mrf24j40_set_option(dev, NETDEV_IEEE802154_SRC_MODE_LONG, true);
     mrf24j40_set_option(dev, NETDEV_IEEE802154_ACK_REQ, true);
     mrf24j40_set_option(dev, MRF24J40_OPT_CSMA, true);
+    mrf24j40_set_option(dev, MRF24J40_OPT_TELL_RX_START, false);
+    mrf24j40_set_option(dev, MRF24J40_OPT_TELL_RX_END, true);
+#ifdef MODULE_NETSTATS_L2
+    mrf24j40_set_option(dev, MRF24J40_OPT_TELL_TX_END, true);
+#endif
+
+    /* set default protocol */
+#ifdef MODULE_GNRC_SIXLOWPAN
+    dev->netdev.proto = GNRC_NETTYPE_SIXLOWPAN;
+#elif MODULE_GNRC
+    dev->netdev.proto = GNRC_NETTYPE_UNDEF;
+#endif
 
     /* go into RX state */
     mrf24j40_reset_tasks(dev);
@@ -142,7 +156,7 @@ void mrf24j40_tx_exec(mrf24j40_t *dev)
      */
     mrf24j40_reg_write_long(dev, MRF24J40_TX_NORMAL_FIFO, dev->header_len);
 
-    if (dev->fcf_low & IEEE802154_FCF_ACK_REQ) {
+    if (dev->netdev.flags & NETDEV_IEEE802154_ACK_REQ) {
         mrf24j40_reg_write_short(dev, MRF24J40_REG_TXNCON, MRF24J40_TXNCON_TXNACKREQ | MRF24J40_TXNCON_TXNTRIG);
     }
     else {

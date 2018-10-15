@@ -7,7 +7,8 @@
  * General Public License v2.1. See the file LICENSE in the top level
  * directory for more details.
  *
- * @ingroup cpu_native
+ * @ingroup native_cpu
+ * @ingroup irq
  * @{
  * @file
  * @author  Ludwig Knüpfer <ludwig.knuepfer@fu-berlin.de>
@@ -60,12 +61,12 @@ int _sig_pipefd[2];
 static _native_callback_t native_irq_handlers[255];
 char sigalt_stk[SIGSTKSZ];
 
-void *thread_isr_stack_pointer(void)
+void *thread_arch_isr_stack_pointer(void)
 {
     return native_isr_context.uc_stack.ss_sp;
 }
 
-void *thread_isr_stack_start(void)
+void *thread_arch_isr_stack_start(void)
 {
     return __isr_stack;
 }

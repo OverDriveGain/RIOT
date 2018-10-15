@@ -43,7 +43,7 @@ void *busy_thread(void *arg)
     printf("j: %i\n", j);
     printf("k: %i\n", k);
 
-    puts("SUCCESS");
+    puts("success");
 
     return NULL;
 }
@@ -51,8 +51,6 @@ void *busy_thread(void *arg)
 
 int main(void)
 {
-    puts("START");
-
     busy = 1;
     k = 23;
     thread_create(busy_stack, sizeof(busy_stack),

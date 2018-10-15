@@ -7,7 +7,7 @@
  * General Public License v2.1. See the file LICENSE in the top level
  * directory for more details.
  *
- * @ingroup sys_ps
+ * @ingroup ps
  * @{
  * @file
  * @brief   UNIX like ps command
@@ -26,9 +26,8 @@
 #include "xtimer.h"
 #endif
 
-#ifdef MODULE_TLSF_MALLOC
+#ifdef MODULE_TLSF
 #include "tlsf.h"
-#include "tlsf-malloc.h"
 #endif
 
 /* list of states copied from tcb.h */
@@ -74,9 +73,9 @@ void ps(void)
            "state");
 
 #if defined(DEVELHELP) && defined(ISR_STACKSIZE)
-    int isr_usage = thread_isr_stack_usage();
-    void *isr_start = thread_isr_stack_start();
-    void *isr_sp = thread_isr_stack_pointer();
+    int isr_usage = thread_arch_isr_stack_usage();
+    void *isr_start = thread_arch_isr_stack_start();
+    void *isr_sp = thread_arch_isr_stack_pointer();
     printf("\t  - | isr_stack            | -        - |"
            "   - | %6i (%5i) | %10p | %10p\n", ISR_STACKSIZE, isr_usage, isr_start, isr_sp);
     overall_stacksz += ISR_STACKSIZE;
@@ -145,12 +144,9 @@ void ps(void)
 #ifdef DEVELHELP
     printf("\t%5s %-21s|%13s%6s %6i (%5i)\n", "|", "SUM", "|", "|",
            overall_stacksz, overall_used);
-#   ifdef MODULE_TLSF_MALLOC
+#   ifdef MODULE_TLSF
     puts("\nHeap usage:");
-    tlsf_size_container_t sizes = { .free = 0, .used = 0 };
-    tlsf_walk_pool(tlsf_get_pool(_tlsf_get_global_control()), tlsf_size_walker, &sizes);
-    printf("\tTotal free size: %u\n", sizes.free);
-    printf("\tTotal used size: %u\n", sizes.used);
+    tlsf_walk_pool(NULL);
 #   endif
 #endif
 }

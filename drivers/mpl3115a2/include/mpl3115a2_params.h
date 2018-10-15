@@ -44,13 +44,10 @@ extern "C" {
 #define MPL3115A2_PARAM_RATIO       MPL3115A2_OS_RATIO_DEFAULT
 #endif
 
-#ifndef MPL3115A2_PARAMS
-#define MPL3115A2_PARAMS            { .i2c   = MPL3115A2_PARAM_I2C,  \
+#ifndef MPL3115A2_PARAMS_DEFAULT
+#define MPL3115A2_PARAMS_DEFAULT    { .i2c   = MPL3115A2_PARAM_I2C, \
                                       .addr  = MPL3115A2_PARAM_ADDR, \
                                       .ratio = MPL3115A2_PARAM_RATIO }
-#endif
-#ifndef MPL3115A2_SAUL_INFO
-#define MPL3115A2_SAUL_INFO         { .name = "mpl3115a2" }
 #endif
 /**@}*/
 
@@ -59,7 +56,12 @@ extern "C" {
  */
 static const mpl3115a2_params_t mpl3115a2_params[] =
 {
-    MPL3115A2_PARAMS
+
+#ifdef MPL3115A2_PARAMS_CUSTOM
+    MPL3115A2_PARAMS_CUSTOM
+#else
+    MPL3115A2_PARAMS_DEFAULT
+#endif
 };
 
 /**
@@ -67,7 +69,7 @@ static const mpl3115a2_params_t mpl3115a2_params[] =
  */
 static const saul_reg_info_t mpl3115a2_saul_info[] =
 {
-    MPL3115A2_SAUL_INFO
+    { .name = "mpl3115a2" },
 };
 
 #ifdef __cplusplus

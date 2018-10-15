@@ -62,31 +62,10 @@ size_t fmt_byte_hex(char *out, uint8_t byte)
     return 2;
 }
 
-size_t fmt_bytes_hex(char *out, const uint8_t *ptr, size_t n)
-{
-    size_t len = n * 2;
-    if (out) {
-        while (n--) {
-            out += fmt_byte_hex(out, *ptr++);
-        }
-    }
-
-    return len;
-}
-
 size_t fmt_strlen(const char *str)
 {
     const char *tmp = str;
     while(*tmp) {
-        tmp++;
-    }
-    return (tmp - str);
-}
-
-size_t fmt_strnlen(const char *str, size_t maxlen)
-{
-    const char *tmp = str;
-    while(*tmp && maxlen--) {
         tmp++;
     }
     return (tmp - str);
@@ -114,43 +93,6 @@ size_t fmt_bytes_hex_reverse(char *out, const uint8_t *ptr, size_t n)
         out += fmt_byte_hex(out, ptr[i]);
     }
     return (n<<1);
-}
-
-static uint8_t _byte_mod25(uint8_t x)
-{
-    for (unsigned divisor = 200; divisor >= 25; divisor >>= 1) {
-        if (x >= divisor) {
-            x -= divisor;
-        }
-    }
-
-    return x;
-}
-
-static uint8_t _hex_nib(uint8_t nib)
-{
-    return _byte_mod25((nib & 0x1f) + 9);
-}
-
-uint8_t fmt_hex_byte(const char *hex)
-{
-    return (_hex_nib(hex[0]) << 4) | _hex_nib(hex[1]);
-}
-
-size_t fmt_hex_bytes(uint8_t *out, const char *hex)
-{
-    size_t len = fmt_strlen(hex);
-
-    if (len & 1) {
-        return 0;
-    }
-
-    size_t final_len = len >> 1;
-    for (size_t i = 0, j = 0; j < final_len; i += 2, j++) {
-        out[j] = fmt_hex_byte(hex + i);
-    }
-
-    return final_len;
 }
 
 size_t fmt_u32_hex(char *out, uint32_t val)
@@ -222,14 +164,8 @@ size_t fmt_u32_dec(char *out, uint32_t val)
     size_t len = 1;
 
     /* count needed characters */
-    /* avoid multiply overflow: uint32_t max len = 10 digits */
-    if (val >= 1000000000ul) {
-        len = 10;
-    }
-    else {
-        for (uint32_t tmp = 10; tmp <= val; len++) {
-            tmp *= 10;
-        }
+    for (uint32_t tmp = 10; tmp <= val; len++) {
+        tmp *= 10;
     }
 
     if (out) {
@@ -245,18 +181,6 @@ size_t fmt_u32_dec(char *out, uint32_t val)
 size_t fmt_u16_dec(char *out, uint16_t val)
 {
     return fmt_u32_dec(out, val);
-}
-
-size_t fmt_s64_dec(char *out, int64_t val)
-{
-    unsigned negative = (val < 0);
-    if (negative) {
-        if (out) {
-            *out++ = '-';
-        }
-        val = -val;
-    }
-    return fmt_u64_dec(out, val) + negative;
 }
 
 size_t fmt_s32_dec(char *out, int32_t val)
@@ -276,56 +200,48 @@ size_t fmt_s16_dec(char *out, int16_t val)
     return fmt_s32_dec(out, val);
 }
 
-size_t fmt_s16_dfp(char *out, int16_t val, int fp_digits)
+size_t fmt_s16_dfp(char *out, int16_t val, unsigned fp_digits)
 {
     return fmt_s32_dfp(out, val, fp_digits);
 }
 
-size_t fmt_s32_dfp(char *out, int32_t val, int fp_digits)
+size_t fmt_s32_dfp(char *out, int32_t val, unsigned fp_digits)
 {
-    assert(fp_digits > -(int)TENMAP_SIZE);
+    assert(fp_digits < TENMAP_SIZE);
 
-    unsigned  pos = 0;
+    int32_t absolute, divider;
+    unsigned div_len, len, pos = 0;
+    char tmp[9];
 
     if (fp_digits == 0) {
-        pos = fmt_s32_dec(out, val);
+        return fmt_s32_dec(out, val);
     }
-    else if (fp_digits > 0) {
-        pos = fmt_s32_dec(out, val);
+    if (val < 0) {
         if (out) {
-            memset(&out[pos], '0', fp_digits);
+            out[pos++] = '-';
         }
-        pos += fp_digits;
+        val = -val;
     }
-    else {
-        fp_digits *= -1;
-        uint32_t e = _tenmap[fp_digits];
-        int32_t abs = (val / (int32_t)e);
-        int32_t div = val - (abs * e);
 
-        /* the divisor should never be negative */
-        if (div < 0) {
-            div *= -1;
-        }
-        /* handle special case for negative number with zero as absolute value */
-        if ((abs == 0) && (val < 0)) {
-            if (out) {
-                out[pos] = '-';
-            }
-            pos++;
-        }
+    uint32_t e = _tenmap[fp_digits];
+    absolute = (val / e);
+    divider = val - (absolute * e);
 
-        if (!out) {
-            /* compensate for the decimal point character... */
-            pos += fmt_s32_dec(NULL, abs) + 1;
-        }
-        else {
-            pos += fmt_s32_dec(&out[pos], abs);
-            out[pos++] = '.';
-            unsigned div_len = fmt_s32_dec(&out[pos], div);
-            fmt_lpad(&out[pos], div_len, (size_t)fp_digits, '0');
-        }
-        pos += fp_digits;
+    pos += fmt_s32_dec(&out[pos], absolute);
+
+    if (!out) {
+        return pos + 1 + fp_digits;     /* abs len + decimal point + divider */
+    }
+
+    out[pos++] = '.';
+    len = pos + fp_digits;
+    div_len = fmt_s32_dec(tmp, divider);
+
+    while (pos < (len - div_len)) {
+        out[pos++] = '0';
+    }
+    for (size_t i = 0; i < div_len; i++) {
+        out[pos++] = tmp[i];
     }
 
     return pos;
@@ -435,14 +351,14 @@ void print(const char *s, size_t n)
 
 void print_u32_dec(uint32_t val)
 {
-    char buf[10]; /* "4294967295" */
+    char buf[10];
     size_t len = fmt_u32_dec(buf, val);
     print(buf, len);
 }
 
 void print_s32_dec(int32_t val)
 {
-    char buf[11]; /* "-2147483648" */
+    char buf[11];
     size_t len = fmt_s32_dec(buf, val);
     print(buf, len);
 }
@@ -469,15 +385,8 @@ void print_u64_hex(uint64_t val)
 
 void print_u64_dec(uint64_t val)
 {
-    char buf[20]; /* "18446744073709551615" */
+    char buf[18];
     size_t len = fmt_u64_dec(buf, val);
-    print(buf, len);
-}
-
-void print_s64_dec(uint64_t val)
-{
-    char buf[20]; /* "-9223372036854775808" */
-    size_t len = fmt_s64_dec(buf, val);
     print(buf, len);
 }
 

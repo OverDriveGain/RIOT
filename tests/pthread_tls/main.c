@@ -30,8 +30,7 @@ void *run(void *parameter)
 
     (void)parameter;
 
-    printf("\n-= TEST 1 - create %d tls with sequencial values 0...%d =-\n",
-           NUMBER_OF_TLS, NUMBER_OF_TLS - 1);
+    printf("\n-= TEST 1 - create %d tls with sequencial values 0...%d =-\n", NUMBER_OF_TLS, NUMBER_OF_TLS - 1);
 
     for (int i = 0; i < NUMBER_OF_TLS; ++i) {
         aTLS_values[i] = i;
@@ -45,12 +44,11 @@ void *run(void *parameter)
         aTLS_values[i]++;
     }
 
-    printf("pick deliberate storage (key[3]:%d) and change the value\n",
-           (int)aKeys[3]);
+    printf("pick deliberate storage (key[3]:%d) and change the value\n", (int)aKeys[3]);
     void *val = pthread_getspecific(aKeys[3]);
     *((int *)val) = 42;
 
-    puts("show tls values:");
+    printf("show tls values:\n");
 
     for (int i = 0; i < NUMBER_OF_TLS; ++i) {
         void *val = pthread_getspecific(aKeys[i]);
@@ -58,11 +56,10 @@ void *run(void *parameter)
         printf("key[%d]: %d, val: %d\n",i, (int)aKeys[i], x);
     }
 
-    printf("\n -= TEST 2 - delete deliberate key (key[5]:%d) =-\n",
-           (int)aKeys[5]);
+    printf("\n -= TEST 2 - delete deliberate key (key[5]:%d) =-\n", (int)aKeys[5]);
     pthread_key_delete(aKeys[5]);
 
-    puts("show tls values:");
+    printf("show tls values:\n");
 
     for (int i = 0; i < NUMBER_OF_TLS; ++i) {
         void *val = pthread_getspecific(aKeys[i]);
@@ -73,8 +70,7 @@ void *run(void *parameter)
         }
     }
 
-    puts("");
-    puts("-= TEST 3 - create new tls =-");
+    printf("\n-= TEST 3 - create new tls =-\n");
     int new_val = 99;
     pthread_key_t new_key;
     pthread_key_create(&new_key, NULL);
@@ -92,8 +88,7 @@ void *run(void *parameter)
         }
     }
 
-    puts("");
-    puts("-= TEST 4 - delete all keys =-");
+    printf("\n-= TEST 4 - delete all keys =-\n");
 
     for (int i = 0; i < NUMBER_OF_TLS; ++i) {
         pthread_key_delete(aKeys[i]);
@@ -110,22 +105,17 @@ void *run(void *parameter)
         }
     }
 
-    puts("");
-    puts("-= TEST 5 - try delete non-existing key =-");
-    printf("try to delete returns: %d\n",
-           pthread_key_delete((pthread_key_t)99));
+    printf("\n-= TEST 5 - try delete non-existing key =-\n");
+    printf("try to delete returns: %d\n", pthread_key_delete((pthread_key_t)99));
 
-    puts("");
-    puts("-= TEST 6 - add key and delete without a tls =-");
-
+    printf("\n-= TEST 6 - add key and delete without a tls =-\n");
     pthread_key_create(&new_key, NULL);
-    printf("created key: %d\n", (int)new_key);
+    printf("crated key: %d\n", (int)new_key);
     printf("try to delete returns: %d\n", pthread_key_delete(new_key));
 
-    puts("");
-    puts("-= TEST 7 - add key without tls =-");
+    printf("\n-= TEST 7 - add key without tls =-\n");
     pthread_key_create(&new_key, NULL);
-    printf("created key: %d\n", (int)new_key);
+    printf("crated key: %d\n", (int)new_key);
     void* test_7_val = pthread_getspecific(new_key);
     printf("test_7_val: %p\n", test_7_val);
 
@@ -135,7 +125,6 @@ void *run(void *parameter)
 
 int main(void)
 {
-    puts("START");
     pthread_t th_id;
     pthread_attr_t th_attr;
 
@@ -144,13 +133,6 @@ int main(void)
 
     size_t res;
     pthread_join(th_id, (void **) &res);
-    puts("tls tests finished.");
-
-    if (res == 0) {
-        puts("SUCCESS");
-    }
-    else {
-        puts("FAILURE");
-    }
+    puts("\ntls tests finished.");
     return 0;
 }

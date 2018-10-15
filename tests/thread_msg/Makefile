@@ -1,10 +1,8 @@
+APPLICATION = thread_msg
 include ../Makefile.tests_common
 
-BOARD_INSUFFICIENT_MEMORY := arduino-duemilanove arduino-uno \
-                             nucleo-f031k6 nucleo-f042k6
+BOARD_INSUFFICIENT_MEMORY := nucleo32-f031 nucleo32-f042 stm32f0discovery
 
 DISABLE_MODULE += auto_init
-
-TEST_ON_CI_WHITELIST += all
 
 include $(RIOTBASE)/Makefile.include

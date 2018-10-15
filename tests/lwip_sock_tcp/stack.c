@@ -11,7 +11,6 @@
  *
  * @file
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
- * @}
  */
 
 
@@ -27,3 +26,5 @@ void _net_init(void)
     xtimer_init();
     lwip_bootstrap();
 }
+
+/** @} */

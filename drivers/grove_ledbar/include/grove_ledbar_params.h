@@ -54,24 +54,23 @@ extern "C"
 /**
  * @brief   Default parameter settings
  */
-#ifndef GROVE_LEDBAR_PARAMS
-#define GROVE_LEDBAR_PARAMS     { .leds = 10,               \
-                                  .dir  = GROVE_LEDBAR_DIR, \
-                                  .clk  = GROVE_LEDBAR_CLK, \
-                                  .dat  = GROVE_LEDBAR_DAT }
-#endif
-
-/**
- * @brief   SAUL info
- */
-#define GROVE_LEDBAR_SAUL_INFO  { .name = "Grove LED bar" }
+#define GROVE_LEDBAR_PARAMS {       \
+    .leds       = 10,               \
+    .dir        = GROVE_LEDBAR_DIR, \
+    .clk        = GROVE_LEDBAR_CLK, \
+    .dat        = GROVE_LEDBAR_DAT, \
+}
 
 /**
  * @brief   Grove LED bar configuration
  */
 static const grove_ledbar_params_t grove_ledbar_params[] =
 {
+#ifdef GROVE_LEDBAR_CUSTOM
+    GROVE_LEDBAR_CUSTOM,
+#else
     GROVE_LEDBAR_PARAMS,
+#endif
 };
 
 /**
@@ -79,7 +78,9 @@ static const grove_ledbar_params_t grove_ledbar_params[] =
  */
 static const saul_reg_info_t grove_ledbar_saul_info[] =
 {
-    GROVE_LEDBAR_SAUL_INFO
+    {
+        .name = "Grove LED bar"
+    }
 };
 
 #ifdef __cplusplus

@@ -21,7 +21,7 @@
 #include "net/gnrc/sixlowpan.h"
 #include "net/gnrc/sixlowpan/frag.h"
 #include "net/gnrc/sixlowpan/iphc.h"
-#include "net/gnrc/netif.h"
+#include "net/gnrc/sixlowpan/netif.h"
 #include "net/sixlowpan.h"
 
 #define ENABLE_DEBUG    (0)
@@ -33,6 +33,10 @@
 #endif
 
 static kernel_pid_t _pid = KERNEL_PID_UNDEF;
+
+#ifdef MODULE_GNRC_SIXLOWPAN_FRAG
+static gnrc_sixlowpan_msg_frag_t fragment_msg = {KERNEL_PID_UNDEF, NULL, 0, 0};
+#endif
 
 #if ENABLE_DEBUG
 static char _stack[GNRC_SIXLOWPAN_STACK_SIZE + THREAD_EXTRA_STACKSIZE_PRINTF];
@@ -58,92 +62,6 @@ kernel_pid_t gnrc_sixlowpan_init(void)
                          THREAD_CREATE_STACKTEST, _event_loop, NULL, "6lo");
 
     return _pid;
-}
-
-void gnrc_sixlowpan_dispatch_recv(gnrc_pktsnip_t *pkt, void *context,
-                                  unsigned page)
-{
-    gnrc_nettype_t type;
-
-    (void)context;
-    (void)page;
-#ifdef MODULE_CCNLITE
-    type = GNRC_NETTYPE_UNDEF;
-    for (gnrc_pktsnip_t *ptr = pkt; (ptr || (type == GNRC_NETTYPE_UNDEF));
-         ptr = ptr->next) {
-        if ((ptr->next) && (ptr->next->type == GNRC_NETTYPE_NETIF)) {
-            type = ptr->type;
-        }
-    }
-    assert(network_snip);
-#else   /* MODULE_CCNLITE */
-    /* just assume normal IPv6 traffic */
-    type = GNRC_NETTYPE_IPV6;
-#endif  /* MODULE_CCNLITE */
-    if (!gnrc_netapi_dispatch_receive(type,
-                                      GNRC_NETREG_DEMUX_CTX_ALL, pkt)) {
-        DEBUG("6lo: No receivers for this packet found\n");
-        gnrc_pktbuf_release(pkt);
-    }
-}
-
-void gnrc_sixlowpan_dispatch_send(gnrc_pktsnip_t *pkt, void *context,
-                                  unsigned page)
-{
-    (void)context;
-    (void)page;
-    assert(pkt->type == GNRC_NETTYPE_NETIF);
-    gnrc_netif_hdr_t *hdr = pkt->data;
-    if (gnrc_netapi_send(hdr->if_pid, pkt) < 1) {
-        DEBUG("6lo: unable to send %p over interface %u\n", (void *)pkt,
-              hdr->if_pid);
-        gnrc_pktbuf_release(pkt);
-    }
-}
-
-void gnrc_sixlowpan_multiplex_by_size(gnrc_pktsnip_t *pkt,
-                                      size_t orig_datagram_size,
-                                      gnrc_netif_t *netif,
-                                      unsigned page)
-{
-    assert(pkt != NULL);
-    assert(netif != NULL);
-    size_t datagram_size = gnrc_pkt_len(pkt->next);
-    DEBUG("6lo: iface->sixlo.max_frag_size = %u for interface %i\n",
-          netif->sixlo.max_frag_size, netif->pid);
-    if ((netif->sixlo.max_frag_size == 0) ||
-        (datagram_size <= netif->sixlo.max_frag_size)) {
-        DEBUG("6lo: Dispatch for sending\n");
-        gnrc_sixlowpan_dispatch_send(pkt, NULL, page);
-    }
-#ifdef MODULE_GNRC_SIXLOWPAN_FRAG
-    else if (orig_datagram_size <= SIXLOWPAN_FRAG_MAX_LEN) {
-        DEBUG("6lo: Send fragmented (%u > %u)\n",
-              (unsigned int)datagram_size, netif->sixlo.max_frag_size);
-        gnrc_sixlowpan_msg_frag_t *fragment_msg;
-
-        fragment_msg = gnrc_sixlowpan_msg_frag_get();
-        if (fragment_msg == NULL) {
-            DEBUG("6lo: Not enough resources to fragment packet. "
-                  "Dropping packet\n");
-            gnrc_pktbuf_release_error(pkt, ENOMEM);
-            return;
-        }
-        fragment_msg->pid = netif->pid;
-        fragment_msg->pkt = pkt;
-        fragment_msg->datagram_size = orig_datagram_size;
-        /* Sending the first fragment has an offset==0 */
-        fragment_msg->offset = 0;
-
-        gnrc_sixlowpan_frag_send(pkt, fragment_msg, page);
-    }
-#endif
-    else {
-        (void)orig_datagram_size;
-        DEBUG("6lo: packet too big (%u > %u)\n",
-              (unsigned int)datagram_size, netif->sixlo.max_frag_size);
-        gnrc_pktbuf_release_error(pkt, EMSGSIZE);
-    }
 }
 
 static void _receive(gnrc_pktsnip_t *pkt)
@@ -205,15 +123,38 @@ static void _receive(gnrc_pktsnip_t *pkt)
 #ifdef MODULE_GNRC_SIXLOWPAN_FRAG
     else if (sixlowpan_frag_is((sixlowpan_frag_t *)dispatch)) {
         DEBUG("6lo: received 6LoWPAN fragment\n");
-        gnrc_sixlowpan_frag_recv(pkt, NULL, 0);
+        gnrc_sixlowpan_frag_handle_pkt(pkt);
         return;
     }
 #endif
 #ifdef MODULE_GNRC_SIXLOWPAN_IPHC
     else if (sixlowpan_iphc_is(dispatch)) {
-        DEBUG("6lo: received 6LoWPAN IPHC comressed datagram\n");
-        gnrc_sixlowpan_iphc_recv(pkt, NULL, 0);
-        return;
+        size_t dispatch_size, nh_len;
+        gnrc_pktsnip_t *sixlowpan;
+        gnrc_pktsnip_t *dec_hdr = gnrc_pktbuf_add(NULL, NULL, sizeof(ipv6_hdr_t),
+                                                  GNRC_NETTYPE_IPV6);
+        if ((dec_hdr == NULL) ||
+            (dispatch_size = gnrc_sixlowpan_iphc_decode(&dec_hdr, pkt, 0, 0,
+                                                        &nh_len)) == 0) {
+            DEBUG("6lo: error on IPHC decoding\n");
+            if (dec_hdr != NULL) {
+                gnrc_pktbuf_release(dec_hdr);
+            }
+            gnrc_pktbuf_release(pkt);
+            return;
+        }
+        sixlowpan = gnrc_pktbuf_mark(pkt, dispatch_size, GNRC_NETTYPE_SIXLOWPAN);
+        if (sixlowpan == NULL) {
+            DEBUG("6lo: error on marking IPHC dispatch\n");
+            gnrc_pktbuf_release(dec_hdr);
+            gnrc_pktbuf_release(pkt);
+            return;
+        }
+
+        /* Remove IPHC dispatches */
+        /* Insert decoded header instead */
+        pkt = gnrc_pktbuf_replace_snip(pkt, sixlowpan, dec_hdr);
+        payload->type = GNRC_NETTYPE_UNDEF;
     }
 #endif
     else {
@@ -222,7 +163,10 @@ static void _receive(gnrc_pktsnip_t *pkt)
         gnrc_pktbuf_release(pkt);
         return;
     }
-    gnrc_sixlowpan_dispatch_recv(pkt, NULL, 0);
+    if (!gnrc_netapi_dispatch_receive(GNRC_NETTYPE_IPV6, GNRC_NETREG_DEMUX_CTX_ALL, pkt)) {
+        DEBUG("6lo: No receivers for this packet found\n");
+        gnrc_pktbuf_release(pkt);
+    }
 }
 
 static inline bool _add_uncompr_disp(gnrc_pktsnip_t *pkt)
@@ -247,8 +191,8 @@ static inline bool _add_uncompr_disp(gnrc_pktsnip_t *pkt)
 static void _send(gnrc_pktsnip_t *pkt)
 {
     gnrc_netif_hdr_t *hdr;
-    gnrc_pktsnip_t *tmp;
-    gnrc_netif_t *netif;
+    gnrc_pktsnip_t *pkt2;
+    gnrc_sixlowpan_netif_t *iface;
     /* datagram_size: pure IPv6 packet without 6LoWPAN dispatches or compression */
     size_t datagram_size;
 
@@ -264,37 +208,103 @@ static void _send(gnrc_pktsnip_t *pkt)
         return;
     }
 
-    tmp = gnrc_pktbuf_start_write(pkt);
+    pkt2 = gnrc_pktbuf_start_write(pkt);
 
-    if (tmp == NULL) {
+    if (pkt2 == NULL) {
         DEBUG("6lo: no space left in packet buffer\n");
         gnrc_pktbuf_release(pkt);
         return;
     }
-    pkt = tmp;
-    hdr = pkt->data;
-    netif = gnrc_netif_get_by_pid(hdr->if_pid);
-    datagram_size = gnrc_pkt_len(pkt->next);
 
-    if (netif == NULL) {
+    hdr = pkt2->data;
+    iface = gnrc_sixlowpan_netif_get(hdr->if_pid);
+    datagram_size = gnrc_pkt_len(pkt2->next);
+
+    if (iface == NULL) {
         DEBUG("6lo: Can not get 6LoWPAN specific interface information.\n");
         gnrc_pktbuf_release(pkt);
         return;
     }
 
 #ifdef MODULE_GNRC_SIXLOWPAN_IPHC
-    if (netif->flags & GNRC_NETIF_FLAGS_6LO_HC) {
-        gnrc_sixlowpan_iphc_send(pkt, NULL, 0);
+    if (iface->iphc_enabled) {
+        if (!gnrc_sixlowpan_iphc_encode(pkt2)) {
+            DEBUG("6lo: error on IPHC encoding\n");
+            gnrc_pktbuf_release(pkt2);
+            return;
+        }
+        /* IPHC dispatch does not count on dispatch length since it _shortens_
+         * the datagram */
+    }
+    else {
+        if (!_add_uncompr_disp(pkt2)) {
+            /* adding uncompressed dispatch failed */
+            DEBUG("6lo: no space left in packet buffer\n");
+            gnrc_pktbuf_release(pkt2);
+            return;
+        }
+    }
+#else
+    /* suppress clang-analyzer report about iface being not read */
+    (void) iface;
+    if (!_add_uncompr_disp(pkt2)) {
+        /* adding uncompressed dispatch failed */
+        DEBUG("6lo: no space left in packet buffer\n");
+        gnrc_pktbuf_release(pkt2);
         return;
     }
 #endif
-    if (!_add_uncompr_disp(pkt)) {
-        /* adding uncompressed dispatch failed */
-        DEBUG("6lo: no space left in packet buffer\n");
-        gnrc_pktbuf_release(pkt);
+    DEBUG("6lo: iface->max_frag_size = %" PRIu16 " for interface %"
+          PRIkernel_pid "\n", iface->max_frag_size, hdr->if_pid);
+
+    /* IP should not send anything here if it is not a 6LoWPAN interface,
+     * so we don't need to check for NULL pointers.
+     * Note, that datagram_size cannot be used here, because the header size
+     * might be changed by IPHC. */
+    if (gnrc_pkt_len(pkt2->next) <= iface->max_frag_size) {
+        DEBUG("6lo: Send SND command for %p to %" PRIu16 "\n",
+              (void *)pkt2, hdr->if_pid);
+        if (gnrc_netapi_send(hdr->if_pid, pkt2) < 1) {
+            DEBUG("6lo: unable to send %p over %" PRIu16 "\n", (void *)pkt, hdr->if_pid);
+            gnrc_pktbuf_release(pkt2);
+        }
+
         return;
     }
-    gnrc_sixlowpan_multiplex_by_size(pkt, datagram_size, netif, 0);
+#ifdef MODULE_GNRC_SIXLOWPAN_FRAG
+    else if (fragment_msg.pkt != NULL) {
+        DEBUG("6lo: Fragmentation already ongoing. Dropping packet\n");
+        gnrc_pktbuf_release(pkt2);
+        return;
+    }
+    else if (datagram_size <= SIXLOWPAN_FRAG_MAX_LEN) {
+        DEBUG("6lo: Send fragmented (%u > %" PRIu16 ")\n",
+              (unsigned int)datagram_size, iface->max_frag_size);
+        msg_t msg;
+
+        fragment_msg.pid = hdr->if_pid;
+        fragment_msg.pkt = pkt2;
+        fragment_msg.datagram_size = datagram_size;
+        /* Sending the first fragment has an offset==0 */
+        fragment_msg.offset = 0;
+
+        /* set the outgoing message's fields */
+        msg.type = GNRC_SIXLOWPAN_MSG_FRAG_SND;
+        msg.content.ptr = &fragment_msg;
+        /* send message to self */
+        msg_send_to_self(&msg);
+    }
+    else {
+        DEBUG("6lo: packet too big (%u > %" PRIu16 ")\n",
+              (unsigned int)datagram_size, (uint16_t)SIXLOWPAN_FRAG_MAX_LEN);
+        gnrc_pktbuf_release(pkt2);
+    }
+#else
+    (void) datagram_size;
+    DEBUG("6lo: packet too big (%u > %" PRIu16 ")\n",
+          (unsigned int)datagram_size, iface->max_frag_size);
+    gnrc_pktbuf_release(pkt2);
+#endif
 }
 
 static void *_event_loop(void *args)
@@ -337,11 +347,7 @@ static void *_event_loop(void *args)
 #ifdef MODULE_GNRC_SIXLOWPAN_FRAG
             case GNRC_SIXLOWPAN_MSG_FRAG_SND:
                 DEBUG("6lo: send fragmented event received\n");
-                gnrc_sixlowpan_frag_send(NULL, msg.content.ptr, 0);
-                break;
-            case GNRC_SIXLOWPAN_MSG_FRAG_GC_RBUF:
-                DEBUG("6lo: garbage collect reassembly buffer event received\n");
-                gnrc_sixlowpan_frag_rbuf_gc();
+                gnrc_sixlowpan_frag_send(msg.content.ptr);
                 break;
 #endif
 

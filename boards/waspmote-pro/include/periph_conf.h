@@ -29,7 +29,7 @@ extern "C" {
  * @name    Clock configuration
  * @{
  */
-#define CLOCK_CORECLOCK     (14745600UL)
+#define CLOCK_CORECLOCK     (14745600L)
 /** @} */
 
 /**
@@ -104,19 +104,9 @@ extern "C" {
 /** @} */
 
 /**
- * @name    I2C configuration
- * @{
+ * @brief    I2C configuration
  */
-#define I2C_BUS_SPEED       I2C_SPEED_FAST
 #define I2C_NUMOF           1
-/** @} */
-
-/**
- * @name     ADC configuration
- * @{
- */
-#define ADC_NUMOF           (8U)
-/** @} */
 
 #ifdef __cplusplus
 }

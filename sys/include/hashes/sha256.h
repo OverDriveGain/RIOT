@@ -31,9 +31,7 @@
 
 
 /**
- * @defgroup    sys_hashes_sha256 SHA-256
- * @ingroup     sys_hashes_unkeyed
- * @brief       Implementation of the SHA-256 hashing function
+ * @ingroup     sys_hashes
  * @{
  *
  * @file
@@ -49,15 +47,11 @@
 #define HASHES_SHA256_H
 
 #include <inttypes.h>
-#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
- * @brief   Length of SHA256 digests in bytes
- */
 #define SHA256_DIGEST_LENGTH 32
 
 /**
@@ -66,7 +60,7 @@ extern "C" {
 #define SHA256_INTERNAL_BLOCK_SIZE (64)
 
 /**
- * @brief Context for cipher operations based on sha256
+ * @brief Context for ciper operations based on sha256
  */
 typedef struct {
     /** global state */

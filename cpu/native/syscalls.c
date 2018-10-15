@@ -10,7 +10,7 @@
  * General Public License v2.1. See the file LICENSE in the top level
  * directory for more details.
  *
- * @ingroup cpu_native
+ * @ingroup native_cpu
  * @{
  * @file
  * @author  Ludwig Knüpfer <ludwig.knuepfer@fu-berlin.de>
@@ -62,11 +62,9 @@ void (*real_freeifaddrs)(struct ifaddrs *ifa);
 void (*real_srandom)(unsigned int seed);
 int (*real_accept)(int socket, ...);
 int (*real_bind)(int socket, ...);
-int (*real_connect)(int socket, ...);
 int (*real_printf)(const char *format, ...);
 int (*real_getaddrinfo)(const char *node, ...);
 int (*real_getifaddrs)(struct ifaddrs **ifap);
-int (*real_gettimeofday)(struct timeval *t, ...);
 int (*real_getpid)(void);
 int (*real_chdir)(const char *path);
 int (*real_close)(int);
@@ -265,9 +263,6 @@ int puts(const char *s)
     return r;
 }
 
-/* Solve 'format string is not a string literal' as it is validly used in this
- * function */
-__attribute__((__format__ (__printf__, 1, 0)))
 char *make_message(const char *format, va_list argp)
 {
     int size = 100;
@@ -427,9 +422,10 @@ int getpid(void)
 int _gettimeofday(struct timeval *tp, void *restrict tzp)
 {
     (void) tzp;
-    uint64_t now = xtimer_now_usec64();
-    tp->tv_sec  = now / US_PER_SEC;
-    tp->tv_usec = now - tp->tv_sec;
+    timex_t now;
+    xtimer_now_timex(&now);
+    tp->tv_sec = now.seconds;
+    tp->tv_usec = now.microseconds;
     return 0;
 }
 #endif
@@ -451,13 +447,11 @@ void _native_init_syscalls(void)
     *(void **)(&real_srandom) = dlsym(RTLD_NEXT, "srandom");
     *(void **)(&real_accept) = dlsym(RTLD_NEXT, "accept");
     *(void **)(&real_bind) = dlsym(RTLD_NEXT, "bind");
-    *(void **)(&real_connect) = dlsym(RTLD_NEXT, "connect");
     *(void **)(&real_printf) = dlsym(RTLD_NEXT, "printf");
     *(void **)(&real_gai_strerror) = dlsym(RTLD_NEXT, "gai_strerror");
     *(void **)(&real_getaddrinfo) = dlsym(RTLD_NEXT, "getaddrinfo");
     *(void **)(&real_getifaddrs) = dlsym(RTLD_NEXT, "getifaddrs");
     *(void **)(&real_getpid) = dlsym(RTLD_NEXT, "getpid");
-    *(void **)(&real_gettimeofday) = dlsym(RTLD_NEXT, "gettimeofday");
     *(void **)(&real_pipe) = dlsym(RTLD_NEXT, "pipe");
     *(void **)(&real_chdir) = dlsym(RTLD_NEXT, "chdir");
     *(void **)(&real_close) = dlsym(RTLD_NEXT, "close");

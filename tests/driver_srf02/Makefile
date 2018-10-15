@@ -1,6 +1,7 @@
+APPLICATION = driver_srf02
 include ../Makefile.tests_common
 
-BOARD_INSUFFICIENT_MEMORY := arduino-duemilanove arduino-uno
+FEATURES_REQUIRED = periph_i2c
 
 USEMODULE += xtimer
 USEMODULE += srf02

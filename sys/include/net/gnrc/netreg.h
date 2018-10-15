@@ -93,7 +93,7 @@ typedef enum {
  *
  * @return  An initialized netreg entry
  */
-#if defined(MODULE_GNRC_NETAPI_MBOX) || defined(MODULE_GNRC_NETAPI_CALLBACKS)
+#ifdef MODULE_GNRC_NETAPI_MBOX
 #define GNRC_NETREG_ENTRY_INIT_PID(demux_ctx, pid)  { NULL, demux_ctx, \
                                                       GNRC_NETREG_TYPE_DEFAULT, \
                                                       { pid } }
@@ -305,9 +305,7 @@ static inline void gnrc_netreg_entry_init_cb(gnrc_netreg_entry_t *entry,
  * @warning Call gnrc_netreg_unregister() *before* you leave the context you
  *          allocated @p entry in. Otherwise it might get overwritten.
  *
- * @pre The calling thread must provide a [message queue](@ref msg_init_queue)
- *      when using @ref GNRC_NETREG_TYPE_DEFAULT for gnrc_netreg_entry_t::type
- *      of @p entry.
+ * @pre The calling thread must provide a message queue.
  *
  * @return  0 on success
  * @return  -EINVAL if @p type was < GNRC_NETTYPE_UNDEF or >= GNRC_NETTYPE_NUMOF

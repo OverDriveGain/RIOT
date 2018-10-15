@@ -35,6 +35,8 @@
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
 
+#define I2C_SPEED           I2C_SPEED_FAST
+
 #define BUS                 (dev->params.i2c)
 #define ADDR                (dev->params.addr)
 
@@ -49,8 +51,14 @@ int mag3110_init(mag3110_t *dev, const mag3110_params_t *params)
     memcpy(dev, params, sizeof(mag3110_params_t));
 
     i2c_acquire(BUS);
+    /* initialize the I2C bus */
+    if (i2c_init_master(BUS, I2C_SPEED) < 0) {
+        i2c_release(BUS);
+        LOG_ERROR("mag3110_init: failed!\n");
+        return -MAG3110_ERROR_I2C;
+    }
     /* test device */
-    i2c_read_regs(BUS, ADDR, MAG3110_WHO_AM_I, &reg, 1, 0);
+    i2c_read_regs(BUS, ADDR, MAG3110_WHO_AM_I, &reg, 1);
     if (reg != dev->params.type) {
         i2c_release(BUS);
         LOG_ERROR("mag3110_init: invalid WHO_AM_I value (0x%02x)!\n", (int)reg);
@@ -58,26 +66,26 @@ int mag3110_init(mag3110_t *dev, const mag3110_params_t *params)
     }
     /* enable automatic magnetic sensor reset */
     reg = MAG3110_CTRL_REG2_AUTO_MRST_EN;
-    if (i2c_write_regs(BUS, ADDR, MAG3110_CTRL_REG2, &reg, 1, 0) < 0) {
+    if (i2c_write_regs(BUS, ADDR, MAG3110_CTRL_REG2, &reg, 1) != 1) {
         i2c_release(BUS);
         LOG_ERROR("mag3110_init: failed to enable auto reset!\n");
         return -MAG3110_ERROR_CNF;
     }
     /* set sample rate */
     reg = MAG3110_CTRL_REG1_DROS(dev->params.dros);
-    if (i2c_write_regs(BUS, ADDR, MAG3110_CTRL_REG1, &reg, 1, 0) < 0) {
+    if (i2c_write_regs(BUS, ADDR, MAG3110_CTRL_REG1, &reg, 1) != 1) {
         i2c_release(BUS);
         LOG_ERROR("mag3110_init: failed to set sample rate!\n");
         return -MAG3110_ERROR_CNF;
     }
     /* set device active */
-    if (i2c_read_regs(BUS, ADDR, MAG3110_CTRL_REG1, &reg, 1, 0) < 0) {
+    if (i2c_read_regs(BUS, ADDR, MAG3110_CTRL_REG1, &reg, 1) != 1) {
         i2c_release(BUS);
         LOG_ERROR("mag3110_init: failed to read device state!\n");
         return -MAG3110_ERROR_I2C;
     }
     reg |= MAG3110_CTRL_REG1_AC;
-    if (i2c_write_regs(BUS, ADDR, MAG3110_CTRL_REG1, &reg, 1, 0) < 0) {
+    if (i2c_write_regs(BUS, ADDR, MAG3110_CTRL_REG1, &reg, 1) != 1) {
         i2c_release(BUS);
         LOG_ERROR("mag3110_init: failed to set device active!\n");
         return -MAG3110_ERROR_CNF;
@@ -105,7 +113,7 @@ int mag3110_set_user_offset(const mag3110_t *dev, int16_t x, int16_t y, int16_t 
           (int)x, (int)y, (int)z);
 
     i2c_acquire(BUS);
-    if (i2c_write_regs(BUS, ADDR, MAG3110_OFF_X_MSB, buf, 6, 0) < 0) {
+    if (i2c_write_regs(BUS, ADDR, MAG3110_OFF_X_MSB, buf, 6) != 6) {
         i2c_release(BUS);
         LOG_ERROR("mag3110_set_user_offset: failed to set offsets!\n");
         return -MAG3110_ERROR_I2C;
@@ -122,14 +130,14 @@ int mag3110_set_active(const mag3110_t *dev)
     assert(dev);
 
     i2c_acquire(BUS);
-    if (i2c_read_regs(BUS, ADDR, MAG3110_CTRL_REG1, &reg, 1, 0) < 0) {
+    if (i2c_read_regs(BUS, ADDR, MAG3110_CTRL_REG1, &reg, 1) != 1) {
         i2c_release(BUS);
         return -MAG3110_ERROR_I2C;
     }
 
     reg |= MAG3110_CTRL_REG1_AC;
 
-    if (i2c_write_regs(BUS, ADDR, MAG3110_CTRL_REG1, &reg, 1, 0) < 0) {
+    if (i2c_write_regs(BUS, ADDR, MAG3110_CTRL_REG1, &reg, 1) != 1) {
         i2c_release(BUS);
         return -MAG3110_ERROR_I2C;
     }
@@ -145,14 +153,14 @@ int mag3110_set_standby(const mag3110_t *dev)
     assert(dev);
 
     i2c_acquire(BUS);
-    if (i2c_read_regs(BUS, ADDR, MAG3110_CTRL_REG1, &reg, 1, 0) < 0) {
+    if (i2c_read_regs(BUS, ADDR, MAG3110_CTRL_REG1, &reg, 1) != 1) {
         i2c_release(BUS);
         return -MAG3110_ERROR_I2C;
     }
 
     reg &= ~MAG3110_CTRL_REG1_AC;
 
-    if (i2c_write_regs(BUS, ADDR, MAG3110_CTRL_REG1, &reg, 1, 0) < 0) {
+    if (i2c_write_regs(BUS, ADDR, MAG3110_CTRL_REG1, &reg, 1) != 1) {
         i2c_release(BUS);
         return -MAG3110_ERROR_I2C;
     }
@@ -168,7 +176,7 @@ int mag3110_is_ready(const mag3110_t *dev)
     assert(dev);
 
     i2c_acquire(BUS);
-    if (i2c_read_regs(BUS, ADDR, MAG3110_DR_STATUS, &reg, 1, 0) < 0) {
+    if (i2c_read_regs(BUS, ADDR, MAG3110_DR_STATUS, &reg, 1) != 1) {
         i2c_release(BUS);
         return -MAG3110_ERROR_I2C;
     }
@@ -184,7 +192,7 @@ int mag3110_read(const mag3110_t *dev, mag3110_data_t *data)
     assert(dev);
 
     i2c_acquire(BUS);
-    if (i2c_read_regs(BUS, ADDR, MAG3110_DR_STATUS, buf, 7, 0) < 0) {
+    if (i2c_read_regs(BUS, ADDR, MAG3110_DR_STATUS, buf, 7) != 7) {
         i2c_release(BUS);
         return -MAG3110_ERROR_I2C;
     }
@@ -204,7 +212,7 @@ int mag3110_read_dtemp(const mag3110_t *dev, int8_t *dtemp)
     assert(dev);
 
     i2c_acquire(BUS);
-    if (i2c_read_regs(BUS, ADDR, MAG3110_DIE_TEMP, dtemp, 1, 0) < 0) {
+    if (i2c_read_regs(BUS, ADDR, MAG3110_DIE_TEMP, dtemp, 1) != 1) {
         i2c_release(BUS);
         return -MAG3110_ERROR_I2C;
     }

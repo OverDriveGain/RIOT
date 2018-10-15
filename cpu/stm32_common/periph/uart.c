@@ -30,7 +30,8 @@
 #include "assert.h"
 #include "periph/uart.h"
 #include "periph/gpio.h"
-#include "pm_layered.h"
+
+#ifdef UART_NUMOF
 
 #define RXENABLE            (USART_CR1_RE | USART_CR1_RXNEIE)
 
@@ -86,7 +87,7 @@ int uart_init(uart_t uart, uint32_t baudrate, uart_rx_cb_t rx_cb, void *arg)
 #endif
 
     /* enable the clock */
-    uart_poweron(uart);
+    periph_clk_en(uart_config[uart].bus, uart_config[uart].rcc_mask);
 
     /* reset UART configuration -> defaults to 8N1 mode */
     dev(uart)->CR1 = 0;
@@ -118,21 +119,24 @@ int uart_init(uart_t uart, uint32_t baudrate, uart_rx_cb_t rx_cb, void *arg)
     return UART_OK;
 }
 
-static inline void send_byte(uart_t uart, uint8_t byte)
+void uart_write(uart_t uart, const uint8_t *data, size_t len)
 {
+    assert(uart < UART_NUMOF);
+
+    for (size_t i = 0; i < len; i++) {
 #if defined(CPU_FAM_STM32F0) || defined(CPU_FAM_STM32L0) \
     || defined(CPU_FAM_STM32F3) || defined(CPU_FAM_STM32L4) \
     || defined(CPU_FAM_STM32F7)
-    while (!(dev(uart)->ISR & USART_ISR_TXE)) {}
-    dev(uart)->TDR = byte;
+        while (!(dev(uart)->ISR & USART_ISR_TXE)) {}
+        dev(uart)->TDR = data[i];
 #else
-    while (!(dev(uart)->SR & USART_SR_TXE)) {}
-    dev(uart)->DR = byte;
+        while (!(dev(uart)->SR & USART_SR_TXE)) {}
+        dev(uart)->DR = data[i];
 #endif
-}
+    }
 
-static inline void wait_for_tx_complete(uart_t uart)
-{
+    /* make sure the function is synchronous by waiting for the transfer to
+     * finish */
 #if defined(CPU_FAM_STM32F0) || defined(CPU_FAM_STM32L0) \
     || defined(CPU_FAM_STM32F3) || defined(CPU_FAM_STM32L4) \
     || defined(CPU_FAM_STM32F7)
@@ -142,78 +146,16 @@ static inline void wait_for_tx_complete(uart_t uart)
 #endif
 }
 
-void uart_write(uart_t uart, const uint8_t *data, size_t len)
-{
-    assert(uart < UART_NUMOF);
-
-#ifdef MODULE_PERIPH_DMA
-    if (!len) {
-        return;
-    }
-    if (uart_config[uart].dma != DMA_STREAM_UNDEF) {
-        if (irq_is_in()) {
-            uint16_t todo = 0;
-            if (dev(uart)->CR3 & USART_CR3_DMAT) {
-                /* DMA transfer for UART on-going */
-                todo = dma_suspend(uart_config[uart].dma);
-            }
-            if (todo) {
-                dma_stop(uart_config[uart].dma);
-                dev(uart)->CR3 &= ~USART_CR3_DMAT;
-            }
-            for (unsigned i = 0; i < len; i++) {
-                send_byte(uart, data[i]);
-            }
-            if (todo > 0) {
-                wait_for_tx_complete(uart);
-                dev(uart)->CR3 |= USART_CR3_DMAT;
-                dma_resume(uart_config[uart].dma, todo);
-            }
-        }
-        else {
-            dma_acquire(uart_config[uart].dma);
-            dev(uart)->CR3 |= USART_CR3_DMAT;
-            dma_transfer(uart_config[uart].dma, uart_config[uart].dma_chan, data,
-                         (void *)&dev(uart)->DR, len, DMA_MEM_TO_PERIPH, DMA_INC_SRC_ADDR);
-            dma_release(uart_config[uart].dma);
-
-            /* make sure the function is synchronous by waiting for the transfer to
-             * finish */
-            wait_for_tx_complete(uart);
-            dev(uart)->CR3 &= ~USART_CR3_DMAT;
-        }
-        return;
-    }
-#endif
-    for (size_t i = 0; i < len; i++) {
-        send_byte(uart, data[i]);
-    }
-    /* make sure the function is synchronous by waiting for the transfer to
-     * finish */
-    wait_for_tx_complete(uart);
-}
-
 void uart_poweron(uart_t uart)
 {
     assert(uart < UART_NUMOF);
-#ifdef STM32_PM_STOP
-    if (isr_ctx[uart].rx_cb) {
-        pm_block(STM32_PM_STOP);
-    }
-#endif
     periph_clk_en(uart_config[uart].bus, uart_config[uart].rcc_mask);
 }
 
 void uart_poweroff(uart_t uart)
 {
     assert(uart < UART_NUMOF);
-
-    periph_clk_dis(uart_config[uart].bus, uart_config[uart].rcc_mask);
-#ifdef STM32_PM_STOP
-    if (isr_ctx[uart].rx_cb) {
-        pm_unblock(STM32_PM_STOP);
-    }
-#endif
+    periph_clk_en(uart_config[uart].bus, uart_config[uart].rcc_mask);
 }
 
 static inline void irq_handler(uart_t uart)
@@ -289,3 +231,5 @@ void UART_5_ISR(void)
     irq_handler(UART_DEV(5));
 }
 #endif
+
+#endif /* UART_NUMOF */

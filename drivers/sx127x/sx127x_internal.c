@@ -27,8 +27,6 @@
 
 #include "irq.h"
 
-#include "net/lora.h"
-
 #include "sx127x.h"
 #include "sx127x_registers.h"
 #include "sx127x_internal.h"
@@ -42,28 +40,28 @@
 #define SX127X_SPI_MODE     (SPI_MODE_0)
 
 
-int sx127x_check_version(const sx127x_t *dev)
+bool sx127x_test(const sx127x_t *dev)
 {
     /* Read version number and compare with sx127x assigned revision */
     uint8_t version = sx127x_reg_read(dev, SX127X_REG_VERSION);
 
 #if defined(MODULE_SX1272)
     if (version != VERSION_SX1272) {
-        DEBUG("[sx127x] sx1272 test failed, invalid version number: %d\n",
+        DEBUG("[Error] sx1272 test failed, invalid version number: %d\n",
               version);
-        return -1;
+        return false;
     }
-    DEBUG("[sx127x] SX1272 transceiver detected\n");
+    DEBUG("SX1272 transceiver detected.\n");
 #else /* MODULE_SX1276) */
     if (version != VERSION_SX1276) {
-        DEBUG("[sx127x] sx1276 test failed, invalid version number: %d\n",
+        DEBUG("[Error] sx1276 test failed, invalid version number: %d\n",
               version);
-        return -1;
+        return false;
     }
-    DEBUG("[sx127x] SX1276 transceiver detected\n");
+    DEBUG("SX1276 transceiver detected.\n");
 #endif
 
-    return 0;
+    return true;
 }
 
 void sx127x_reg_write(const sx127x_t *dev, uint8_t addr, uint8_t data)
@@ -124,8 +122,7 @@ void sx127x_read_fifo(const sx127x_t *dev, uint8_t *buffer, uint8_t size)
     sx127x_reg_read_burst(dev, 0, buffer, size);
 }
 
-#if defined(MODULE_SX1276)
-void sx1276_rx_chain_calibration(sx127x_t *dev)
+void sx127x_rx_chain_calibration(sx127x_t *dev)
 {
     uint8_t reg_pa_config_init_val;
     uint32_t initial_freq;
@@ -134,7 +131,7 @@ void sx1276_rx_chain_calibration(sx127x_t *dev)
     reg_pa_config_init_val = sx127x_reg_read(dev, SX127X_REG_PACONFIG);
     initial_freq = (double) (((uint32_t) sx127x_reg_read(dev, SX127X_REG_FRFMSB) << 16)
                              | ((uint32_t) sx127x_reg_read(dev, SX127X_REG_FRFMID) << 8)
-                             | ((uint32_t) sx127x_reg_read(dev, SX127X_REG_FRFLSB))) * (double)LORA_FREQUENCY_RESOLUTION_DEFAULT;
+                             | ((uint32_t) sx127x_reg_read(dev, SX127X_REG_FRFLSB))) * (double) SX127X_FREQUENCY_RESOLUTION;
 
     /* Cut the PA just in case, RFO output, power = -1 dBm */
     sx127x_reg_write(dev, SX127X_REG_PACONFIG, 0x00);
@@ -165,7 +162,6 @@ void sx1276_rx_chain_calibration(sx127x_t *dev)
     sx127x_reg_write(dev, SX127X_REG_PACONFIG, reg_pa_config_init_val);
     sx127x_set_channel(dev, initial_freq);
 }
-#endif
 
 int16_t sx127x_read_rssi(const sx127x_t *dev)
 {
@@ -225,19 +221,4 @@ void sx127x_start_cad(sx127x_t *dev)
         default:
             break;
     }
-}
-
-bool sx127x_is_channel_free(sx127x_t *dev, uint32_t freq, int16_t rssi_threshold)
-{
-    int16_t rssi = 0;
-
-    sx127x_set_channel(dev, freq);
-    sx127x_set_op_mode(dev, SX127X_RF_OPMODE_RECEIVER);
-
-    xtimer_usleep(1000); /* wait 1 millisecond */
-
-    rssi = sx127x_read_rssi(dev);
-    sx127x_set_sleep(dev);
-
-    return (rssi <= rssi_threshold);
 }

@@ -27,27 +27,26 @@
 
 char t1_stack[THREAD_STACKSIZE_MAIN];
 
-kernel_pid_t p_send = KERNEL_PID_UNDEF, p_recv = KERNEL_PID_UNDEF;
+kernel_pid_t p1 = KERNEL_PID_UNDEF, p_main = KERNEL_PID_UNDEF;
 
 void *thread1(void *arg)
 {
     (void) arg;
 
-    printf("sender_thread start\n");
+    printf("THREAD %u start\n", p1);
 
     msg_t msg, reply;
     memset(&msg, 1, sizeof(msg_t));
 
-    /* step 1: send non-blocking to fill up the msg_queue of p_recv */
-    msg_try_send(&msg, p_recv);
+    /* step 1: send asynchonously */
+    msg_try_send(&msg, p_main);
 
-    /* step 2: send message. This puts sender_thread into msg_waiters and turns its
-       status into STATUS_REPLY_BLOCKED. It should block forever, since the
-       second message is never read by p_recv. */
-    msg_send_receive(&msg, &reply, p_recv);
+    /* step 2: send message, turning its status into STATUS_REPLY_BLOCKED */
+    msg_send_receive(&msg, &reply, p_main);
+    printf("received: %" PRIkernel_pid ", %u \n", reply.sender_pid, reply.type);
+    printf("pointer: %s\n", (char *)reply.content.ptr);
 
-    /* If this is printed, sender_thread did *not* block as expected. */
-    printf("ERROR: sender_thread should be blocking\n");
+    printf("THREAD %" PRIkernel_pid " SHOULD BE BLOCKING :(\n", p1);
 
     return NULL;
 }
@@ -55,15 +54,15 @@ void *thread1(void *arg)
 int main(void)
 {
     msg_t msg;
-    p_recv = sched_active_pid;
+    p_main = sched_active_pid;
 
-    p_send = thread_create(t1_stack, sizeof(t1_stack), THREAD_PRIORITY_MAIN - 1,
+    p1 = thread_create(t1_stack, sizeof(t1_stack), THREAD_PRIORITY_MAIN - 1,
                        THREAD_CREATE_WOUT_YIELD | THREAD_CREATE_STACKTEST,
                        thread1, NULL, "nr1");
 
-    /* step 3: receive first msg from sender_thread*/
+    /* step 3: receive a msg */
     msg_receive(&msg);
 
-    printf("main thread alive\n");
+    printf("MAIN THREAD %" PRIkernel_pid " ALIVE!\n", p_main);
     return 0;
 }

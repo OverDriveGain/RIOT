@@ -1,12 +1,12 @@
+# name of your application
+APPLICATION = gnrc_udp
 include ../Makefile.tests_common
 
-BOARD_INSUFFICIENT_MEMORY := arduino-duemilanove arduino-mega2560 arduino-uno \
-                             calliope-mini chronos hifive1 mega-xplained \
-                             microbit msb-430 msb-430h \
-                             nucleo-f031k6 nucleo-f042k6 nucleo-f303k8 nucleo-l031k6 \
-                             nucleo-f030r8 nucleo-f070rb nucleo-f072rb nucleo-f103rb nucleo-f302r8 \
-                             nucleo-f334r8 nucleo-l053r8 spark-core stm32f0discovery telosb \
-                             waspmote-pro wsn430-v1_3b wsn430-v1_4 z1
+BOARD_INSUFFICIENT_MEMORY := calliope-mini chronos microbit msb-430 msb-430h \
+                             nucleo32-f031 nucleo32-f042 nucleo32-f303 nucleo32-l031 \
+                             nucleo-f030 nucleo-f070 nucleo-f072 nucleo-f103 nucleo-f302 \
+                             nucleo-f334 nucleo-l053 spark-core stm32f0discovery telosb \
+                             wsn430-v1_3b wsn430-v1_4 z1
 
 USEMODULE += gnrc_netdev_default
 USEMODULE += auto_init_gnrc_netif
@@ -21,6 +21,8 @@ USEMODULE += shell_commands
 USEMODULE += ps
 USEMODULE += netstats_l2
 USEMODULE += netstats_ipv6
+
+CFLAGS += -DDEVELHELP
 
 include $(RIOTBASE)/Makefile.include
 

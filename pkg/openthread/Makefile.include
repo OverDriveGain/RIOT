@@ -1,8 +1,14 @@
 OPENTHREAD_DIR = $(RIOTBASE)/pkg/openthread
 
 INCLUDES += -I$(OPENTHREAD_DIR)/include \
+#MZTODO COMPILE<<<<<<< HEAD
             -I$(PKGDIRBASE)/openthread/output/include \
             -I$(PKGDIRBASE)/openthread/include/openthread \
+#=======
+            -I$(OPENTHREAD_DIR)/include/openthread \
+            -I$(BINDIRBASE)/pkg/$(BOARD)/openthread/output/include \
+            -I$(BINDIRBASE)/pkg/$(BOARD)/openthread/include/openthread \
+#>>>>>>> Fix dependencies, make javascript example run
 
 ifneq (,$(filter openthread_contrib,$(USEMODULE)))
   DIRS += $(OPENTHREAD_DIR)/contrib

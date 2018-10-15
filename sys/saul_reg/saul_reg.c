@@ -63,7 +63,6 @@ int saul_reg_rm(saul_reg_t *dev)
     }
     if (saul_reg == dev) {
         saul_reg = dev->next;
-        return 0;
     }
     while (tmp->next && (tmp->next != dev)) {
         tmp = tmp->next;

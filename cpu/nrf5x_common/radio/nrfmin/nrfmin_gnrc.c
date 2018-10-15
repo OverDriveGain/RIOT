@@ -20,7 +20,11 @@
 
 #include "net/gnrc.h"
 #include "thread.h"
-#include "net/gnrc/netif.h"
+#ifdef MODULE_GNRC_NETIF2
+#include "net/gnrc/netif2.h"
+#else
+#include "net/gnrc/netdev.h"
+#endif
 
 #include "nrfmin_gnrc.h"
 
@@ -32,7 +36,11 @@
  * @{
  */
 #ifndef NRFMIN_GNRC_THREAD_PRIO
-#define NRFMIN_GNRC_THREAD_PRIO     GNRC_NETIF_PRIO
+#ifdef MODULE_GNRC_NETIF2
+#define NRFMIN_GNRC_THREAD_PRIO     GNRC_NETIF2_PRIO
+#else
+#define NRFMIN_GNRC_THREAD_PRIO     GNRC_NETDEV_MAC_PRIO
+#endif
 #endif
 
 #ifndef NRFMIN_GNRC_STACKSIZE
@@ -49,6 +57,14 @@
  * @brief   Allocate the stack for the GNRC netdev thread to run in
  */
 static char stack[NRFMIN_GNRC_STACKSIZE];
+
+#ifndef MODULE_GNRC_NETIF2
+/**
+ * @brief   Allocate the GNRC netdev data structure.
+ */
+static gnrc_netdev_t plug;
+#endif
+
 
 static int hdr_netif_to_nrfmin(nrfmin_hdr_t *nrfmin, gnrc_pktsnip_t *pkt)
 {
@@ -76,9 +92,16 @@ static int hdr_netif_to_nrfmin(nrfmin_hdr_t *nrfmin, gnrc_pktsnip_t *pkt)
     return 0;
 }
 
-static int gnrc_nrfmin_send(gnrc_netif_t *dev, gnrc_pktsnip_t *pkt)
+#ifdef MODULE_GNRC_NETIF2
+static int gnrc_nrfmin_send(gnrc_netif2_t *dev, gnrc_pktsnip_t *pkt)
+#else
+static int gnrc_nrfmin_send(gnrc_netdev_t *dev, gnrc_pktsnip_t *pkt)
+#endif
 {
     int res;
+    struct iovec *vec;
+    size_t vec_len;
+    gnrc_pktsnip_t *vec_snip;
     nrfmin_hdr_t nrfmin_hdr;
 
     assert(pkt);
@@ -92,26 +115,35 @@ static int gnrc_nrfmin_send(gnrc_netif_t *dev, gnrc_pktsnip_t *pkt)
     res = hdr_netif_to_nrfmin(&nrfmin_hdr, pkt);
     if (res < 0) {
         DEBUG("[nrfmin_gnrc] send: failed to build nrfmin header\n");
-        goto out;
+        gnrc_pktbuf_release(pkt);
+        return res;
     }
 
-    /* link first entry after netif hdr of the pkt to the nrfmin header */
-    iolist_t iolist = {
-        .iol_next = (iolist_t *)pkt->next,
-        .iol_base = &nrfmin_hdr,
-        .iol_len = NRFMIN_HDR_LEN
-    };
+    /* create iovec of data */
+    vec_snip = gnrc_pktbuf_get_iovec(pkt, &vec_len);
+    if (vec_snip == NULL) {
+        DEBUG("[nrfmin_gnrc] send: failed to create IO vector\n");
+        gnrc_pktbuf_release(pkt);
+        return -ENOBUFS;
+    }
+
+    /* link first entry of the vector to the nrfmin header */
+    vec = (struct iovec *)vec_snip->data;
+    vec[0].iov_base = &nrfmin_hdr;
+    vec[0].iov_len = NRFMIN_HDR_LEN;
 
     /* and finally send out the data and release the packet */
-    res = dev->dev->driver->send(dev->dev, &iolist);
-
-out:
-    gnrc_pktbuf_release(pkt);
+    res = dev->dev->driver->send(dev->dev, vec, vec_len);
+    gnrc_pktbuf_release(vec_snip);
 
     return res;
 }
 
-static gnrc_pktsnip_t *gnrc_nrfmin_recv(gnrc_netif_t *dev)
+#ifdef MODULE_GNRC_NETIF2
+static gnrc_pktsnip_t *gnrc_nrfmin_recv(gnrc_netif2_t *dev)
+#else
+static gnrc_pktsnip_t *gnrc_nrfmin_recv(gnrc_netdev_t *dev)
+#endif
 {
     int pktsize;
     nrfmin_hdr_t *nrfmin;
@@ -172,17 +204,30 @@ static gnrc_pktsnip_t *gnrc_nrfmin_recv(gnrc_netif_t *dev)
     return pkt_snip;
 }
 
-static const gnrc_netif_ops_t gnrc_nrfmin_ops = {
+#ifdef MODULE_GNRC_NETIF2
+static const gnrc_netif2_ops_t gnrc_nrfmin_ops = {
     .send = gnrc_nrfmin_send,
     .recv = gnrc_nrfmin_recv,
-    .get = gnrc_netif_get_from_netdev,
-    .set = gnrc_netif_set_from_netdev,
+    .get = gnrc_netif2_get_from_netdev,
+    .set = gnrc_netif2_set_from_netdev,
 };
+#endif
 
 void gnrc_nrfmin_init(void)
 {
     /* setup the NRFMIN driver */
     nrfmin_setup();
-    gnrc_netif_create(stack, sizeof(stack), NRFMIN_GNRC_THREAD_PRIO, "nrfmin",
-                      (netdev_t *)&nrfmin_dev, &gnrc_nrfmin_ops);
+#ifdef MODULE_GNRC_NETIF2
+    gnrc_netif2_create(stack, sizeof(stack), NRFMIN_GNRC_THREAD_PRIO, "nrfmin",
+                       (netdev_t *)&nrfmin_dev, &gnrc_nrfmin_ops);
+#else
+    /* initialize the GNRC plug struct */
+    plug.send = gnrc_nrfmin_send;
+    plug.recv = gnrc_nrfmin_recv;
+    plug.dev = &nrfmin_dev;
+
+    gnrc_netdev_init(stack, sizeof(stack),
+                      NRFMIN_GNRC_THREAD_PRIO,
+                      "nrfmin", &plug);
+#endif
 }

@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     examples
+ * @ingroup     xtimer_examples
  * @{
  *
  * @file

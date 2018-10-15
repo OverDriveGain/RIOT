@@ -1,3 +1,6 @@
+# this CPU implementation is using the new core/CPU interface
+export CFLAGS += -DCOREIF_NG=1
+
 # tell the build system that the CPU depends on the atmega common files
 USEMODULE += atmega_common
 
@@ -7,9 +10,6 @@ export ATMEGA_COMMON = $(RIOTCPU)/atmega_common/
 # explicitly tell the linker to link the syscalls and startup code.
 #   Without this the interrupt vectors will not be linked correctly!
 export UNDEF += $(BINDIR)/cpu/startup.o
-
-RAM_LEN = 8K
-ROM_LEN = 128K
 
 # CPU depends on the atmega common module, so include it
 include $(ATMEGA_COMMON)Makefile.include

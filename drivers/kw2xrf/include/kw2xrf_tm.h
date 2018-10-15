@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     drivers_kw2xrf
+ * @ingroup     tests_kw2xrf
  * @{
  *
  * @file

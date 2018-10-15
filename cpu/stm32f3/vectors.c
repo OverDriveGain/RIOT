@@ -21,6 +21,9 @@
 #include <stdint.h>
 #include "vectors_cortexm.h"
 
+/* get the start of the ISR stack as defined in the linkerscript */
+extern uint32_t _estack;
+
 /* define a local dummy handler as it needs to be in the same compilation unit
  * as the alias definition */
 void dummy_handler(void) {
@@ -136,7 +139,7 @@ ISR_VECTOR(1) const isr_t vector_cpu[CPU_IRQ_NUMOF] = {
     isr_tim1_trg_com_tim17, /* [26] TIM1 Trigger and Commutation and TIM17 Interrupt */
     isr_tim1_cc,            /* [27] TIM1 Capture Compare Interrupt */
     isr_tim2,               /* [28] TIM2 global Interrupt */
-#if defined(CPU_LINE_STM32F302x8)
+#if defined(CPU_MODEL_STM32F302R8)
     (0UL),                  /* [29] Reserved */
     (0UL),                  /* [30] Reserved */
     isr_i2c1_ev,            /* [31] I2C1 Event Interrupt & EXTI Line23 Interrupt (I2C1 wakeup) */
@@ -190,7 +193,7 @@ ISR_VECTOR(1) const isr_t vector_cpu[CPU_IRQ_NUMOF] = {
     (0UL),                  /* [79] Reserved */
     (0UL),                  /* [80] Reserved */
     isr_fpu                 /* [81] Floating point Interrupt */
-#elif defined(CPU_LINE_STM32F303x8)
+#elif defined(CPU_MODEL_STM32F303K8)
     isr_tim3,               /* [29] TIM3 global Interrupt */
     (0UL),                  /* [30] Reserved */
     isr_i2c1_ev,            /* [31] I2C1 Event Interrupt & EXTI Line23 Interrupt (I2C1 wakeup) */
@@ -244,7 +247,7 @@ ISR_VECTOR(1) const isr_t vector_cpu[CPU_IRQ_NUMOF] = {
     (0UL),                  /* [79] Reserved */
     (0UL),                  /* [80] Reserved */
     isr_fpu                 /* [81] Floating point Interrupt */
-#elif (CPU_LINE_STM32F334x8)
+#elif (CPU_MODEL_STM32F334R8)
     isr_tim3,               /* [29] TIM3 global Interrupt */
     isr_tim4,               /* [30] TIM4 global Interrupt */
     isr_i2c1_ev,            /* [31] I2C1 Event Interrupt & EXTI Line23 Interrupt (I2C1 wakeup) */
@@ -298,7 +301,7 @@ ISR_VECTOR(1) const isr_t vector_cpu[CPU_IRQ_NUMOF] = {
     (0UL),                  /* [79] Reserved */
     (0UL),                  /* [80] Reserved */
     isr_fpu                 /* [81] Floating point Interrupt */
-#else /* CPU_LINE_STM32F303xC, CPU_LINE_STM32F303xE */
+#else /* CPU_MODEL_STM32F303VC, CPU_MODEL_STM32F303RE, CPU_MODEL_STM32F303ZE */
     isr_tim3,               /* [29] TIM3 global Interrupt */
     isr_tim4,               /* [30] TIM4 global Interrupt */
     isr_i2c1_ev,            /* [31] I2C1 Event Interrupt & EXTI Line23 Interrupt (I2C1 wakeup) */
@@ -318,7 +321,7 @@ ISR_VECTOR(1) const isr_t vector_cpu[CPU_IRQ_NUMOF] = {
     isr_tim8_trg_com,       /* [45] TIM8 Trigger and Commutation Interrupt */
     isr_tim8_cc,            /* [46] TIM8 Capture Compare Interrupt */
     isr_adc3,               /* [47] ADC3 global Interrupt */
-#if defined(CPU_LINE_STM32F303xC)
+#if defined(CPU_MODEL_STM32F303VC)
     (0UL),                  /* [48] Reserved */
 #else
     isr_fmc,                /* [48] FMC global Interrupt */
@@ -346,7 +349,7 @@ ISR_VECTOR(1) const isr_t vector_cpu[CPU_IRQ_NUMOF] = {
     (0UL),                  /* [69] Reserved */
     (0UL),                  /* [70] Reserved */
     (0UL),                  /* [71] Reserved */
-#if defined(CPU_LINE_STM32F303xC)
+#if defined(CPU_MODEL_STM32F303VC)
     (0UL),                  /* [72] Reserved */
     (0UL),                  /* [73] Reserved */
     isr_usb_hp,             /* [74] USB High Priority global Interrupt remap */
@@ -357,7 +360,7 @@ ISR_VECTOR(1) const isr_t vector_cpu[CPU_IRQ_NUMOF] = {
     (0UL),                  /* [79] Reserved */
     (0UL),                  /* [80] Reserved */
     isr_fpu                 /* [81] Floating point Interrupt */
-#else /* CPU_LINE_STM32F303xE */
+#else /* CPU_MODEL_STM32F303RE, CPU_MODEL_STM32F303ZE */
     isr_i2c3_ev,            /* [72] I2C3 event interrupt */
     isr_i2c3_er,            /* [73] I2C3 error interrupt */
     isr_usb_hp,             /* [74] USB High Priority global Interrupt remap */

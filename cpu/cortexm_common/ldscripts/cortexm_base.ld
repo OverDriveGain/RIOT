@@ -108,7 +108,6 @@ SECTIONS
     /* stack section */
     .stack (NOLOAD):
     {
-        KEEP (*(.puf))
         . = ALIGN(8);
         _sstack = .;
         KEEP (*(.isr_stack))
@@ -116,7 +115,7 @@ SECTIONS
         _estack = .;
     } > ram
 
-    .relocate :
+    .relocate : AT (_etext)
     {
         . = ALIGN(4);
         _srelocate = .;
@@ -125,7 +124,7 @@ SECTIONS
         KEEP (*(.openocd .openocd.*))
         . = ALIGN(4);
         _erelocate = .;
-    } > ram AT> rom
+    } > ram
 
     /* .bss section which is used for uninitialized data */
     .bss (NOLOAD) :
@@ -145,7 +144,7 @@ SECTIONS
     _sheap = . ;
     _eheap = ORIGIN(ram) + LENGTH(ram);
 
-    /* Populate information about ram size */
+    /* Populate information abour ram size */
     _sram = ORIGIN(ram);
     _eram = ORIGIN(ram) + LENGTH(ram);
 }

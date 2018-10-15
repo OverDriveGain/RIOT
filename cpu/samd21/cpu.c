@@ -161,10 +161,11 @@ static void clk_init(void)
     }
 
     SYSCTRL->DFLLCTRL.bit.ENABLE = 1;
-    uint32_t mask = SYSCTRL_PCLKSR_DFLLRDY |
-                    SYSCTRL_PCLKSR_DFLLLCKF |
-                    SYSCTRL_PCLKSR_DFLLLCKC;
-    while ((SYSCTRL->PCLKSR.reg & mask) != mask) { } /* Wait for DFLL lock */
+    while ((SYSCTRL->PCLKSR.reg & (SYSCTRL_PCLKSR_DFLLRDY |
+                                   SYSCTRL_PCLKSR_DFLLLCKF |
+                                   SYSCTRL_PCLKSR_DFLLLCKC)) == 0) {
+        /* Wait for DFLLLXXX sync */
+    }
 
     /* select the DFLL as source for clock generator 0 (CPU core clock) */
     GCLK->GENDIV.reg =  (GCLK_GENDIV_DIV(1U) | GCLK_GENDIV_ID(0));

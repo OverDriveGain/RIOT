@@ -21,20 +21,16 @@ BOARD_INSUFFICIENT_MEMORY := airfy-beacon arduino-duemilanove arduino-mega2560 \
 
 # The following boards do not have an available UART
 BOARD_BLACKLIST += mips-malta pic32-wifire pic32-clicker ruuvitag thingy52
-
 # use ethos (ethernet over serial) for network communication and stdio over
 # UART, but not on native, as native has a tap interface towards the host.
 ifeq (,$(filter native,$(BOARD)))
   GNRC_NETIF_NUMOF := 2
-  USEMODULE += ethos
+  USEMODULE += ethos gnrc_netdev
 
   # ethos baudrate can be configured from make command
   ETHOS_BAUDRATE ?= 115200
   CFLAGS += -DETHOS_BAUDRATE=$(ETHOS_BAUDRATE) -DUSE_ETHOS_FOR_STDIO
-else
-  GNRC_NETIF_NUMOF := 2
-  TERMFLAGS += -z [::1]:17754
-  USEMODULE += socket_zep
+  FEATURES_REQUIRED += periph_uart
 endif
 
 # SLIP legacy compatibility
@@ -74,43 +70,30 @@ USEMODULE += ps
 # include UHCP client
 USEMODULE += gnrc_uhcpc
 
-# Optionally include RPL as a routing protocol. When includede gnrc_uhcpc will
-# configure the node as a RPL DODAG root when receiving a prefix.
-#USEMODULE += gnrc_rpl
-
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:
-DEVELHELP ?= 1
+CFLAGS += -DDEVELHELP
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
 TAP ?= tap0
 IPV6_PREFIX ?= 2001:db8::/64
 
-ifeq (native,$(BOARD))
-TERMDEPS += uhcpd-daemon
-
-.PHONY: uhcpd-daemon
-
-uhcpd-daemon: host-tools
-	$(RIOTTOOLS)/uhcpd/bin/uhcpd $(TAP) $(IPV6_PREFIX) &
-else
 # We override the `make term` command to use ethos
-TERMPROG ?= sudo sh $(RIOTTOOLS)/ethos/start_network.sh
+TERMPROG ?= sudo sh $(RIOTBASE)/dist/tools/ethos/start_network.sh
 TERMFLAGS ?= $(PORT) $(TAP) $(IPV6_PREFIX)
 
 # We depend on the ethos host tools to run the border router, we build them
 # if necessary
 TERMDEPS += host-tools
-endif
 
 include $(RIOTBASE)/Makefile.include
 
 .PHONY: host-tools
 
 host-tools:
-	$(Q)env -u CC -u CFLAGS make -C $(RIOTTOOLS)
+	$(Q)env -u CC -u CFLAGS make -C $(RIOTBASE)/dist/tools
 
 # Set a custom channel if needed
 ifneq (,$(filter cc110x,$(USEMODULE)))          # radio is cc110x sub-GHz

@@ -18,11 +18,6 @@
  * @}
  */
 
-/* needed for posix usleep */
-#ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE 600
-#endif
-
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>

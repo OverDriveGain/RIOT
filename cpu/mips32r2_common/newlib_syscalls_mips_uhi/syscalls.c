@@ -7,7 +7,7 @@
  */
 
 /**
-  * @ingroup    sys_newlib
+  * @ingroup sys_newlib
   * @{
   *
   * @file
@@ -153,7 +153,6 @@ int _kill_r(struct _reent *r, pid_t pid, int sig)
 */
 int _open_r(struct _reent *r, const char *name, int flags, int mode)
 {
-    (void)r;
     return open(name, flags, mode);
 }
 
@@ -172,7 +171,6 @@ int _open_r(struct _reent *r, const char *name, int flags, int mode)
 */
 _ssize_t _read_r(struct _reent *r, int fd, void *dest, size_t count)
 {
-    (void)r;
     return read(fd,dest,count);
 }
 
@@ -191,7 +189,6 @@ _ssize_t _read_r(struct _reent *r, int fd, void *dest, size_t count)
 */
 _ssize_t _write_r(struct _reent *r, int fd, const void *src, size_t count)
 {
-    (void)r;
     int res = write(fd, src, count);
     return res;
 }
@@ -212,7 +209,6 @@ _ssize_t _write_r(struct _reent *r, int fd, const void *src, size_t count)
 */
 int _close_r(struct _reent *r, int fd)
 {
-    (void)r;
     int res = close(fd);
     return res;
 }
@@ -232,7 +228,6 @@ int _close_r(struct _reent *r, int fd)
 */
 int _fcntl_r (struct _reent *r, int fd, int cmd, int arg)
 {
-    (void)r;
     int res = fcntl(fd, cmd, arg);
     return res;
 }
@@ -259,7 +254,6 @@ int _fcntl_r (struct _reent *r, int fd, int cmd, int arg)
 */
 _off_t _lseek_r(struct _reent *r, int fd, _off_t off, int whence)
 {
-    (void)r;
     int res = lseek(fd, off, whence);
     return res;
 }
@@ -278,7 +272,6 @@ _off_t _lseek_r(struct _reent *r, int fd, _off_t off, int whence)
 */
 int _fstat_r(struct _reent *r, int fd, struct stat *buf)
 {
-    (void)r;
     int res = fstat(fd, buf);
     return res;
 }
@@ -294,7 +287,6 @@ int _fstat_r(struct _reent *r, int fd, struct stat *buf)
 */
 int _unlink_r(struct _reent *r, const char *path)
 {
-    (void)r;
     int res = unlink(path);
     return res;
 }

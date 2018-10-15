@@ -25,29 +25,29 @@
 /*
  * A test set of dummy resources. The resource handlers are set to NULL.
  */
-static const coap_resource_t resources[] = {
-    { .path = "/act/switch", .methods = (COAP_GET | COAP_POST) },
-    { .path = "/sensor/temp", .methods = (COAP_GET) },
-    { .path = "/test/info/all", .methods = (COAP_GET) },
+static const coap_resource_t ressources[] = {
+    { "/test/info/all", (COAP_GET), NULL },
+    { "/sensor/temp", (COAP_GET), NULL },
+    { "/act/switch", (COAP_GET | COAP_POST), NULL }
 };
 
 static const coap_resource_t resources_second[] = {
-    { .path = "/second/part", .methods = (COAP_GET)},
+    { "/second/part", (COAP_GET), NULL },
 };
 
 static gcoap_listener_t listener = {
-    .resources     = &resources[0],
-    .resources_len = (sizeof(resources) / sizeof(resources[0])),
+    .resources     = (coap_resource_t *)&ressources[0],
+    .resources_len = (sizeof(ressources) / sizeof(ressources[0])),
     .next          = NULL
 };
 
 static gcoap_listener_t listener_second = {
-    .resources     = &resources_second[0],
+    .resources     = (coap_resource_t *)&resources_second[0],
     .resources_len = (sizeof(resources_second) / sizeof(resources_second[0])),
     .next          = NULL
 };
 
-static const char *resource_list_str = "</act/switch>,</sensor/temp>,</test/info/all>,</second/part>";
+static const char *resource_list_str = "</test/info/all>,</sensor/temp>,</act/switch>,</second/part>";
 
 /*
  * Client GET request success case. Test request generation.

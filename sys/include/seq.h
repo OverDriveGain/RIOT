@@ -7,7 +7,9 @@
  */
 
 /**
- * @ingroup     sys_seq
+ * @defgroup    sys_seq     Serial Number Arithmetic
+ * @ingroup     sys
+ * @brief       Serial Number Arithmetic (RFC 1982)
  * @{
  *
  * @file

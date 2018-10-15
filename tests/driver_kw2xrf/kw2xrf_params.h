@@ -8,7 +8,7 @@
  */
 
 /**
- * @ingroup     tests
+ * @ingroup     tests_kw2xrf
  * @brief       generic kw2xrf pin config
  *
  * Copyright (C) 2014 PHYTEC Messtechnik GmbH

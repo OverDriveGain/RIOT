@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     drivers_adcxx1c
+ * @ingroup     drivers_adcxx1x
  * @{
  *
  * @file

@@ -23,6 +23,7 @@
 #include "periph/adc.h"
 #include "periph_conf.h"
 
+#ifdef ADC_CONFIG
 /**
  * @brief   Load the ADC configuration
  */
@@ -84,3 +85,7 @@ int adc_sample(adc_t line, adc_res_t res)
 
     return val;
 }
+
+#else
+typedef int dont_be_pedantic;
+#endif /* ADC_CONFIG */

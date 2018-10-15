@@ -21,7 +21,6 @@
 #ifndef JC42_PARAMS_H
 #define JC42_PARAMS_H
 
-#include "board.h"
 #include "jc42.h"
 #include "periph/i2c.h"
 
@@ -43,14 +42,9 @@ extern "C" {
 #define JC42_PARAM_SPEED           I2C_SPEED_FAST
 #endif
 
-#ifndef JC42_PARAMS
-#define JC42_PARAMS                { .i2c   = JC42_PARAM_I2C_DEV, \
-                                     .speed = JC42_PARAM_SPEED,   \
+#define JC42_PARAMS_DEFAULT        { .i2c   = JC42_PARAM_I2C_DEV,  \
+                                     .speed = JC42_PARAM_SPEED, \
                                      .addr  = JC42_PARAM_ADDR }
-#endif
-#ifndef JC42_SAUL_INFO
-#define JC42_SAUL_INFO             { .name= "jc42" }
-#endif
 /**@}*/
 
 /**
@@ -58,15 +52,19 @@ extern "C" {
  */
 static const jc42_params_t jc42_params[] =
 {
-    JC42_PARAMS
+#ifdef JC42_PARAMS_BOARD
+    JC42_PARAMS_BOARD,
+#else
+    JC42_PARAMS_DEFAULT,
+#endif
 };
 
 /**
  * @brief   Configure SAUL registry entries
  */
-static const saul_reg_info_t jc42_saul_info[] =
+static const saul_reg_info_t jc42_saul_reg_info[] =
 {
-    JC42_SAUL_INFO
+    { .name= "jc42" }
 };
 
 #ifdef __cplusplus

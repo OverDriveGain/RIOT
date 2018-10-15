@@ -23,12 +23,12 @@
 #include "assert.h"
 #include "periph/flashpage.h"
 
-void flashpage_write(int page, const void *data)
+void flashpage_write(int page, void *data)
 {
-    assert(page < (int)FLASHPAGE_NUMOF);
+    assert(page < FLASHPAGE_NUMOF);
 
     uint32_t *page_addr = (uint32_t *)flashpage_addr(page);
-    const uint32_t *data_addr = data;
+    uint32_t *data_addr = (uint32_t *)data;
 
     /* erase given page */
     NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een;

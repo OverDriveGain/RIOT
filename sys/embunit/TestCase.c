@@ -39,7 +39,7 @@
 static TestResult* result_;
 static TestCase* self_;
 
-const char* TestCase_name(TestCase* self)
+char* TestCase_name(TestCase* self)
 {
     return self->name;
 }

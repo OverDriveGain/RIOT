@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     cpu_nrf51
+ * @ingroup     cpu_nrf51822
  * @{
  *
  * @file
@@ -21,6 +21,9 @@
 #include <stdint.h>
 #include "cpu.h"
 #include "vectors_cortexm.h"
+
+/* get the start of the ISR stack as defined in the linkerscript */
+extern uint32_t _estack;
 
 /* define a local dummy handler as it needs to be in the same compilation unit
  * as the alias definition */

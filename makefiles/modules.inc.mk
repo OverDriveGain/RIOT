@@ -1,9 +1,9 @@
-ED = $(addprefix MODULE_,$(sort $(USEMODULE) $(USEPKG)))
-EXTDEFINES = $(addprefix -D,$(shell echo '$(ED)' | tr 'a-z-' 'A-Z_'))
+USEMODULE := $(filter-out $(filter-out $(FEATURES_PROVIDED), $(FEATURES_OPTIONAL)), $(sort $(USEMODULE)))
 
-# filter "pseudomodules" from "real modules", but not "no_pseudomodules"
-NO_PSEUDOMODULES := $(filter $(NO_PSEUDOMODULES), $(sort $(USEMODULE) $(USEPKG)))
-REALMODULES = $(filter-out $(PSEUDOMODULES), $(sort $(USEMODULE) $(USEPKG))) $(NO_PSEUDOMODULES)
+ED = $(addprefix FEATURE_,$(sort $(filter $(FEATURES_PROVIDED), $(FEATURES_REQUIRED))))
+ED += $(addprefix MODULE_,$(sort $(USEMODULE) $(USEPKG)))
+EXTDEFINES = $(addprefix -D,$(shell echo '$(ED)' | tr 'a-z-' 'A-Z_'))
+REALMODULES = $(filter-out $(PSEUDOMODULES), $(sort $(USEMODULE) $(USEPKG)))
 export BASELIBS += $(REALMODULES:%=$(BINDIR)/%.a)
 
 CFLAGS += $(EXTDEFINES)

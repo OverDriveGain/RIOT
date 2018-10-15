@@ -160,7 +160,7 @@ uint8_t kw2xrf_get_cca_mode(kw2xrf_t *dev);
  *
  * @return              deduced RSSI in dBm
  */
-int16_t kw2xrf_get_rssi(uint32_t value);
+uint32_t kw2xrf_get_rssi(uint32_t value);
 
 /**
  * @brief   Get state of a given device

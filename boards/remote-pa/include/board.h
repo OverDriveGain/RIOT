@@ -8,7 +8,9 @@
  */
 
 /**
- * @ingroup     boards_remote-pa
+ * @defgroup    boards_remote-pa Re-Mote Prototype A
+ * @ingroup     boards
+ * @brief       Support for the Re-Mote board prototype A
  * @{
  *
  * @file

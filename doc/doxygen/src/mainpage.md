@@ -32,12 +32,19 @@ RIOT is developed by an open community that anyone is welcome to join:
    Wiki](https://github.com/RIOT-OS/RIOT/wiki/Contributing-to-RIOT).
  - [Subscribe](http://lists.riot-os.org/mailman/listinfo/users) to
    users@riot-os.org to ask for help using RIOT or writing an application for
-   RIOT (or to just stay in the loop). An archive of this list [is available
-   here](https://lists.riot-os.org/pipermail/users/).
+   RIOT (or to just stay in the loop). A searchable archive of this list is
+   available at the
+   [RIOT user Gmane newsgroup](http://news.gmane.org/gmane.os.riot.user)
  - [Subscribe](http://lists.riot-os.org/mailman/listinfo/devel) to
    devel@riot-os.org to follow and discuss kernel and network stack
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
    development, or hardware support. An archive of this list [is available
    here](https://lists.riot-os.org/pipermail/devel/).
+====================================================================================================
+   developement, or hardware support. A searchable archive of this list is
+   available at the
+   [RIOT devel Gmane newsgroup](http://news.gmane.org/gmane.os.riot.devel)
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Fix dependencies, make javascript example run
  - Follow us on [Twitter](https://twitter.com/RIOT_OS) for news from the RIOT
    community.
  - Regarding critical vulnerabilities we would appreciate if you give us a
@@ -55,8 +62,8 @@ call this the `native` port). Try it right now in your terminal window:
 
 ~~~~~~~{.sh}
 git clone git://github.com/RIOT-OS/RIOT.git # assumption: git is pre-installed
-cd RIOT
 git checkout <LATEST_RELEASE>
+cd RIOT
 ./dist/tools/tapsetup/tapsetup              # create virtual Ethernet
                                             # interfaces to connect multiple
                                             # RIOT instances
@@ -148,7 +155,7 @@ CPUs share the same code for task switching and interrupt handling). This
 shared code is put in its own directories, following a `xxxxx_common` naming
 scheme. Examples for this is code shared across architectures (e.g.
 `cortexm_common`, `msp430_comon`) or code shared among vendors (e.g.
-`stm32_common`).
+`kinetis_common`).
 
 See @ref cpu for more detailed information.
 

@@ -62,21 +62,6 @@ extern "C" {
 size_t fmt_byte_hex(char *out, uint8_t byte);
 
 /**
- * @brief Formats a sequence of bytes as hex bytes
- *
- * Will write 2*n bytes to @p out.
- * If @p out is NULL, will only return the number of bytes that would have
- * been written.
- *
- * @param[out] out  Pointer to output buffer, or NULL
- * @param[in]  ptr  Pointer to bytes to convert
- * @param[in]  n    Number of bytes to convert
- *
- * @return     2*n
- */
-size_t fmt_bytes_hex(char *out, const uint8_t *ptr, size_t n);
-
-/**
  * @brief Formats a sequence of bytes as hex bytes, starting with the last byte
  *
  * Will write 2*n bytes to @p out.
@@ -90,34 +75,6 @@ size_t fmt_bytes_hex(char *out, const uint8_t *ptr, size_t n);
  * @return     2*n
  */
 size_t fmt_bytes_hex_reverse(char *out, const uint8_t *ptr, size_t n);
-
-/**
- * @brief Converts a sequence of two hex characters to a byte
- *
- * The hex characters sequence must contain valid hexadecimal characters
- * otherwise the result is undefined.
- *
- * @param[in]  hex  Pointer to input buffer
- * @returns    byte based on hex string
- */
-uint8_t fmt_hex_byte(const char *hex);
-
-/**
- * @brief Converts a sequence of hex bytes to an array of bytes
- *
- * The sequence of hex characters must have an even length:
- * 2 hex character => 1 byte. If the sequence of hex has an odd length, this
- * function returns 0 and an empty @p out.
- *
- * The hex characters sequence must contain valid hexadecimal characters
- * otherwise the result in @p out is undefined.
- *
- * @param[out] out  Pointer to converted bytes, or NULL
- * @param[in]  hex  Pointer to input buffer
- * @returns    strlen(hex) / 2 when length of @p hex was even
- * @returns    0 otherwise
- */
-size_t fmt_hex_bytes(uint8_t *out, const char *hex);
 
 /**
  * @brief Convert a uint32 value to hex string.
@@ -189,21 +146,6 @@ size_t fmt_u64_dec(char *out, uint64_t val);
 size_t fmt_u16_dec(char *out, uint16_t val);
 
 /**
- * @brief Convert a int64 value to decimal string.
- *
- * Will add a leading "-" if @p val is negative.
- *
- * If @p out is NULL, will only return the number of bytes that would have
- * been written.
- *
- * @param[out]  out  Pointer to output buffer, or NULL
- * @param[in]   val  Value to convert
- *
- * @return      nr of characters written to (or needed in) @p out
- */
-size_t fmt_s64_dec(char *out, int64_t val);
-
-/**
  * @brief Convert a int32 value to decimal string.
  *
  * Will add a leading "-" if @p val is negative.
@@ -236,43 +178,60 @@ size_t fmt_s16_dec(char *out, int16_t val);
 /**
  * @brief Convert 16-bit fixed point number to a decimal string
  *
- * See fmt_s32_dfp() for more details
+ * The input for this function is a signed 16-bit integer holding the fixed
+ * point value as well as an unsigned integer defining the position of the
+ * decimal point, so this value defines the number of decimal digits after the
+ * decimal point.
+ *
+ * The resulting string will always be patted with zeros after the decimal point.
+ *
+ * For example: if @p val is -3548 and @p fp_digits is 2, the resulting string
+ * will be "-35.48". For @p val := 12010 and @p fp_digits := 3 the result will
+ * be "12.010".
+ *
+ * Will add a leading "-" if @p val is negative.
+ *
+ * If @p out is NULL, will only return the number of bytes that would have
+ * been written.
+ *
+ * @pre fp_digits < 8 (TENMAP_SIZE)
  *
  * @param[out] out          Pointer to the output buffer, or NULL
  * @param[in]  val          Fixed point value
- * @param[in]  fp_digits    Number of digits after the decimal point, MUST be
- *                          >= -7
+ * @param[in]  fp_digits    Number of digits after the decimal point
  *
  * @return      Length of the resulting string
  */
-size_t fmt_s16_dfp(char *out, int16_t val, int fp_digits);
+size_t fmt_s16_dfp(char *out, int16_t val, unsigned fp_digits);
 
 /**
  * @brief Convert 32-bit fixed point number to a decimal string
  *
  * The input for this function is a signed 32-bit integer holding the fixed
- * point value as well as an integer defining the position of the decimal point.
- * This value is used to shift the decimal point to the right (positive value
- * of @p fp_digits) or to the left (negative value of @p fp_digits).
+ * point value as well as an unsigned integer defining the position of the
+ * decimal point, so this value defines the number of decimal digits after the
+ * decimal point.
  *
  * Will add a leading "-" if @p val is negative.
  *
  * The resulting string will always be patted with zeros after the decimal point.
  *
- * For example: if @p val is -3548 and @p fp_digits is -2, the resulting string
- * will be "-35.48". The same value for @p val with @p fp_digits of 2 will
- * result in "-354800".
+ * For example: if @p val is -314159 and @p fp_digits is 5, the resulting string
+ * will be "-3.14159". For @p val := 16777215 and @p fp_digits := 6 the result
+ * will be "16.777215".
  *
- * @pre fp_digits > -8 (TENMAP_SIZE)
+ * If @p out is NULL, will only return the number of bytes that would have
+ * been written.
+ *
+ * @pre fp_digits < 8 (TENMAP_SIZE)
  *
  * @param[out] out          Pointer to the output buffer, or NULL
  * @param[in]  val          Fixed point value
- * @param[in]  fp_digits    Number of digits after the decimal point, MUST be
- *                          >= -7
+ * @param[in]  fp_digits    Number of digits after the decimal point
  *
  * @return      Length of the resulting string
  */
-size_t fmt_s32_dfp(char *out, int32_t val, int fp_digits);
+size_t fmt_s32_dfp(char *out, int32_t val, unsigned fp_digits);
 
 /**
  * @brief Format float to string
@@ -304,17 +263,6 @@ size_t fmt_float(char *out, float f, unsigned precision);
  * @return      nr of characters in string @p str points to
  */
 size_t fmt_strlen(const char *str);
-
-/**
- * @brief Count at most @p maxlen characters until '\0' (exclusive) in @p str
- *
- * @param[in]   str     Pointer to string
- * @param[in]   maxlen  Maximum number of chars to count
- *
- * @return      nr of characters in string @p str points to, or @p maxlen if no
- *              null terminator is found within @p maxlen chars
- */
-size_t fmt_strnlen(const char *str, size_t maxlen);
 
 /**
  * @brief Copy null-terminated string (excluding terminating \0)

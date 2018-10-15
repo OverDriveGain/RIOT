@@ -1,3 +1,4 @@
+APPLICATION = driver_bmp180
 include ../Makefile.tests_common
 
 USEMODULE += bmp180

@@ -57,17 +57,15 @@ extern "C" {
 #define CC2420_PARAM_RESET      (GPIO_PIN(0, 3))
 #endif
 
-#ifndef CC2420_PARAMS
-#define CC2420_PARAMS           { .spi        = CC2420_PARAM_SPI,     \
-                                  .spi_clk    = CC2420_PARAM_SPI_CLK, \
-                                  .pin_cs     = CC2420_PARAM_CS,      \
-                                  .pin_fifo   = CC2420_PARAM_FIFO,    \
-                                  .pin_fifop  = CC2420_PARAM_FIFOP,   \
-                                  .pin_cca    = CC2420_PARAM_CCA,     \
-                                  .pin_sfd    = CC2420_PARAM_SFD,     \
-                                  .pin_vrefen = CC2420_PARAM_VREFEN,  \
-                                  .pin_reset  = CC2420_PARAM_RESET }
-#endif
+#define CC2420_PARAMS_DEFAULT   {.spi        = CC2420_PARAM_SPI, \
+                                 .spi_clk    = CC2420_PARAM_SPI_CLK, \
+                                 .pin_cs     = CC2420_PARAM_CS, \
+                                 .pin_fifo   = CC2420_PARAM_FIFO, \
+                                 .pin_fifop  = CC2420_PARAM_FIFOP, \
+                                 .pin_cca    = CC2420_PARAM_CCA, \
+                                 .pin_sfd    = CC2420_PARAM_SFD, \
+                                 .pin_vrefen = CC2420_PARAM_VREFEN, \
+                                 .pin_reset  = CC2420_PARAM_RESET}
 /**@}*/
 
 /**
@@ -75,7 +73,11 @@ extern "C" {
  */
 static const cc2420_params_t cc2420_params[] =
 {
-    CC2420_PARAMS
+#ifdef CC2420_PARAMS_BOARD
+    CC2420_PARAMS_BOARD,
+#else
+    CC2420_PARAMS_DEFAULT,
+#endif
 };
 
 #ifdef __cplusplus

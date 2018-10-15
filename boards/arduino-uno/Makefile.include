@@ -1,7 +1,7 @@
 # define the cpu used by the arduino uno board
 export CPU = atmega328p
 
-USEMODULE += boards_common_arduino-atmega
+USEMODULE += arduino-atmega-common
 
 # export needed for flash rule
 export PORT_LINUX ?= /dev/ttyACM0
@@ -14,7 +14,4 @@ export FFLAGS += -p m328p
 # overridden for debugging (which requires changes that require to use an ISP)
 export PROGRAMMER ?= arduino
 
-BOOTLOADER_SIZE ?= 512
-ROM_RESERVED ?= $(BOOTLOADER_SIZE)
-
-include $(RIOTBOARD)/common/arduino-atmega/Makefile.include
+include $(RIOTBOARD)/arduino-atmega-common/Makefile.include

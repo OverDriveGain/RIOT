@@ -24,7 +24,7 @@
 
 #include "cpu.h"
 #include "board.h"
-#include "stdio_uart.h"
+#include "uart_stdio.h"
 
 static void z1_ports_init(void)
 {
@@ -215,8 +215,8 @@ void board_init(void)
     /* initializes DCO */
     msp430_init_dco();
 
-    /* initialize STDIO */
-    stdio_init();
+    /* initialize STDIO over UART */
+    uart_stdio_init();
 
     /* enable interrupts */
     __bis_SR_register(GIE);

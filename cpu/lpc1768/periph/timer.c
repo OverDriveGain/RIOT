@@ -24,6 +24,9 @@
 #include "periph_conf.h"
 #include "periph/timer.h"
 
+/* guard file in case no timers are defined */
+#if TIMER_0_EN
+
 /**
  * @name Timer channel interrupt flags
  * @{
@@ -145,3 +148,5 @@ void TIMER_0_ISR(void)
     cortexm_isr_end();
 }
 #endif
+
+#endif /* TIMER_0_EN */

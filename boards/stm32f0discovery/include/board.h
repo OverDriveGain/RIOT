@@ -7,7 +7,9 @@
  */
 
 /**
- * @ingroup     boards_stm32f0discovery
+ * @defgroup    boards_stm32f0discovery STM32F0Discovery
+ * @ingroup     boards
+ * @brief       Support for the STM32F0Discovery board
  * @{
  *
  * @file
@@ -47,7 +49,7 @@ extern "C" {
 /** @} */
 
 /**
- * @name User button
+ * @brief User button
  * @{
  */
 #define BTN0_PIN            GPIO_PIN(PORT_A, 0)

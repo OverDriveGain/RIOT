@@ -40,6 +40,6 @@ int main(void)
     RUN(fix16_str_unittests);
     RUN(fix16_unittests);
 
-    puts("SUCCESS");
+    puts("All tests executed.");
     return 0;
 }

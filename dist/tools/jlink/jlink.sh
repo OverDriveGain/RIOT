@@ -25,18 +25,17 @@
 #               options:
 #               BINFILE: path to the binary file that is flashed
 #
-# debug:        starts JLink as GDB server in the background and
+# debug:        starts OpenOCD as GDB server in the background and
 #               connects to the server with the GDB client specified by
 #               the board (DBG environment variable)
 #
 #               options:
 #               GDB_PORT:       port opened for GDB connections
 #               TELNET_PORT:    port opened for telnet connections
-#               DBG:            debugger client command, default: 'gdb -q'
 #               TUI:            if TUI!=null, the -tui option will be used
 #               ELFFILE:        path to the ELF file to debug
 #
-# debug-server: starts JLink as GDB server, but does not connect to
+# debug-server: starts OpenOCD as GDB server, but does not connect to
 #               to it with any frontend. This might be useful when using
 #               IDEs.
 #
@@ -58,14 +57,17 @@ _JLINK=JLinkExe
 _JLINK_SERVER=JLinkGDBServer
 _JLINK_IF=SWD
 _JLINK_SPEED=2000
-# default terminal frontend
-_JLINK_TERMPROG=${RIOTTOOLS}/pyterm/pyterm
-_JLINK_TERMFLAGS="-ts 19021"
 
 #
 # a couple of tests for certain configuration options
 #
 test_config() {
+    if [ -z "${HEXFILE}" ]; then
+        echo "no hexfile"
+    else
+        echo "HEXFILE found"
+    fi
+
     if [ -z "${JLINK}" ]; then
         JLINK=${_JLINK}
     fi
@@ -126,21 +128,6 @@ test_serial() {
     fi
 }
 
-test_dbg() {
-    if [ -z "${DBG}" ]; then
-        DBG="${GDB}"
-    fi
-}
-
-test_term() {
-    if [ -z "${JLINK_TERMPROG}" ]; then
-        JLINK_TERMPROG="${_JLINK_TERMPROG}"
-    fi
-    if [ -z "${JLINK_TERMFLAGS}" ]; then
-        JLINK_TERMFLAGS="${_JLINK_TERMFLAGS}"
-    fi
-}
-
 #
 # now comes the actual actions
 #
@@ -158,7 +145,7 @@ do_flash() {
     if [ ! -z "${JLINK_POST_FLASH}" ]; then
         printf "${JLINK_POST_FLASH}\n" >> ${BINDIR}/burn.seg
     fi
-    cat ${RIOTTOOLS}/jlink/reset.seg >> ${BINDIR}/burn.seg
+    cat ${RIOTBASE}/dist/tools/jlink/reset.seg >> ${BINDIR}/burn.seg
     # flash device
     sh -c "${JLINK} ${JLINK_SERIAL} \
                     -device '${JLINK_DEVICE}' \
@@ -174,7 +161,6 @@ do_debug() {
     test_elffile
     test_ports
     test_tui
-    test_dbg
     # start the JLink GDB server
     sh -c "${JLINK_SERVER} ${JLINK_SERIAL_SERVER} \
                            -device '${JLINK_DEVICE}' \
@@ -239,7 +225,7 @@ do_term() {
             -speed '${JLINK_SPEED}' \
             -if '${JLINK_IF}' \
             -jtagconf -1,-1 \
-            -commandfile '${RIOTTOOLS}/jlink/term.seg' >/dev/null & \
+    -commandfile '${RIOTTOOLS}/jlink/term.seg' >/dev/null & \
             echo  \$! > $JLINK_PIDFILE" &
 
     sh -c "${JLINK_TERMPROG} ${JLINK_TERMFLAGS}"
@@ -268,10 +254,6 @@ case "${ACTION}" in
   reset)
     echo "### Resetting Target ###"
     do_reset "$@"
-    ;;
-  term_rtt)
-    echo "### Starting RTT terminal ###"
-    do_term
     ;;
   *)
     echo "Usage: $0 {flash|debug|debug-server|reset}"

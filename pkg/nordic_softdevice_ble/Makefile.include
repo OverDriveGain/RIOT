@@ -20,8 +20,6 @@ CFLAGS += -DNRF52 \
 		  -DSOFTDEVICE_PRESENT \
 		  -DS132
 
-CFLAGS += -Wno-pedantic -Wno-unused-parameter -Wno-sign-compare
-
 # Nordic's ble_6lowpan.a is compiled with hard-float
 # so set this, otherwise linking fails
 CFLAGS_FPU := -mfloat-abi=hard -mfpu=fpv4-sp-d16

@@ -22,12 +22,9 @@
 #include "msg.h"
 #include "net/gnrc.h"
 #include "net/gnrc/ipv6.h"
-#include "net/gnrc/netif.h"
-#include "net/gnrc/netif/hdr.h"
 #include "net/gnrc/udp.h"
 #include "net/gnrc/pktdump.h"
 #include "timex.h"
-#include "utlist.h"
 #include "xtimer.h"
 
 #define SERVER_MSG_QUEUE_SIZE   (8U)
@@ -81,16 +78,10 @@ static void *_eventloop(void *arg)
 static void send(char *addr_str, char *port_str, char *data_len_str, unsigned int num,
                  unsigned int delay)
 {
-    int iface;
     uint16_t port;
     ipv6_addr_t addr;
     size_t data_len;
 
-    /* get interface, if available */
-    iface = ipv6_addr_split_iface(addr_str);
-    if ((iface < 0) && (gnrc_netif_numof() == 1)) {
-        iface = gnrc_netif_iter(NULL)->pid;
-    }
     /* parse destination address */
     if (ipv6_addr_from_str(&addr, addr_str) == NULL) {
         puts("Error: unable to parse destination address");
@@ -132,13 +123,6 @@ static void send(char *addr_str, char *port_str, char *data_len_str, unsigned in
             gnrc_pktbuf_release(udp);
             return;
         }
-        /* add netif header, if interface was given */
-        if (iface > 0) {
-            gnrc_pktsnip_t *netif = gnrc_netif_hdr_build(NULL, 0, NULL, 0);
-
-            ((gnrc_netif_hdr_t *)netif->data)->if_pid = (kernel_pid_t)iface;
-            LL_PREPEND(ip, netif);
-        }
         /* send packet */
         if (!gnrc_netapi_dispatch_send(GNRC_NETTYPE_UDP, GNRC_NETREG_DEMUX_CTX_ALL, ip)) {
             puts("Error: unable to locate UDP thread");
@@ -170,7 +154,6 @@ static void start_server(char *port_str)
         return;
     }
     if (server_pid <= KERNEL_PID_UNDEF) {
-        /* start server */
         server_pid = thread_create(server_stack, sizeof(server_stack), SERVER_PRIO,
                                    THREAD_CREATE_STACKTEST, _eventloop, NULL, "UDP server");
         if (server_pid <= KERNEL_PID_UNDEF) {
@@ -178,7 +161,7 @@ static void start_server(char *port_str)
             return;
         }
     }
-    /* register server to receive messages from given port */
+    /* start server (which means registering pktdump for the chosen port) */
     gnrc_netreg_entry_init_pid(&server, port, server_pid);
     gnrc_netreg_register(GNRC_NETTYPE_UDP, &server);
     printf("Success: started UDP server on port %" PRIu16 "\n", port);

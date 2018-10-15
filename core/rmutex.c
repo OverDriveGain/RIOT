@@ -7,7 +7,8 @@
  */
 
 /**
- * @ingroup     core_sync
+ * @ingroup     core_sync Synchronization
+ * @brief       Recursive Mutex for thread synchronization
  * @{
  *
  * @file

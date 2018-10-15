@@ -11,7 +11,7 @@
  * General Public License v2.1. See the file LICENSE in the top level
  * directory for more details.
  *
- * @ingroup cpu_native
+ * @ingroup native_cpu
  * @{
  * @file
  * @author  Takuo Yonezawa <Yonezawa-T2@mail.dnp.co.jp>

@@ -7,7 +7,9 @@
  */
 
 /**
- * @ingroup     boards_opencm904
+ * @defgroup    boards_opencm904 OpenCM9.04
+ * @ingroup     boards
+ * @brief       Board specific files for the OpenCM9.04 board
  * @{
  *
  * @file
@@ -47,7 +49,7 @@ extern "C" {
 /** @} */
 
 /**
- * @name User button
+ * @brief User button
  * @{
  */
 #define BTN0_PIN            GPIO_PIN(PORT_C, 15)
@@ -66,14 +68,14 @@ extern "C" {
 /**
  * @brief Use the USART2 for STDIO on this board
  */
-#define STDIO_UART_DEV      UART_DEV(0)
+#define UART_STDIO_DEV      UART_DEV(0)
 
 /**
  * @name Override with ROBOTIS Bluetooth antenna baudrate for STDIO
  * @{
  */
-#ifndef STDIO_UART_BAUDRATE
-#define STDIO_UART_BAUDRATE (921600UL)
+#ifndef UART_STDIO_BAUDRATE
+#define UART_STDIO_BAUDRATE (921600UL)
 #endif
 /** @} */
 

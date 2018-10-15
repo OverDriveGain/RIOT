@@ -25,18 +25,10 @@
 
 #include "cpu_conf_common.h"
 
-#if defined(CPU_MODEL_STM32L496ZG)
-#include "vendor/stm32l496xx.h"
-#elif defined(CPU_MODEL_STM32L476RG) || defined(CPU_MODEL_STM32L476VG)
+#if defined(CPU_MODEL_STM32L476RG)
 #include "vendor/stm32l476xx.h"
-#elif defined(CPU_MODEL_STM32L475VG)
-#include "vendor/stm32l475xx.h"
 #elif defined(CPU_MODEL_STM32L432KC)
 #include "vendor/stm32l432xx.h"
-#elif defined(CPU_MODEL_STM32L433RC)
-#include "vendor/stm32l433xx.h"
-#elif defined(CPU_MODEL_STM32L452RE)
-#include "vendor/stm32l452xx.h"
 #endif
 
 #ifdef __cplusplus
@@ -48,34 +40,11 @@ extern "C" {
  * @{
  */
 #define CPU_DEFAULT_IRQ_PRIO            (1U)
-#if defined(CPU_MODEL_STM32L432KC) || defined(CPU_MODEL_STM32L433RC)
+#if defined(CPU_MODEL_STM32L432KC)
 #define CPU_IRQ_NUMOF                   (83U)
-#elif defined(CPU_MODEL_STM32L496ZG)
-#define CPU_IRQ_NUMOF                   (91U)
 #else
 #define CPU_IRQ_NUMOF                   (82U)
 #endif
-/** @} */
-
-/**
- * @name   Flash page configuration
- * @{
- */
-#define FLASHPAGE_SIZE      (2048U)
-
-#if defined(CPU_MODEL_STM32L432KC) || defined(CPU_MODEL_STM32L433RC)
-#define FLASHPAGE_NUMOF            (128U)
-#elif defined(CPU_MODEL_STM32L452RE)
-#define FLASHPAGE_NUMOF            (256U)
-#else
-#define FLASHPAGE_NUMOF            (512U)
-#endif
-/* The minimum block size which can be written is 8B. However, the erase
- * block is always FLASHPAGE_SIZE.
- */
-#define FLASHPAGE_RAW_BLOCKSIZE    (8U)
-/* Writing should be always 8 bytes aligned */
-#define FLASHPAGE_RAW_ALIGNMENT    (8U)
 /** @} */
 
 #ifdef __cplusplus

@@ -52,7 +52,6 @@ static void *second_thread(void *arg)
 
 int main(void)
 {
-    puts("START");
     count = 0;
     is_finished = 0;
     expected_value = 1000ul * 1000ul;
@@ -75,14 +74,10 @@ int main(void)
             puts("condition fulfilled.");
             is_finished = 1;
             mutex_unlock(&mutex);
-            break;
+            return 0;
         }
 
         pthread_cond_wait(&cv, &mutex);
         mutex_unlock(&mutex);
     }
-
-    puts("SUCCESS");
-
-    return 0;
 }

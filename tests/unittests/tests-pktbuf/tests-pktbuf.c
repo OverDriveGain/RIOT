@@ -189,7 +189,6 @@ static void test_pktbuf_add__pkt_NOT_NULL__data_NOT_NULL__size_not_0(void)
     TEST_ASSERT(!gnrc_pktbuf_is_empty());
 }
 
-#ifndef MODULE_GNRC_PKTBUF_MALLOC   /* to long for standard malloc on native ;-) */
 static void test_pktbuf_add__memfull(void)
 {
     gnrc_pktsnip_t *pkt = gnrc_pktbuf_add(NULL, NULL, 1, GNRC_NETTYPE_TEST);
@@ -200,7 +199,6 @@ static void test_pktbuf_add__memfull(void)
     TEST_ASSERT(gnrc_pktbuf_is_sane());
     TEST_ASSERT(!gnrc_pktbuf_is_empty());
 }
-#endif
 
 static void test_pktbuf_add__success(void)
 {
@@ -245,7 +243,6 @@ static void test_pktbuf_add__packed_struct(void)
     TEST_ASSERT_EQUAL_INT(data.s64, data_cpy->s64);
 }
 
-#ifndef MODULE_GNRC_PKTBUF_MALLOC   /* alignment-handling left to malloc, so no certainty here */
 static void test_pktbuf_add__unaligned_in_aligned_hole(void)
 {
     gnrc_pktsnip_t *pkt1 = gnrc_pktbuf_add(NULL, NULL, 8, GNRC_NETTYPE_TEST);
@@ -264,7 +261,6 @@ static void test_pktbuf_add__unaligned_in_aligned_hole(void)
     gnrc_pktbuf_release(pkt4);
     TEST_ASSERT(gnrc_pktbuf_is_empty());
 }
-#endif
 
 static void test_pktbuf_add__0_sized_release(void)
 {
@@ -321,7 +317,7 @@ static void test_pktbuf_mark__pkt_NOT_NULL__size_greater_than_pkt_size(void)
 
 static void test_pktbuf_mark__pkt_NOT_NULL__pkt_data_NULL(void)
 {
-    gnrc_pktsnip_t pkt = { NULL, NULL, sizeof(TEST_STRING16), 1, GNRC_NETTYPE_TEST };
+    gnrc_pktsnip_t pkt = { 1, NULL, NULL, sizeof(TEST_STRING16), GNRC_NETTYPE_TEST };
 
     TEST_ASSERT_NULL(gnrc_pktbuf_mark(&pkt, sizeof(TEST_STRING16) - 1,
                                       GNRC_NETTYPE_TEST));
@@ -509,7 +505,6 @@ static void test_pktbuf_realloc_data__size_0(void)
     TEST_ASSERT(gnrc_pktbuf_is_empty());
 }
 
-#ifndef MODULE_GNRC_PKTBUF_MALLOC   /* GNRC_PKTBUF_SIZE does not apply for gnrc_pktbuf_malloc */
 static void test_pktbuf_realloc_data__memfull(void)
 {
     gnrc_pktsnip_t *pkt = gnrc_pktbuf_add(NULL, NULL, sizeof(TEST_STRING8), GNRC_NETTYPE_TEST);
@@ -518,7 +513,6 @@ static void test_pktbuf_realloc_data__memfull(void)
     gnrc_pktbuf_release(pkt);
     TEST_ASSERT(gnrc_pktbuf_is_empty());
 }
-#endif
 
 static void test_pktbuf_realloc_data__shrink(void)
 {
@@ -661,7 +655,7 @@ static void test_pktbuf_hold__pkt_null(void)
 
 static void test_pktbuf_hold__pkt_external(void)
 {
-    gnrc_pktsnip_t pkt = { NULL, TEST_STRING8, sizeof(TEST_STRING8), 1, GNRC_NETTYPE_TEST };
+    gnrc_pktsnip_t pkt = { 1, NULL, TEST_STRING8, sizeof(TEST_STRING8), GNRC_NETTYPE_TEST };
 
     gnrc_pktbuf_hold(&pkt, 1);
     TEST_ASSERT(gnrc_pktbuf_is_empty());
@@ -829,14 +823,10 @@ Test *tests_pktbuf_tests(void)
         new_TestFixture(test_pktbuf_add__pkt_NULL__data_NULL__size_not_0),
         new_TestFixture(test_pktbuf_add__pkt_NOT_NULL__data_NULL__size_not_0),
         new_TestFixture(test_pktbuf_add__pkt_NOT_NULL__data_NOT_NULL__size_not_0),
-#ifndef MODULE_GNRC_PKTBUF_MALLOC
         new_TestFixture(test_pktbuf_add__memfull),
-#endif
         new_TestFixture(test_pktbuf_add__success),
         new_TestFixture(test_pktbuf_add__packed_struct),
-#ifndef MODULE_GNRC_PKTBUF_MALLOC
         new_TestFixture(test_pktbuf_add__unaligned_in_aligned_hole),
-#endif
         new_TestFixture(test_pktbuf_add__0_sized_release),
         new_TestFixture(test_pktbuf_mark__pkt_NULL__size_0),
         new_TestFixture(test_pktbuf_mark__pkt_NULL__size_not_0),
@@ -848,9 +838,7 @@ Test *tests_pktbuf_tests(void)
         new_TestFixture(test_pktbuf_mark__success_small),
         new_TestFixture(test_pktbuf_mark__success_equally_sized),
         new_TestFixture(test_pktbuf_realloc_data__size_0),
-#ifndef MODULE_GNRC_PKTBUF_MALLOC
         new_TestFixture(test_pktbuf_realloc_data__memfull),
-#endif
         new_TestFixture(test_pktbuf_realloc_data__nomemenough),
         new_TestFixture(test_pktbuf_realloc_data__shrink),
         new_TestFixture(test_pktbuf_realloc_data__memenough),

@@ -24,28 +24,6 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
-/**
- * @brief   Timer specific additional bus clock prescaler
- *
- * This prescale factor is dependent on the actual APBx bus clock divider, if
- * the APBx presacler is != 1, it is set to 2, if the APBx prescaler is == 1, it
- * is set to 1.
- *
- * See reference manuals section 'reset and clock control'.
- */
-static const uint8_t apbmul[] = {
-#if (CLOCK_APB1 < CLOCK_CORECLOCK)
-    [APB1] = 2,
-#else
-    [APB1] = 1,
-#endif
-#if (CLOCK_APB2 < CLOCK_CORECLOCK)
-    [APB2] = 2
-#else
-    [APB2] = 1
-#endif
-};
-
 uint32_t periph_apb_clk(uint8_t bus)
 {
     if (bus == APB1) {
@@ -54,11 +32,6 @@ uint32_t periph_apb_clk(uint8_t bus)
     else {
         return CLOCK_APB2;
     }
-}
-
-uint32_t periph_timer_clk(uint8_t bus)
-{
-    return periph_apb_clk(bus) * apbmul[bus];
 }
 
 void periph_clk_en(bus_t bus, uint32_t mask)
@@ -92,7 +65,7 @@ void periph_clk_en(bus_t bus, uint32_t mask)
             RCC->AHB1ENR |= mask;
             break;
 /* STM32F410 RCC doesn't provide AHB2 and AHB3 */
-#if !defined(CPU_LINE_STM32F410Rx)
+#if !defined(CPU_MODEL_STM32F410RB)
         case AHB2:
             RCC->AHB2ENR |= mask;
             break;
@@ -140,7 +113,7 @@ void periph_clk_dis(bus_t bus, uint32_t mask)
             RCC->AHB1ENR &= ~(mask);
             break;
 /* STM32F410 RCC doesn't provide AHB2 and AHB3 */
-#if !defined(CPU_LINE_STM32F410Rx)
+#if !defined(CPU_MODEL_STM32F410RB)
         case AHB2:
             RCC->AHB2ENR &= ~(mask);
             break;

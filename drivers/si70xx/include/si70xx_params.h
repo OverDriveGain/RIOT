@@ -24,7 +24,6 @@
 #include "board.h"
 #include "si70xx.h"
 #include "saul_reg.h"
-#include "si70xx_internals.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,16 +37,11 @@ extern "C" {
 #define SI70XX_PARAM_I2C_DEV         I2C_DEV(0)
 #endif
 #ifndef SI70XX_PARAM_ADDR
-#define SI70XX_PARAM_ADDR            SI70XX_I2C_ADDRESS
+#define SI70XX_PARAM_ADDR            (0x80)
 #endif
 
-#ifndef SI70XX_PARAMS
-#define SI70XX_PARAMS                { .i2c_dev = SI70XX_PARAM_I2C_DEV, \
+#define SI70XX_PARAMS_DEFAULT        { .i2c_dev = SI70XX_PARAM_I2C_DEV,  \
                                        .address = SI70XX_PARAM_ADDR }
-#endif
-#ifndef SI70XX_SAUL_INFO
-#define SI70XX_SAUL_INFO             { .name = "si70xx" }
-#endif
 /**@}*/
 
 /**
@@ -55,15 +49,19 @@ extern "C" {
  */
 static const si70xx_params_t si70xx_params[] =
 {
-    SI70XX_PARAMS
+#ifdef SI70XX_PARAMS_CUSTOM
+    SI70XX_PARAMS_CUSTOM,
+#else
+    SI70XX_PARAMS_DEFAULT,
+#endif
 };
 
 /**
  * @brief   Configure SAUL registry entries
  */
-static const saul_reg_info_t si70xx_saul_info[] =
+static const saul_reg_info_t si70xx_saul_reg_info[] =
 {
-    SI70XX_SAUL_INFO
+    { .name = "si70xx" }
 };
 
 #ifdef __cplusplus

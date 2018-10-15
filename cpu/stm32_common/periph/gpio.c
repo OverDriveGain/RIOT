@@ -26,13 +26,11 @@
  * @}
  */
 
+#ifndef CPU_FAM_STM32F1
 
 #include "cpu.h"
 #include "periph/gpio.h"
 #include "periph_conf.h"
-
-/* this implementation is not valid for the stm32f1 */
-#ifndef CPU_FAM_STM32F1
 
 /**
  * @brief   The STM32F0 family has 16 external interrupt lines
@@ -203,7 +201,12 @@ void gpio_irq_disable(gpio_t pin)
 
 int gpio_read(gpio_t pin)
 {
-    return (_port(pin)->IDR & (1 << _pin_num(pin)));
+    if (_port(pin)->MODER & (0x3 << (_pin_num(pin) * 2))) {
+        return _port(pin)->ODR & (1 << _pin_num(pin));
+    }
+    else {
+        return _port(pin)->IDR & (1 << _pin_num(pin));
+    }
 }
 
 void gpio_set(gpio_t pin)

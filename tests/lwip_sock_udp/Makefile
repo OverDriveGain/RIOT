@@ -1,13 +1,14 @@
+APPLICATION = lwip_sock_udp
+
 include ../Makefile.tests_common
 
 # lwIP's memory management doesn't seem to work on non 32-bit platforms at the
 # moment.
 BOARD_BLACKLIST := arduino-uno arduino-duemilanove arduino-mega2560 chronos \
                    msb-430 msb-430h telosb waspmote-pro wsn430-v1_3b \
-                   wsn430-v1_4 z1 jiminy-mega256rfr2 mega-xplained
-BOARD_INSUFFICIENT_MEMORY = nucleo-f031k6 nucleo-f042k6 nucleo-l031k6 nucleo-f030r8 \
-                            nucleo-f303k8 nucleo-f334r8 nucleo-l053r8 \
-                            stm32f0discovery
+                   wsn430-v1_4 z1
+BOARD_INSUFFICIENT_MEMORY = nucleo32-f031 nucleo32-f042 nucleo32-l031 nucleo-f030 \
+                            nucleo-f334 nucleo-l053 stm32f0discovery
 
 LWIP_IPV4 ?= 0
 
@@ -27,7 +28,7 @@ ifneq (0, $(LWIP_IPV6))
 endif
 
 USEMODULE += inet_csum
-USEMODULE += lwip_netdev
+USEMODULE += lwip_ethernet lwip_netdev
 USEMODULE += lwip_sock_udp
 USEMODULE += netdev_eth
 USEMODULE += netdev_test
@@ -35,7 +36,11 @@ USEMODULE += ps
 
 DISABLE_MODULE += auto_init
 
+CFLAGS += -DDEVELHELP
 CFLAGS += -DSO_REUSE
 CFLAGS += -DLWIP_SO_RCVTIMEO
 
 include $(RIOTBASE)/Makefile.include
+
+test:
+	./tests/01-run.py

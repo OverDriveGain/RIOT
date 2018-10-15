@@ -39,11 +39,9 @@ extern "C" {
 #define LPD8808_PARAM_PIN_DAT       (GPIO_PIN(0, 1))
 #endif
 
-#ifndef LPD8808_PARAMS
-#define LPD8808_PARAMS              { .led_cnt = LPD8808_PARAM_LED_CNT, \
-                                      .pin_clk = LPD8808_PARAM_PIN_CLK, \
-                                      .pin_dat = LPD8808_PARAM_PIN_DAT }
-#endif
+#define LPD8808_PARAMS_DEFAULT      {.led_cnt = LPD8808_PARAM_LED_CNT, \
+                                     .pin_clk = LPD8808_PARAM_PIN_CLK, \
+                                     .pin_dat = LPD8808_PARAM_PIN_DAT }
 /**@}*/
 
 /**
@@ -51,7 +49,11 @@ extern "C" {
  */
 static const lpd8808_params_t lpd8808_params[] =
 {
-    LPD8808_PARAMS
+#ifdef LPD8808_PARAMS_BOARD
+    LPD8808_PARAMS_BOARD,
+#else
+    LPD8808_PARAMS_DEFAULT,
+#endif
 };
 
 #ifdef __cplusplus

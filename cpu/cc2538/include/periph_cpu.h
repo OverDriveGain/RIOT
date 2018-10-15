@@ -24,10 +24,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "vendor/hw_soc_adc.h"
-
 #include "cpu.h"
-#include "vendor/hw_ssi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,14 +34,13 @@ extern "C" {
  * @brief   Starting offset of CPU_ID
  */
 #define CPUID_ADDR          (&IEEE_ADDR_MSWORD)
-
 /**
  * @brief   Length of the CPU_ID in octets
  */
 #define CPUID_LEN           (8U)
 
 /**
- * @name    Define a custom type for GPIO pins
+ * @brief   Define a custom type for GPIO pins
  * @{
  */
 #define HAVE_GPIO_T
@@ -59,70 +55,102 @@ typedef uint32_t gpio_t;
 /** @} */
 
 /**
- * @brief Define custom value to speficy undefined or unused GPIOs
+ * @name Internal GPIO shift and masking
+ * @{
  */
-#define GPIO_UNDEF          (0xffffffff)
+#define PORTNUM_MASK        (0x00007000)    /**< bit mask for GPIO port [0-3] */
+#define PORTNUM_SHIFT       (12U)           /**< bit shift for GPIO port      */
+#define PIN_MASK            (0x00000007)    /**< bit mask for GPIO pin [0-7]  */
+#define GPIO_MASK           (0xfffff000)    /**< bit mask for GPIO port addr  */
+/** @} */
 
-/**
- * @brief Custom value to indicate unused parameter in gpio_init_mux
- */
-#define GPIO_MUX_NONE       (0xff)
 /**
  * @brief   Define a custom GPIO_PIN macro
  *
  * For the CC2538, we use OR the gpio ports base register address with the
  * actual pin number.
  */
-#define GPIO_PIN(port, pin) (gpio_t)(((uint32_t)GPIO_BASE + \
-                                      (port << GPIO_PORTNUM_SHIFT)) | pin)
+#define GPIO_PIN(port, pin) (gpio_t)(((uint32_t)GPIO_A + \
+                                      (port << PORTNUM_SHIFT)) | pin)
+
+/**
+ * @brief Access GPIO low-level device
+ *
+ * @param[in] pin   gpio pin
+ *
+ * @return          pointer to gpio low level device address
+ */
+static inline cc2538_gpio_t *gpio(gpio_t pin)
+{
+    return (cc2538_gpio_t *)(pin & GPIO_MASK);
+}
+
+/**
+ * @brief   Helper function to get port number for gpio pin
+ *
+ * @param[in] pin   gpio pin
+ *
+ * @return          port number of gpio pin, [0=A - 3=D]
+ */
+static inline uint8_t gpio_port_num(gpio_t pin)
+{
+    return (uint8_t)((pin & PORTNUM_MASK) >> PORTNUM_SHIFT) - 1;
+}
+
+/**
+ * @brief   Helper function to get pin number for gpio pin
+ *
+ * @param[in] pin   gpio pin
+ *
+ * @return          pin number of gpio pin, [0 - 7]
+ */
+static inline uint8_t gpio_pin_num(gpio_t pin)
+{
+    return (uint8_t)(pin & PIN_MASK);
+}
+
+/**
+ * @brief   Helper function to get bit mask for gpio pin number
+ *
+ * @param[in] pin   gpio pin
+ *
+ * @return          bit mask for gpio pin number, 2^[0 - 7]
+ */
+static inline uint32_t gpio_pin_mask(gpio_t pin)
+{
+    return (1 << (pin & PIN_MASK));
+}
+
+/**
+ * @brief   Helper function to get CC2538 gpio number from port and pin
+ *
+ * @param[in] pin   gpio pin
+ *
+ * @return          number of gpio pin, [0 - 31]
+ */
+static inline uint8_t gpio_pp_num(gpio_t pin)
+{
+    return (uint8_t)((gpio_port_num(pin) * 8) + gpio_pin_num(pin));
+}
 
 /**
  * @brief   Configure an alternate function for the given pin
  *
  * @param[in] pin   gpio pin
- * @param[in] sel   Select pin peripheral function
- * @param[in] over  Override pin configuration
+ * @param[in] sel   Setting for IOC select register, (-1) to ignore
+ * @param[in] over  Setting for IOC override register, (-1) to ignore
  */
-void gpio_init_af(gpio_t pin, uint8_t sel, uint8_t over);
+void gpio_init_af(gpio_t pin, int sel, int over);
 
 /**
- * @brief   Configure an alternate function for the given pin
- *
- * @param[in] pin   gpio pin
- * @param[in] over  Override pin configuration
- * @param[in] sel   Set peripheral function for pin (output)
- * @param[in] func  Set pin for peripheral function (input)
+ * @brief   Define a custom GPIO_UNDEF value
  */
-void gpio_init_mux(gpio_t pin, uint8_t over, uint8_t sel, uint8_t func);
+#define GPIO_UNDEF 99
 
-/**
- * @name   Use shared I2C functions
- * @{
- */
-#define PERIPH_I2C_NEED_READ_REG
-#define PERIPH_I2C_NEED_READ_REGS
-#define PERIPH_I2C_NEED_WRITE_REG
-#define PERIPH_I2C_NEED_WRITE_REGS
-/** @} */
-
-/**
- * @name   Override I2C clock speed values
- * @{
- */
-#define HAVE_I2C_SPEED_T
-typedef enum {
-    I2C_SPEED_LOW       = 0x01,     /**< not supported */
-    I2C_SPEED_NORMAL    = 100000U,  /**< normal mode:   ~100kbit/s */
-    I2C_SPEED_FAST      = 400000U,  /**< fast mode:     ~400kbit/s */
-    I2C_SPEED_FAST_PLUS = 0x02,     /**< not supported */
-    I2C_SPEED_HIGH      = 0x03,     /**< not supported */
-} i2c_speed_t;
-/** @} */
 /**
  * @brief   I2C configuration options
  */
 typedef struct {
-    i2c_speed_t speed;      /**< baudrate used for the bus */
     gpio_t scl_pin;         /**< pin used for SCL */
     gpio_t sda_pin;         /**< pin used for SDA */
 } i2c_conf_t;
@@ -143,28 +171,13 @@ typedef struct {
  */
 #define HAVE_GPIO_MODE_T
 typedef enum {
-    GPIO_IN         = ((uint8_t)OVERRIDE_DISABLE),      /**< input, no pull */
-    GPIO_IN_ANALOG  = ((uint8_t)OVERRIDE_ANALOG),       /**< input, analog */
-    GPIO_IN_PD      = ((uint8_t)OVERRIDE_PULLDOWN),     /**< input, pull-down */
-    GPIO_IN_PU      = ((uint8_t)OVERRIDE_PULLUP),       /**< input, pull-up */
-    GPIO_OUT        = ((uint8_t)OVERRIDE_ENABLE),       /**< output */
-    GPIO_OD         = (0xff),                           /**< not supported */
-    GPIO_OD_PU      = (0xff)                            /**< not supported */
+    GPIO_IN    = ((uint8_t)0x00),               /**< input, no pull */
+    GPIO_IN_PD = ((uint8_t)IOC_OVERRIDE_PDE),   /**< input, pull-down */
+    GPIO_IN_PU = ((uint8_t)IOC_OVERRIDE_PUE),   /**< input, pull-up */
+    GPIO_OUT   = ((uint8_t)IOC_OVERRIDE_OE),    /**< output */
+    GPIO_OD    = (0xff),                        /**< not supported */
+    GPIO_OD_PU = (0xff)                         /**< not supported */
 } gpio_mode_t;
-/** @} */
-
-
-/**
- * @name   UART device configuration
- * @{
- */
-typedef struct {
-    cc2538_uart_t *dev;       /**< pointer to the used UART device */
-    gpio_t rx_pin;            /**< pin used for RX */
-    gpio_t tx_pin;            /**< pin used for TX */
-    gpio_t cts_pin;           /**< CTS pin - set to GPIO_UNDEF when not using */
-    gpio_t rts_pin;           /**< RTS pin - set to GPIO_UNDEF when not using */
-} uart_conf_t;
 /** @} */
 
 /**
@@ -202,29 +215,12 @@ typedef struct {
     uint8_t scr;            /**< SCR clock divider */
 } spi_clk_conf_t;
 
-#ifndef BOARD_HAS_SPI_CLK_CONF
-/**
- * @brief   Pre-calculated clock divider values based on a CLOCK_CORECLOCK (32MHz)
- *
- * SPI bus frequency =  CLOCK_CORECLOCK / (CPSR * (SCR + 1)), with
- * CPSR = 2..254 and even,
- *  SCR = 0..255
- */
-static const spi_clk_conf_t spi_clk_config[] = {
-    { .cpsr = 64, .scr =  4 },  /* 100khz */
-    { .cpsr = 16, .scr =  4 },  /* 400khz */
-    { .cpsr = 32, .scr =  0 },  /* 1.0MHz */
-    { .cpsr =  2, .scr =  2 },  /* 5.3MHz */
-    { .cpsr =  2, .scr =  1 }   /* 8.0MHz */
-};
-#endif /* BOARD_HAS_SPI_CLK_CONF */
-
 /**
  * @name    SPI configuration data structure
  * @{
  */
 typedef struct {
-    uint8_t num;            /**< number of SSI device, i.e. 0 or 1 */
+    cc2538_ssi_t *dev;      /**< SSI device */
     gpio_t mosi_pin;        /**< pin used for MOSI */
     gpio_t miso_pin;        /**< pin used for MISO */
     gpio_t sck_pin;         /**< pin used for SCK */
@@ -266,13 +262,36 @@ typedef enum {
 typedef gpio_t adc_conf_t;
 
 /**
- * @name SOC_ADC_ADCCON3_EREF registers field values
+ * @name SOC_ADC_ADCCON3 register bit masks
  * @{
  */
-#define SOC_ADC_ADCCON3_EREF_INT      (0 << SOC_ADC_ADCCON3_EREF_S)    /**< Internal reference */
-#define SOC_ADC_ADCCON3_EREF_EXT      (1 << SOC_ADC_ADCCON3_EREF_S)    /**< External reference on AIN7 pin */
-#define SOC_ADC_ADCCON3_EREF_AVDD5    (2 << SOC_ADC_ADCCON3_EREF_S)    /**< AVDD5 pin */
-#define SOC_ADC_ADCCON3_EREF_DIFF     (3 << SOC_ADC_ADCCON3_EREF_S)    /**< External reference on AIN6-AIN7 differential input */
+#define SOC_ADC_ADCCON3_EREF    (0x000000C0) /**< Reference voltage for extra */
+#define SOC_ADC_ADCCON3_EDIV    (0x00000030) /**< Decimation rate for extra */
+#define SOC_ADC_ADCCON3_ECH     (0x0000000F) /**< Single channel select */
+/** @} */
+
+/**
+ * @name SOC_ADC_ADCCONx registers field values
+ * @{
+ */
+#define SOC_ADC_ADCCON_REF_INT      (0 << 6)    /**< Internal reference */
+#define SOC_ADC_ADCCON_REF_EXT      (1 << 6)    /**< External reference on AIN7 pin */
+#define SOC_ADC_ADCCON_REF_AVDD5    (2 << 6)    /**< AVDD5 pin */
+#define SOC_ADC_ADCCON_REF_DIFF     (3 << 6)    /**< External reference on AIN6-AIN7 differential input */
+#define SOC_ADC_ADCCON_CH_GND       (0xC)       /**< GND */
+/** @} */
+
+/**
+ * @brief Mask to check end-of-conversion (EOC) bit
+ */
+#define SOC_ADC_ADCCON1_EOC_MASK    (0x80)
+
+/**
+ * @name Masks for ADC raw data
+ * @{
+ */
+#define SOC_ADC_ADCL_MASK       (0x000000FC)
+#define SOC_ADC_ADCH_MASK       (0x000000FF)
 /** @} */
 
 /**
@@ -288,6 +307,8 @@ typedef gpio_t adc_conf_t;
 #ifdef __cplusplus
 }
 #endif
+
+#include "periph/dev_enums.h"
 
 #endif /* PERIPH_CPU_H */
 /** @} */

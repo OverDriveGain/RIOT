@@ -9,7 +9,7 @@
 #include "dynamixel.h"
 #include "shell.h"
 #include "shell_commands.h"
-#include "stdio_uart.h"
+#include "uart_stdio.h"
 #include "board.h"
 #include "periph/gpio.h"
 
@@ -71,21 +71,15 @@ static uint8_t dynamixel_buffer[128];
 static uart_half_duplex_t stream;
 
 #ifdef DXL_DIR_PIN
-static void dir_init(uart_t uart)
-{
-    (void)uart;
+static void dir_init(uart_t uart) {
     gpio_init(DXL_DIR_PIN, GPIO_OUT);
 }
 
-static void dir_enable_tx(uart_t uart)
-{
-    (void)uart;
+static void dir_enable_tx(uart_t uart) {
     gpio_set(DXL_DIR_PIN);
 }
 
-static void dir_disable_tx(uart_t uart)
-{
-    (void)uart;
+static void dir_disable_tx(uart_t uart) {
     gpio_clear(DXL_DIR_PIN);
 }
 #else
@@ -101,7 +95,7 @@ static int parse_uart(char *arg)
         printf("Error: Invalid UART_DEV device specified (%u).\n", uart);
         return -1;
     }
-    else if (UART_DEV(uart) == STDIO_UART_DEV) {
+    else if (UART_DEV(uart) == UART_STDIO_DEV) {
         printf("Error: The selected UART_DEV(%u) is used for the shell!\n", uart);
         return -2;
     }
@@ -154,8 +148,7 @@ static void parse_reg(char *arg, int *reg8, int *reg16)
     printf("Error: Invalid register (%s)\n", arg);
 }
 
-void print_registers(void)
-{
+void print_registers(void) {
     puts("available 8bits registers :");
     for (size_t i = 0 ; i < ARRAY_LEN(regs8) ; i++) {
         printf("\t%s\n", regs8[i].name);
@@ -167,8 +160,7 @@ void print_registers(void)
     }
 }
 
-static int cmd_init(int argc, char **argv)
-{
+static int cmd_init(int argc, char **argv) {
     int uart = -1;
     int baud = -1;
     uint32_t timeout = -1;
@@ -238,8 +230,7 @@ static int cmd_init(int argc, char **argv)
     return 0;
 }
 
-static int cmd_ping(int argc, char **argv)
-{
+static int cmd_ping(int argc, char **argv) {
     int id = -1;
 
     if (argc != 2) {
@@ -262,8 +253,7 @@ static int cmd_ping(int argc, char **argv)
     return 0;
 }
 
-static int cmd_scan(int argc, char **argv)
-{
+static int cmd_scan(int argc, char **argv) {
     int min = -1;
     int max = -1;
 
@@ -300,8 +290,7 @@ static int cmd_scan(int argc, char **argv)
     return 0;
 }
 
-static int cmd_read(int argc, char **argv)
-{
+static int cmd_read(int argc, char **argv) {
     int id = -1;
     int reg8 = -1;
     int reg16 = -1;
@@ -346,8 +335,7 @@ static int cmd_read(int argc, char **argv)
     return 0;
 }
 
-static int cmd_write(int argc, char **argv)
-{
+static int cmd_write(int argc, char **argv) {
     int id = -1;
     int reg8 = -1;
     int reg16 = -1;

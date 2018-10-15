@@ -7,11 +7,13 @@
  */
 
 /**
- * @ingroup     boards_airfy-beacon
+ * @defgroup    boards_airfy-beacon Airfy Beacon
+ * @ingroup     boards
+ * @brief       Board specific files for the Arify Beacon board
  * @{
  *
  * @file
- * @brief       Board specific definitions for the Airfy Beacon board
+ * @brief       Board specific definitions for the Arify Beacon board
  *
  * @author      Christian Mehlis <mehlis@inf.fu-berlin.de>
  */

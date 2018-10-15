@@ -11,7 +11,7 @@
  * @ingroup     sys
  * @brief       Provides an Event loop
  *
- * This module offers an event queue framework like libevent or libuev.
+ * This module offers an event queue framework not unlike libevent or libuev.
  *
  * An event queue is basically a FIFO queue of events, with some functions to
  * efficiently and safely handle adding and getting events to / from such a
@@ -34,8 +34,7 @@
  *    one thread, e.g., in order to create a state-machine like process flow.
  *    This is not (easily) possible using msg queues, as they might fill up.
  * 4. an event can only be queued in one event queue at the same time.
- *    Notifying many queues using only one event object is not possible with
- *    this imlementation.
+ *    Notifying many queues using only one event object is impossible.
  *
  * At the core, event_wait() uses thread flags to implement waiting for events
  * to be queued. Thus event queues can be used safely and efficiently in combination
@@ -43,40 +42,39 @@
  *
  * Examples:
  *
- * ~~~~~~~~~~~~~~~~~~~~~~~~ {.c}
- * // simple event handler
- * static void handler(event_t *event)
- * {
- *    printf("triggered 0x%08x\n", (unsigned)event);
- * }
+ *     // simple event handler
+ *     static void handler(event_t *event)
+ *     {
+ *        printf("triggered 0x%08x\n", (unsigned)event);
+ *     }
  *
- * static event_t event = { .handler = handler };
- * static event_queue_t queue;
+ *     static event_t event = { .handler=handler };
+ *     static event_queue_t queue;
  *
- * int main(void)
- * {
- *     event_queue_init(&queue);
- *     event_loop(&queue);
- * }
+ *     int main(void)
+ *     {
+ *         event_queue_init(&queue);
+ *         event_loop(&queue);
+ *     }
  *
- * [...] event_post(&queue, &event);
+ *     [...] event_post(&queue, &event);
  *
- * // example for event extended event struct
- * typedef struct {
- *     event_t super;
- *     const char *text;
- * } custom_event_t;
+ *     // example for event extended event struct
+ *     typedef struct {
+ *         event_t super;
+ *         const char *text;
+ *     } custom_event_t;
  *
- * static void custom_handler(event_t *event)
- * {
- *     custom_event_t *custom_event = (custom_event_t *)event;
- *     printf("triggered custom event with text: \"%s\"\n", custom_event->text);
- * }
+ *     static void custom_handler(event_t *event)
+ *     {
+ *         custom_event_t *custom_event = (custom_event_t *)event;
+ *         printf("triggered custom event with text: \"%s\"\n", custom_event->text);
+ *     }
+ *         static custom_event_t custom_event = { .super.callback=custom_handler, .text="CUSTOM EVENT" };
  *
- * static custom_event_t custom_event = { .super.handler = custom_handler, .text = "CUSTOM EVENT" };
+ *     [...] event_post(&queue, &custom_event)
  *
- * [...] event_post(&queue, &custom_event)
- * ~~~~~~~~~~~~~~~~~~~~~~~~
+ *
  *
  * @{
  *
@@ -103,13 +101,13 @@ extern "C" {
 /**
  * @brief   Thread flag use to notify available events in an event queue
  */
-#define THREAD_FLAG_EVENT   (0x1)
+#define THREAD_FLAG_EVENT   0x1
 #endif
 
 /**
  * @brief   event_queue_t static initializer
  */
-#define EVENT_QUEUE_INIT    { .waiter = (thread_t *)sched_active_thread }
+#define EVENT_QUEUE_INIT    { .waiter=(thread_t *)sched_active_thread }
 
 /**
  * @brief   event structure forward declaration
@@ -119,7 +117,7 @@ typedef struct event event_t;
 /**
  * @brief   event handler type definition
  */
-typedef void (*event_handler_t)(event_t *);
+typedef void(*event_handler_t)(event_t*);
 
 /**
  * @brief   event structure
@@ -142,17 +140,12 @@ typedef struct {
  *
  * This will set the calling thread as owner of @p queue.
  *
- * @param[out]  queue   event queue object to initialize
+ * @param[in,out]   queue   event queue object to initialize
  */
 void event_queue_init(event_queue_t *queue);
 
 /**
  * @brief   Queue an event
- *
- * The given event will be posted on the given @p queue. If the event is already
- * queued when calling this function, the event will not be touched and remain
- * in the previous position on the queue. So reposting an event while it is
- * already on the queue will have no effect.
  *
  * @param[in]   queue   event queue to queue event in
  * @param[in]   event   event to queue in event queue
@@ -164,7 +157,7 @@ void event_post(event_queue_t *queue, event_t *event);
  *
  * This will remove a queued event from an event queue.
  *
- * @note    Due to the underlying list implementation, this will run in O(n).
+ * @note: due to the underlying list implementation, this will run in O(n).
  *
  * @param[in]   queue   event queue to remove event from
  * @param[in]   event   event to remove from queue
@@ -206,11 +199,9 @@ event_t *event_wait(event_queue_t *queue);
  *
  * It is pretty much defined as:
  *
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.c}
- *     while ((event = event_wait(queue))) {
+ *     while((event = event_wait(queue))) {
  *         event->handler(event);
  *     }
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * @param[in]   queue   event queue to process
  */

@@ -6,11 +6,9 @@
 # General Public License v2.1. See the file LICENSE in the top level
 # directory for more details.
 
-: "${RIOTBASE:=$(cd $(dirname $0)/../../../; pwd)}"
-cd $RIOTBASE
+: ${RIOTBASE:=$(pwd)}
 
-: "${RIOTTOOLS:=${RIOTBASE}/dist/tools}"
-. "${RIOTTOOLS}"/ci/changed_files.sh
+. ${RIOTBASE}/dist/tools/ci/changed_files.sh
 
 EXIT_CODE=0
 
@@ -23,7 +21,7 @@ filter() {
 }
 
 _headercheck() {
-    OUT="$(${RIOTTOOLS}/headerguards/headerguards.py ${FILES} | filter)"
+    OUT="$(${RIOTBASE}/dist/tools/headerguards/headerguards.py ${FILES} | filter)"
 
     if [ -n "$OUT" ]; then
         EXIT_CODE=1

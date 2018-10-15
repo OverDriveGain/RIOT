@@ -1,7 +1,7 @@
+APPLICATION = xtimer_longterm
 include ../Makefile.tests_common
 
-BOARD_INSUFFICIENT_MEMORY := arduino-duemilanove arduino-uno \
-                             nucleo-f031k6 nucleo-f042k6
+BOARD_INSUFFICIENT_MEMORY := nucleo32-f031 nucleo32-f042
 
 USEMODULE += xtimer
 

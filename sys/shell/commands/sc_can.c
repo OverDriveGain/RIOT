@@ -83,7 +83,7 @@ static int _dump(int argc, char **argv)
         return 0;
     }
 
-    int ret = -1;
+    int ret;
     struct can_filter filters[SC_CAN_MAX_FILTERS];
     conn_can_raw_t conn;
     struct can_frame frame;

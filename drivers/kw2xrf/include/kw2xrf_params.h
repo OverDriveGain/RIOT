@@ -48,12 +48,10 @@ extern "C" {
 #define KW2XRF_PARAM_RESET       (GPIO_PIN(0, 3))
 #endif
 
-#ifndef KW2XRF_PARAMS
-#define KW2XRF_PARAMS            { .spi = KW2XRF_PARAM_SPI,         \
-                                   .spi_clk = KW2XRF_PARAM_SPI_CLK, \
-                                   .cs_pin = KW2XRF_PARAM_CS,       \
-                                   .int_pin = KW2XRF_PARAM_INT }
-#endif
+#define KW2XRF_PARAMS_DEFAULT    {.spi = KW2XRF_PARAM_SPI, \
+                                  .spi_clk = KW2XRF_PARAM_SPI_CLK, \
+                                  .cs_pin = KW2XRF_PARAM_CS, \
+                                  .int_pin = KW2XRF_PARAM_INT }
 /**@}*/
 
 /**
@@ -61,7 +59,11 @@ extern "C" {
  */
 static const kw2xrf_params_t kw2xrf_params[] =
 {
-    KW2XRF_PARAMS
+#ifdef KW2XRF_PARAMS_BOARD
+    KW2XRF_PARAMS_BOARD,
+#else
+    KW2XRF_PARAMS_DEFAULT,
+#endif
 };
 
 #ifdef __cplusplus

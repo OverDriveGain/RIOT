@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup   boards_remote-reva
+ * @ingroup   boards_remote
  * @{
  *
  * @file

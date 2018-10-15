@@ -8,7 +8,7 @@
  */
 
 /**
- * @ingroup     cpu_native
+ * @ingroup     native_cpu
  * @ingroup     drivers_periph_timer
  * @{
  *

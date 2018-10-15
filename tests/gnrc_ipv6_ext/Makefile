@@ -1,15 +1,17 @@
 # name of your application
+APPLICATION = gnrc_ipv6_ext
 include ../Makefile.tests_common
 
-BOARD_INSUFFICIENT_MEMORY := arduino-duemilanove arduino-mega2560 arduino-uno \
-                             chronos msb-430 msb-430h nucleo-f030r8 \
-                             nucleo-f031k6 nucleo-f042k6 nucleo-f303k8 \
-                             nucleo-f334r8 nucleo-l031k6 nucleo-l053r8 \
-                             stm32f0discovery waspmote-pro
+BOARD_INSUFFICIENT_MEMORY := airfy-beacon chronos maple-mini msb-430 msb-430h \
+                             nrf51dongle nrf6310 nucleo32-f031 nucleo32-f042 \
+                             nucleo32-l031 nucleo-f030 nucleo-f103 nucleo-f334 nucleo-l053 \
+                             pca10000 pca10005 spark-core stm32f0discovery telosb \
+                             wsn430-v1_3b wsn430-v1_4 yunjia-nrf51822 z1
 
-# use Ethernet as link-layer protocol
-USEMODULE += netdev_eth
-USEMODULE += netdev_test
+# Include packages that pull up and auto-init the link layer.
+# NOTE: 6LoWPAN will be included if IEEE802.15.4 devices are present
+USEMODULE += gnrc_netdev_default
+USEMODULE += auto_init_gnrc_netif
 # Specify the mandatory networking modules for IPv6
 USEMODULE += gnrc_ipv6_router_default
 # IPv6 extension headers
@@ -21,10 +23,13 @@ USEMODULE += gnrc_udp
 # Add also the shell, some shell commands
 USEMODULE += ps
 
-CFLAGS += -DGNRC_NETIF_IPV6_ADDRS_NUMOF=3
-
-TEST_ON_CI_WHITELIST += all
-
-# Note: The test can check more things with ENABLE_DEBUG set to 1 in gnrc_ipv6.c
+# Comment this out to disable code in RIOT that does safety checking
+# which is not needed in a production environment but helps in the
+# development process:
+CFLAGS += -DDEVELHELP
 
 include $(RIOTBASE)/Makefile.include
+
+# This requires ENABLE_DEBUG in gnrc_ipv6.c to be 1
+test:
+	tests/01-run.py

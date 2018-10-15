@@ -8,7 +8,7 @@
  */
 
 /**
- * @ingroup     drivers_periph_spi
+ * @ingroup     drivers
  * @{
  *
  * @file

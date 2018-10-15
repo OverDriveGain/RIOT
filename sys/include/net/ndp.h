@@ -88,7 +88,6 @@ extern "C" {
 #define NDP_OPT_PI                  (3)     /**< prefix information option */
 #define NDP_OPT_RH                  (4)     /**< redirected option */
 #define NDP_OPT_MTU                 (5)     /**< MTU option */
-#define NDP_OPT_RDNSS               (25)    /**< recursive DNS server option */
 #define NDP_OPT_AR                  (33)    /**< address registration option */
 #define NDP_OPT_6CTX                (34)    /**< 6LoWPAN context option */
 #define NDP_OPT_ABR                 (35)    /**< authoritative border router option */
@@ -122,15 +121,8 @@ extern "C" {
 /** @} */
 
 /**
- * @brief   Minimum length of a recursive DNS server option (in units of 8 bytes)
- * @see     [RFC 8106, section 5.1](https://tools.ietf.org/html/rfc8106#section-5.1)
- */
-#define NDP_OPT_RDNSS_MIN_LEN       (3U)
-
-/**
  * @{
  * @name    Router constants
- * @see     [RFC 4861, section 6.2.1](https://tools.ietf.org/html/rfc4861#section-6.2.1)
  * @see     [RFC 4861, section 10](https://tools.ietf.org/html/rfc4861#section-10)
  */
 #define NDP_MAX_INIT_RA_INTERVAL        (16000U)   /**< MAX_INITIAL_RTR_ADVERT_INTERVAL (in ms) */
@@ -138,9 +130,6 @@ extern "C" {
 #define NDP_MAX_FIN_RA_NUMOF            (3U)       /**< MAX_FINAL_RTR_ADVERTISEMENT */
 #define NDP_MIN_MS_DELAY_BETWEEN_RAS    (3000U)    /**< MIN_DELAY_BETWEEN_RAS (in ms) */
 #define NDP_MAX_RA_DELAY                (500U)     /**< MAX_RA_DELAY_TIME (in ms) */
-#define NDP_MAX_RA_INTERVAL_MS          (600000U)  /**< default of MaxRtrAdvInterval (in ms) */
-#define NDP_MIN_RA_INTERVAL_MS          (198000U)  /**< default of MinRtrAdvInterval (in ms) */
-#define NDP_RTR_LTIME_SEC               (1800U)    /**< default of AdvDefaultLifetime (in sec) */
 /** @} */
 
 /**
@@ -160,15 +149,6 @@ extern "C" {
  */
 #define NDP_MAX_MC_SOL_NUMOF        (3U)        /**< MAX_MULTICAST_SOLICIT */
 #define NDP_MAX_UC_SOL_NUMOF        (3U)        /**< MAX_UNICAST_SOLICIT */
-
-/**
- * @brief   Default for DupAddrDetectTransmits
- * @see     [RFC 4862, section 5.1](https://tools.ietf.org/html/rfc4862#section-5.1)
- * @note    Must not be greater than 7 for @ref net_gnrc since
- *          @ref GNRC_NETIF_IPV6_ADDRS_FLAGS_STATE_TENTATIVE restricts it to
- *          that number.
- */
-#define NDP_DAD_TRANSMIT_NUMOF      (1U)
 #define NDP_MAX_ANYCAST_MS_DELAY    (1000U)     /**< MAX_ANYCAST_DELAY_TIME (in ms) */
 #define NDP_MAX_NA_NUMOF            (3U)        /**< MAX_NEIGHBOR_ADVERTISEMENT */
 #define NDP_REACH_MS                (30000U)    /**< REACHABLE_TIME (in ms) */
@@ -179,15 +159,6 @@ extern "C" {
  * @see     [RFC 7048](https://tools.ietf.org/html/rfc7048)
  */
 #define NDP_MAX_RETRANS_TIMER_MS    (60000U)
-
-/**
- * @brief   Maximum retransmission of neighbor solicitations when UNREACHABLE
- *
- * With more than this number the backoff will always be larger than
- * @ref NDP_MAX_RETRANS_TIMER_MS, even if the random factor is 0.5 and the
- * retransmission time is 1ms.
- */
-#define NDP_MAX_NS_NUMOF            (17U)
 #define NDP_DELAY_FIRST_PROBE_MS    (5000U)     /**< DELAY_FIRST_PROBE_TIME (in ms) */
 #define NDP_MIN_RANDOM_FACTOR       (500U)      /**< MIN_RANDOM_FACTOR (x 1000) */
 #define NDP_MAX_RANDOM_FACTOR       (1500U)     /**< MAX_RANDOM_FACTOR (x 1000) */
@@ -321,19 +292,6 @@ typedef struct __attribute__((packed)) {
     network_uint32_t mtu;   /**< MTU */
 } ndp_opt_mtu_t;
 
-/**
- * @brief   Recursive DNS server option format
- * @extends ndp_opt_t
- *
- * @see     [RFC 8106, section 5.1](https://tools.ietf.org/html/rfc8106#section-5.1)
- */
-typedef struct __attribute__((packed)) {
-    uint8_t type;           /**< option type */
-    uint8_t len;            /**< length in units of 8 octets */
-    network_uint16_t resv;  /**< reserved field */
-    network_uint32_t ltime; /**< lifetime in seconds */
-    ipv6_addr_t addrs[];    /**< addresses of IPv6 recursive DNS servers */
-} ndp_opt_rdnss_t;
 
 #ifdef __cplusplus
 }

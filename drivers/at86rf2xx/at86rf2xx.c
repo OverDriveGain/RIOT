@@ -1,7 +1,6 @@
 /*
  * Copyright (C) 2013 Alaeddine Weslati <alaeddine.weslati@inria.fr>
  * Copyright (C) 2015 Freie Universität Berlin
- *               2017 HAW Hamburg
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -20,7 +19,7 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  * @author      Kaspar Schleiser <kaspar@schleiser.de>
  * @author      Oliver Hahm <oliver.hahm@inria.fr>
- * @author      Sebastian Meiling <s@mlng.net>
+ *
  * @}
  */
 
@@ -56,12 +55,14 @@ void at86rf2xx_reset(at86rf2xx_t *dev)
 
     at86rf2xx_hardware_reset(dev);
 
-    netdev_ieee802154_reset(&dev->netdev);
-
     /* Reset state machine to ensure a known state */
     if (dev->state == AT86RF2XX_STATE_P_ON) {
         at86rf2xx_set_state(dev, AT86RF2XX_STATE_FORCE_TRX_OFF);
     }
+
+    /* reset options and sequence number */
+    dev->netdev.seq = 0;
+    dev->netdev.flags = 0;
 
     /* get an 8-byte unique ID to use as hardware address */
     luid_get(addr_long.uint8, IEEE802154_LONG_ADDRESS_LEN);
@@ -81,12 +82,22 @@ void at86rf2xx_reset(at86rf2xx_t *dev)
     /* set default options */
     at86rf2xx_set_option(dev, AT86RF2XX_OPT_AUTOACK, true);
     at86rf2xx_set_option(dev, AT86RF2XX_OPT_CSMA, true);
-
+    at86rf2xx_set_option(dev, AT86RF2XX_OPT_TELL_RX_START, false);
+    at86rf2xx_set_option(dev, AT86RF2XX_OPT_TELL_RX_END, true);
+#ifdef MODULE_NETSTATS_L2
+    at86rf2xx_set_option(dev, AT86RF2XX_OPT_TELL_TX_END, true);
+#endif
+    /* set default protocol */
+#ifdef MODULE_GNRC_SIXLOWPAN
+    dev->netdev.proto = GNRC_NETTYPE_SIXLOWPAN;
+#elif MODULE_GNRC
+    dev->netdev.proto = GNRC_NETTYPE_UNDEF;
+#endif
     /* enable safe mode (protect RX FIFO until reading data starts) */
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__TRX_CTRL_2,
                         AT86RF2XX_TRX_CTRL_2_MASK__RX_SAFE_MODE);
 #ifdef MODULE_AT86RF212B
-    at86rf2xx_set_page(dev, AT86RF2XX_DEFAULT_PAGE);
+    at86rf2xx_set_page(dev, 0);
 #endif
 
     /* don't populate masked interrupt flags to IRQ_STATUS register */
@@ -113,7 +124,7 @@ void at86rf2xx_reset(at86rf2xx_t *dev)
     DEBUG("at86rf2xx_reset(): reset complete.\n");
 }
 
-size_t at86rf2xx_send(at86rf2xx_t *dev, const uint8_t *data, size_t len)
+size_t at86rf2xx_send(at86rf2xx_t *dev, uint8_t *data, size_t len)
 {
     /* check data length */
     if (len > AT86RF2XX_MAX_PKT_LENGTH) {
@@ -131,14 +142,23 @@ void at86rf2xx_tx_prepare(at86rf2xx_t *dev)
     uint8_t state;
 
     dev->pending_tx++;
-    state = at86rf2xx_set_state(dev, AT86RF2XX_STATE_TX_ARET_ON);
+
+    /* make sure ongoing transmissions are finished */
+    do {
+        state = at86rf2xx_get_status(dev);
+    } while (state == AT86RF2XX_STATE_BUSY_RX_AACK ||
+             state == AT86RF2XX_STATE_BUSY_TX_ARET);
+
     if (state != AT86RF2XX_STATE_TX_ARET_ON) {
         dev->idle_state = state;
     }
+
+    at86rf2xx_set_state(dev, AT86RF2XX_STATE_TX_ARET_ON);
+
     dev->tx_frame_len = IEEE802154_FCS_LEN;
 }
 
-size_t at86rf2xx_tx_load(at86rf2xx_t *dev, const uint8_t *data,
+size_t at86rf2xx_tx_load(at86rf2xx_t *dev, uint8_t *data,
                          size_t len, size_t offset)
 {
     dev->tx_frame_len += (uint8_t)len;
@@ -146,7 +166,7 @@ size_t at86rf2xx_tx_load(at86rf2xx_t *dev, const uint8_t *data,
     return offset + len;
 }
 
-void at86rf2xx_tx_exec(const at86rf2xx_t *dev)
+void at86rf2xx_tx_exec(at86rf2xx_t *dev)
 {
     netdev_t *netdev = (netdev_t *)dev;
 
@@ -156,7 +176,7 @@ void at86rf2xx_tx_exec(const at86rf2xx_t *dev)
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__TRX_STATE,
                         AT86RF2XX_TRX_STATE__TX_START);
     if (netdev->event_callback &&
-        (dev->flags & AT86RF2XX_OPT_TELL_TX_START)) {
+        (dev->netdev.flags & AT86RF2XX_OPT_TELL_TX_START)) {
         netdev->event_callback(netdev, NETDEV_EVENT_TX_STARTED);
     }
 }
@@ -167,7 +187,6 @@ bool at86rf2xx_cca(at86rf2xx_t *dev)
     uint8_t old_state = at86rf2xx_set_state(dev, AT86RF2XX_STATE_TRX_OFF);
     /* Disable RX path */
     uint8_t rx_syn = at86rf2xx_reg_read(dev, AT86RF2XX_REG__RX_SYN);
-
     reg = rx_syn | AT86RF2XX_RX_SYN__RX_PDT_DIS;
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__RX_SYN, reg);
     /* Manually triggered CCA is only possible in RX_ON (basic operating mode) */

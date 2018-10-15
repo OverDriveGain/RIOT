@@ -1,5 +1,5 @@
 MODULE = board
 
-DIRS = $(RIOTBOARD)/common/remote
+DIRS = $(RIOTBOARD)/remote-common
 
 include $(RIOTBASE)/Makefile.base

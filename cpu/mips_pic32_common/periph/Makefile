@@ -1,3 +1,3 @@
-MODULE = mips_pic32_common_periph
+MODULE = periph
 
-include $(RIOTMAKE)/periph.mk
+include $(RIOTBASE)/Makefile.base

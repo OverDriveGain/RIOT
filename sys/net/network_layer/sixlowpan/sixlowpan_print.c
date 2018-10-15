@@ -13,6 +13,7 @@
  */
 
 #include <stdio.h>
+#include <inttypes.h>
 
 #include "od.h"
 #include "net/ipv6/hdr.h"
@@ -39,9 +40,9 @@ void sixlowpan_print(uint8_t *data, size_t size)
         sixlowpan_frag_t *hdr = (sixlowpan_frag_t *)data;
 
         puts("Fragmentation Header (first)");
-        printf("datagram size: %u\n",
-               (byteorder_ntohs(hdr->disp_size) & SIXLOWPAN_FRAG_SIZE_MASK));
-        printf("tag: 0x%04x\n", byteorder_ntohs(hdr->tag));
+        printf("datagram size: %" PRIu16 "\n",
+               (uint16_t) (byteorder_ntohs(hdr->disp_size) & SIXLOWPAN_FRAG_SIZE_MASK));
+        printf("tag: 0x%" PRIu16 "\n", byteorder_ntohs(hdr->tag));
 
         /* Print next dispatch */
         sixlowpan_print(data + sizeof(sixlowpan_frag_t),
@@ -51,10 +52,10 @@ void sixlowpan_print(uint8_t *data, size_t size)
         sixlowpan_frag_n_t *hdr = (sixlowpan_frag_n_t *)data;
 
         puts("Fragmentation Header (subsequent)");
-        printf("datagram size: %u\n",
-               (byteorder_ntohs(hdr->disp_size) & SIXLOWPAN_FRAG_SIZE_MASK));
-        printf("tag: 0x%04x\n", byteorder_ntohs(hdr->tag));
-        printf("offset: %u\n", (unsigned)hdr->offset);
+        printf("datagram size: %" PRIu16 "\n",
+               (uint16_t) (byteorder_ntohs(hdr->disp_size) & SIXLOWPAN_FRAG_SIZE_MASK));
+        printf("tag: 0x%" PRIu16 "\n", byteorder_ntohs(hdr->tag));
+        printf("offset: 0x%u\n", (unsigned)hdr->offset);
 
         od_hex_dump(data + sizeof(sixlowpan_frag_n_t),
                     size - sizeof(sixlowpan_frag_n_t),
@@ -200,15 +201,15 @@ void sixlowpan_print(uint8_t *data, size_t size)
                         puts("reserved");
                         break;
 
-                    case 0x01:
+                    case 0x10:
                         puts("64 bits inline");
                         break;
 
-                    case 0x02:
+                    case 0x20:
                         puts("16 bits inline");
                         break;
 
-                    case 0x03:
+                    case 0x30:
                         puts("elided (use L2 address)");
                         break;
                 }
@@ -221,15 +222,15 @@ void sixlowpan_print(uint8_t *data, size_t size)
                         puts("128 bits inline");
                         break;
 
-                    case 0x01:
+                    case 0x10:
                         puts("64 bits inline");
                         break;
 
-                    case 0x02:
+                    case 0x20:
                         puts("16 bits inline");
                         break;
 
-                    case 0x03:
+                    case 0x30:
                         puts("elided (use L2 address)");
                         break;
                 }

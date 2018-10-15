@@ -28,10 +28,12 @@
 
 #define BUF_SIZE (64)
 
-#define MAX_ADDR_LEN            (GNRC_NETIF_L2ADDR_MAXLEN)
+#define MAX_ADDR_LEN            (8U)
 
 static unsigned char _int_buf[BUF_SIZE];
+static unsigned char _cont_buf[BUF_SIZE];
 
+static const char *_default_content = "Start the RIOT!";
 static unsigned char _out[CCNL_MAX_PACKET_SIZE];
 
 /* usage for open command */
@@ -56,7 +58,7 @@ int _ccnl_open(int argc, char **argv)
 
     /* check if given number is a valid netif PID */
     int pid = atoi(argv[1]);
-    if (gnrc_netif_get_by_pid(pid) == NULL) {
+    if (!gnrc_netif_exist(pid)) {
         printf("%i is not a valid interface!\n", pid);
         return -1;
     }
@@ -76,47 +78,46 @@ int _ccnl_open(int argc, char **argv)
 
 static void _content_usage(char *argv)
 {
-    printf("usage: %s [URI] [content]\n"
-            "prints the CS if called without parameters:\n"
+    printf("usage: %s <URI> [content]\n"
+            "%% %s /riot/peter/schmerzl             (default content)\n"
             "%% %s /riot/peter/schmerzl RIOT\n",
-            argv, argv);
+            argv, argv, argv);
 }
 
 int _ccnl_content(int argc, char **argv)
 {
     if (argc < 2) {
-        ccnl_cs_dump(&ccnl_relay);
-        return 0;
-    }
-    if (argc == 2) {
         _content_usage(argv[0]);
         return -1;
     }
 
     int arg_len;
+    char *body = (char*) _default_content;
     char buf[BUF_SIZE+1]; /* add one extra space to fit trailing '\0' */
 
-    unsigned pos = 0;
-    for (int i = 2; (i < argc) && (pos < BUF_SIZE); ++i) {
-        arg_len = strlen(argv[i]);
-        if ((pos + arg_len) > BUF_SIZE) {
-            arg_len = BUF_SIZE - pos;
+    if (argc > 2) {
+        unsigned pos = 0;
+        for (int i = 2; (i < argc) && (pos < BUF_SIZE); ++i) {
+            arg_len = strlen(argv[i]);
+            if ((pos + arg_len) > BUF_SIZE) {
+                arg_len = BUF_SIZE - pos;
+            }
+            strncpy(&buf[pos], argv[i], arg_len);
+            pos += arg_len;
+            /* increment pos _after_ adding ' ' */
+            buf[pos++] = ' ';
         }
-        strncpy(&buf[pos], argv[i], arg_len);
-        pos += arg_len;
-        /* increment pos _after_ adding ' ' */
-        buf[pos++] = ' ';
+        /* decrement pos _before_ to overwrite last ' ' with '\0' */
+        buf[--pos] = '\0';
+        body = buf;
     }
-    /* decrement pos _before_ to overwrite last ' ' with '\0' */
-    buf[--pos] = '\0';
+    arg_len = strlen(body);
 
-    arg_len = strlen(buf);
-
-    struct ccnl_prefix_s *prefix = ccnl_URItoPrefix(argv[1], CCNL_SUITE_NDNTLV, NULL);
+    struct ccnl_prefix_s *prefix = ccnl_URItoPrefix(argv[1], CCNL_SUITE_NDNTLV, NULL, NULL);
     int offs = CCNL_MAX_PACKET_SIZE;
-    arg_len = ccnl_ndntlv_prependContent(prefix, (unsigned char*) buf, arg_len, NULL, NULL, &offs, _out);
+    arg_len = ccnl_ndntlv_prependContent(prefix, (unsigned char*) body, arg_len, NULL, NULL, &offs, _out);
 
-    ccnl_prefix_free(prefix);
+    free_prefix(prefix);
 
     unsigned char *olddata;
     unsigned char *data = olddata = _out + offs;
@@ -131,13 +132,9 @@ int _ccnl_content(int argc, char **argv)
 
     struct ccnl_content_s *c = 0;
     struct ccnl_pkt_s *pk = ccnl_ndntlv_bytes2pkt(typ, olddata, &data, &arg_len);
-    c = ccnl_content_new(&pk);
+    c = ccnl_content_new(&ccnl_relay, &pk);
+    ccnl_content_add2cache(&ccnl_relay, c);
     c->flags |= CCNL_CONTENT_FLAGS_STATIC;
-    msg_t m = { .type = CCNL_MSG_CS_ADD, .content.ptr = c };
-
-    if(msg_send(&m, ccnl_event_loop_pid) < 1){
-        puts("could not add content");
-    }
 
     return 0;
 }
@@ -147,7 +144,7 @@ static struct ccnl_face_s *_intern_face_get(char *addr_str)
     /* initialize address with 0xFF for broadcast */
     uint8_t relay_addr[MAX_ADDR_LEN];
     memset(relay_addr, UINT8_MAX, MAX_ADDR_LEN);
-    size_t addr_len = gnrc_netif_addr_from_str(addr_str, relay_addr);
+    size_t addr_len = gnrc_netif_addr_from_str(relay_addr, sizeof(relay_addr), addr_str);
 
     if (addr_len == 0) {
         printf("Error: %s is not a valid link layer address\n", addr_str);
@@ -169,7 +166,7 @@ static struct ccnl_face_s *_intern_face_get(char *addr_str)
 static int _intern_fib_add(char *pfx, char *addr_str)
 {
     int suite = CCNL_SUITE_NDNTLV;
-    struct ccnl_prefix_s *prefix = ccnl_URItoPrefix(pfx, suite, NULL);
+    struct ccnl_prefix_s *prefix = ccnl_URItoPrefix(pfx, suite, NULL, 0);
     if (!prefix) {
         puts("Error: prefix could not be created!");
         return -1;
@@ -211,10 +208,26 @@ int _ccnl_interest(int argc, char **argv)
     }
 
     memset(_int_buf, '\0', BUF_SIZE);
+    memset(_cont_buf, '\0', BUF_SIZE);
 
-    struct ccnl_prefix_s *prefix = ccnl_URItoPrefix(argv[1], CCNL_SUITE_NDNTLV, NULL);
-    int res = ccnl_send_interest(prefix, _int_buf, BUF_SIZE, NULL);
-    ccnl_prefix_free(prefix);
+    gnrc_netreg_entry_t _ne =
+        GNRC_NETREG_ENTRY_INIT_PID(GNRC_NETREG_DEMUX_CTX_ALL,
+                                   sched_active_pid);
+    /* register for content chunks */
+    gnrc_netreg_register(GNRC_NETTYPE_CCN_CHUNK, &_ne);
+
+    struct ccnl_prefix_s *prefix = ccnl_URItoPrefix(argv[1], CCNL_SUITE_NDNTLV, NULL, 0);
+    ccnl_send_interest(prefix, _int_buf, BUF_SIZE);
+    int res = 0;
+    if (ccnl_wait_for_chunk(_cont_buf, BUF_SIZE, 0) > 0) {
+        printf("Content received: %s\n", _cont_buf);
+    }
+    else {
+        printf("Timeout! No content received in response to the Interest for %s.\n", argv[1]);
+        res = -1;
+    }
+    free_prefix(prefix);
+    gnrc_netreg_unregister(GNRC_NETTYPE_CCN_CHUNK, &_ne);
 
     return res;
 }
@@ -241,13 +254,13 @@ int _ccnl_fib(int argc, char **argv)
     else if ((argc == 3) && (strncmp(argv[1], "del", 3) == 0)) {
         int suite = CCNL_SUITE_NDNTLV;
         if (strchr(argv[2], '/')) {
-            struct ccnl_prefix_s *prefix = ccnl_URItoPrefix(argv[2], suite, NULL);
+            struct ccnl_prefix_s *prefix = ccnl_URItoPrefix(argv[2], suite, NULL, 0);
             if (!prefix) {
                 puts("Error: prefix could not be created!");
                 return -1;
             }
             int res = ccnl_fib_rem_entry(&ccnl_relay, prefix, NULL);
-            ccnl_prefix_free(prefix);
+            free_prefix(prefix);
             return res;
         }
         else {

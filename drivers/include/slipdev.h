@@ -26,7 +26,7 @@
 #include "cib.h"
 #include "net/netdev.h"
 #include "periph/uart.h"
-#include "tsrb.h"
+#include "ringbuffer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,12 +36,20 @@ extern "C" {
  * @brief   UART buffer size used for TX and RX buffers
  *
  * Reduce this value if your expected traffic does not include full IPv6 MTU
- * sized packets.
- *
- * @pre Needs to be power of two and `<= INT_MAX`
+ * sized packets
  */
 #ifndef SLIPDEV_BUFSIZE
-#define SLIPDEV_BUFSIZE (2048U)
+#define SLIPDEV_BUFSIZE (1500U)
+#endif
+
+/**
+ * @brief   Packet FIFO size
+ *
+ * @note    For GNRC it is recommended to have it the same size as the link-layer
+ *          thread's message queue, but it MUST be of power of 2
+ */
+#ifndef SLIPDEV_PKTFIFO_SIZE
+#define SLIPDEV_PKTFIFO_SIZE    (8U)
 #endif
 
 /**
@@ -60,8 +68,13 @@ typedef struct {
 typedef struct {
     netdev_t netdev;                        /**< parent class */
     slipdev_params_t config;                /**< configuration parameters */
-    tsrb_t inbuf;                           /**< RX buffer */
+    ringbuffer_t inbuf;                     /**< RX buffer */
     char rxmem[SLIPDEV_BUFSIZE];            /**< memory used by RX buffer */
+    uint16_t pktfifo[SLIPDEV_PKTFIFO_SIZE]; /**< FIFO of sizes of fully received
+                                             *   packets */
+    cib_t pktfifo_idx;                      /**< CIB for slipdev_t::pktfifo */
+    uint16_t inbytes;                       /**< the number of bytes received of
+                                             *   a currently incoming packet */
     uint16_t inesc;                         /**< device previously received an escape
                                              *   byte */
 } slipdev_t;

@@ -91,10 +91,6 @@ void *worker_thread(void *arg)
 {
     (void) arg;
 
-    /* Calculate interval based on possible precision when 'XTIMER_SHIFT > 0',
-     * to apply precision loss to expected interval length.
-     * test_interval != TEST_INTERVAL */
-    uint32_t test_interval = xtimer_usec_from_ticks(xtimer_ticks_from_usec(TEST_INTERVAL));
     uint32_t loop_counter = 0;
     uint32_t start = 0;
     uint32_t last = 0;
@@ -115,14 +111,14 @@ void *worker_thread(void *arg)
         else if ((loop_counter % TEST_HZ) == 0) {
             uint32_t us = now % US_PER_SEC;
             uint32_t sec = now / US_PER_SEC;
-            uint32_t expected = start + loop_counter * test_interval;
+            uint32_t expected = start + loop_counter * TEST_INTERVAL;
             int32_t drift = now - expected;
-            expected = last + TEST_HZ * test_interval;
+            expected = last + TEST_HZ * TEST_INTERVAL;
             int32_t jitter = now - expected;
             printf("now=%" PRIu32 ".%06" PRIu32 " (0x%08" PRIx32 " ticks), ",
-                   sec, us, ticks.ticks32);
+                    sec, us, ticks.ticks32);
             printf("drift=%" PRId32 " us, jitter=%" PRId32 " us\n",
-                   drift, jitter);
+                    drift, jitter);
             last = now;
         }
         ++loop_counter;

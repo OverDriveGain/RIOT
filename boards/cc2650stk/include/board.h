@@ -7,7 +7,9 @@
  */
 
 /**
- * @ingroup     boards_cc2650stk
+ * @defgroup    boards_cc2650stk CC2650STK
+ * @ingroup     boards
+ * @brief       SimpleLink™ CC2650 sensor tag
  * @{
  *
  * @file

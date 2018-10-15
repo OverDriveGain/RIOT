@@ -6,7 +6,7 @@
  * directory for more details.
  */
 
-/**
+ /**
  * @ingroup sys_random
  * @{
  * @file
@@ -20,7 +20,6 @@
  */
 
 #include <stdint.h>
-#include <string.h>
 
 #include "tinymt32/tinymt32.h"
 

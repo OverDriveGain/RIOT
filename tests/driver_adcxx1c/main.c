@@ -30,7 +30,6 @@ static adcxx1c_t dev;
 
 static void alert_cb(void *arg)
 {
-    (void)arg;
     puts("[Alert]\n");
 }
 

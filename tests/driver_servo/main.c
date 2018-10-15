@@ -53,7 +53,7 @@ static servo_t servo;
 int main(void)
 {
     int res;
-    unsigned int pos = (STEP_LOWER_BOUND + STEP_UPPER_BOUND) / 2;
+    int pos = (STEP_LOWER_BOUND + STEP_UPPER_BOUND) / 2;
     int step = STEP;
 
     puts("\nRIOT RC servo test");

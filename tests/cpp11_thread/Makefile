@@ -1,3 +1,5 @@
+# name of your application
+APPLICATION = cpp11_thread
 include ../Makefile.tests_common
 
 # ROM is overflowing for these boards when using
@@ -6,7 +8,12 @@ include ../Makefile.tests_common
 # Debian jessie libstdc++-arm-none-eabi-newlib-4.8.3-9+4 works fine, though.
 # Remove this line if Travis is upgraded to a different toolchain which does
 # not pull in all C++ locale code whenever exceptions are used.
-BOARD_INSUFFICIENT_MEMORY := nucleo-f334r8 spark-core stm32f0discovery
+BOARD_INSUFFICIENT_MEMORY := nucleo-f334 spark-core stm32f0discovery
+
+# Comment this out to disable code in RIOT that does safety checking
+# which is not needed in a production environment but helps in the
+# development process:
+CFLAGS += -DDEVELHELP
 
 # If you want to add some extra flags when compile c++ files, add these flags
 # to CXXEXFLAGS variable
@@ -16,6 +23,7 @@ USEMODULE += cpp11-compat
 USEMODULE += xtimer
 USEMODULE += timex
 
-TEST_ON_CI_WHITELIST += all
-
 include $(RIOTBASE)/Makefile.include
+
+test:
+	tests/01-run.py

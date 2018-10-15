@@ -60,7 +60,7 @@ static void *run(void *unused) {
 }
 
 int main(void) {
-    puts("START");
+    puts("Start.");
 
     pthread_t th_id;
     pthread_create(&th_id, NULL, run, NULL);
@@ -69,12 +69,6 @@ int main(void) {
     pthread_join(th_id, (void **) &res);
 
     printf("Result: %i\n", (int) (intptr_t) res);
-
-    if (res == RET_EXIT) {
-        puts("SUCCESS");
-    }
-    else {
-        puts("FAILURE");
-    }
+    puts("Done.");
     return 0;
 }

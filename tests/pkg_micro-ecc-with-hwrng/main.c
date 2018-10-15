@@ -61,6 +61,9 @@ int main(void)
 
     printf("Testing %d random private key pairs and signature using HWRNG\n", TESTROUNDS);
 
+    /* initialize hardware random number generator */
+    hwrng_init();
+
     uint8_t l_private1[curve_size];
     uint8_t l_private2[curve_size];
 
@@ -110,12 +113,10 @@ int main(void)
 
     printf(" done with %d error(s)\n", errorc);
 
-    if (errorc) {
-        puts("FAILURE");
-        return 1;
+    if (errorc == 0) {
+        return 0;
     }
     else {
-        puts("SUCCESS");
-        return 0;
+        return 1;
     }
 }

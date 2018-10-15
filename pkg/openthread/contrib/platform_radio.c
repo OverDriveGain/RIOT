@@ -48,6 +48,15 @@ static int _set_channel(uint16_t channel)
     return _dev->driver->set(_dev, NETOPT_CHANNEL, &channel, sizeof(uint16_t));
 }
 
+/*get transmission power from driver */
+static int16_t _get_power(void)
+{
+    int16_t power;
+
+    _dev->driver->get(_dev, NETOPT_TX_POWER, &power, sizeof(int16_t));
+    return power;
+}
+
 /* set transmission power */
 static int _set_power(int16_t power)
 {
@@ -129,11 +138,12 @@ void recv_pkt(otInstance *aInstance, netdev_t *dev)
     DEBUG("Openthread: Received pkt\n");
     netdev_ieee802154_rx_info_t rx_info;
     /* Read frame length from driver */
-    int len = dev->driver->recv(dev, NULL, 0, NULL);
+    int len = dev->driver->recv(dev, NULL, 0, &rx_info);
+    Rssi = rx_info.rssi;
 
     /* very unlikely */
-    if ((len < 0) || ((uint32_t)len > UINT16_MAX)) {
-        DEBUG("Invalid len: %d\n", len);
+    if ((len > (unsigned) UINT16_MAX)) {
+        DEBUG("Len too high: %d\n", len);
         otPlatRadioReceiveDone(aInstance, NULL, kThreadError_Abort);
         return;
     }
@@ -142,13 +152,10 @@ void recv_pkt(otInstance *aInstance, netdev_t *dev)
     /* Openthread needs a packet length with FCS included,
      * OpenThread do not use the data so we don't need to calculate FCS */
     sReceiveFrame.mLength = len + RADIO_IEEE802154_FCS_LEN;
+    sReceiveFrame.mPower = _get_power();
 
     /* Read received frame */
-    int res = dev->driver->recv(dev, (char *) sReceiveFrame.mPsdu, len, &rx_info);
-
-    /* Get RSSI from a radio driver. RSSI should be in [dBm] */
-    Rssi = (int8_t)rx_info.rssi;
-    sReceiveFrame.mPower = Rssi;
+    int res = dev->driver->recv(dev, (char *) sReceiveFrame.mPsdu, len, NULL);
 
    DEBUG("Received message: len %d\n", (int) sReceiveFrame.mLength);
     for (int i = 0; i < sReceiveFrame.mLength; ++i) {
@@ -163,8 +170,6 @@ void recv_pkt(otInstance *aInstance, netdev_t *dev)
 /* Called upon TX event */
 void send_pkt(otInstance *aInstance, netdev_t *dev, netdev_event_t event)
 {
-    (void)dev;
-
     /* Tell OpenThread transmission is done depending on the NETDEV event */
     switch (event) {
         case NETDEV_EVENT_TX_COMPLETE:
@@ -191,7 +196,6 @@ void send_pkt(otInstance *aInstance, netdev_t *dev, netdev_event_t event)
 /* OpenThread will call this for setting PAN ID */
 void otPlatRadioSetPanId(otInstance *aInstance, uint16_t panid)
 {
-    (void)aInstance;
     DEBUG("openthread: otPlatRadioSetPanId: setting PAN ID to %04x\n", panid);
     _set_panid(panid);
 }
@@ -199,10 +203,9 @@ void otPlatRadioSetPanId(otInstance *aInstance, uint16_t panid)
 /* OpenThread will call this for setting extended address */
 void otPlatRadioSetExtendedAddress(otInstance *aInstance, uint8_t *aExtendedAddress)
 {
-    (void)aInstance;
     DEBUG("openthread: otPlatRadioSetExtendedAddress\n");
     uint8_t reversed_addr[IEEE802154_LONG_ADDRESS_LEN];
-    for (unsigned i = 0; i < IEEE802154_LONG_ADDRESS_LEN; i++) {
+    for (int i = 0; i < IEEE802154_LONG_ADDRESS_LEN; i++) {
         reversed_addr[i] = aExtendedAddress[IEEE802154_LONG_ADDRESS_LEN - 1 - i];
     }
     _set_long_addr(reversed_addr);
@@ -211,7 +214,6 @@ void otPlatRadioSetExtendedAddress(otInstance *aInstance, uint8_t *aExtendedAddr
 /* OpenThread will call this for setting short address */
 void otPlatRadioSetShortAddress(otInstance *aInstance, uint16_t aShortAddress)
 {
-    (void) aInstance;
     DEBUG("openthread: otPlatRadioSetShortAddress: setting address to %04x\n", aShortAddress);
     _set_addr(((aShortAddress & 0xff) << 8) | ((aShortAddress >> 8) & 0xff));
 }
@@ -280,7 +282,6 @@ ThreadError otPlatRadioReceive(otInstance *aInstance, uint8_t aChannel)
 /* OpenThread will call this function to get the transmit buffer */
 RadioPacket *otPlatRadioGetTransmitBuffer(otInstance *aInstance)
 {
-    (void) aInstance;
     DEBUG("openthread: otPlatRadioGetTransmitBuffer\n");
     return &sTransmitFrame;
 }
@@ -297,15 +298,14 @@ void otPlatRadioSetDefaultTxPower(otInstance *aInstance, int8_t aPower)
 ThreadError otPlatRadioTransmit(otInstance *aInstance, RadioPacket *aPacket)
 {
     (void) aInstance;
+    struct iovec pkt;
 
-    /* Populate iolist with transmit data
+    /* Populate iovec with transmit data
      * Unlike RIOT, OpenThread includes two bytes FCS (0x00 0x00) so
      * these bytes are removed
      */
-    iolist_t iolist = {
-        .iol_base = aPacket->mPsdu,
-        .iol_len = (aPacket->mLength - RADIO_IEEE802154_FCS_LEN)
-    };
+    pkt.iov_base = aPacket->mPsdu;
+    pkt.iov_len = aPacket->mLength - RADIO_IEEE802154_FCS_LEN;
 
     /*Set channel and power based on transmit frame */
     DEBUG("otPlatRadioTransmit->channel: %i, length %d\n", (int) aPacket->mChannel, (int)aPacket->mLength);
@@ -317,7 +317,7 @@ ThreadError otPlatRadioTransmit(otInstance *aInstance, RadioPacket *aPacket)
     _set_power(aPacket->mPower);
 
     /* send packet though netdev */
-    _dev->driver->send(_dev, &iolist);
+    _dev->driver->send(_dev, &pkt, 1);
 
     return kThreadError_None;
 }
@@ -325,7 +325,6 @@ ThreadError otPlatRadioTransmit(otInstance *aInstance, RadioPacket *aPacket)
 /* OpenThread will call this for getting the radio caps */
 otRadioCaps otPlatRadioGetCaps(otInstance *aInstance)
 {
-    (void) aInstance;
     DEBUG("openthread: otPlatRadioGetCaps\n");
     /* all drivers should handle ACK, including call of NETDEV_EVENT_TX_NOACK */
     return kRadioCapsNone;
@@ -334,7 +333,6 @@ otRadioCaps otPlatRadioGetCaps(otInstance *aInstance)
 /* OpenThread will call this for getting the state of promiscuous mode */
 bool otPlatRadioGetPromiscuous(otInstance *aInstance)
 {
-    (void) aInstance;
     DEBUG("openthread: otPlatRadioGetPromiscuous\n");
     return _is_promiscuous();
 }
@@ -342,7 +340,6 @@ bool otPlatRadioGetPromiscuous(otInstance *aInstance)
 /* OpenThread will call this for setting the state of promiscuous mode */
 void otPlatRadioSetPromiscuous(otInstance *aInstance, bool aEnable)
 {
-    (void) aInstance;
     DEBUG("openthread: otPlatRadioSetPromiscuous\n");
     _set_promiscuous((aEnable) ? NETOPT_ENABLE : NETOPT_DISABLE);
 }
@@ -416,12 +413,10 @@ ThreadError otPlatRadioEnergyScan(otInstance *aInstance, uint8_t aScanChannel, u
 
 void otPlatRadioGetIeeeEui64(otInstance *aInstance, uint8_t *aIeee64Eui64)
 {
-    (void) aInstance;
     _dev->driver->get(_dev, NETOPT_IPV6_IID, aIeee64Eui64, sizeof(eui64_t));
 }
 
 int8_t otPlatRadioGetReceiveSensitivity(otInstance *aInstance)
 {
-    (void) aInstance;
     return -100;
 }

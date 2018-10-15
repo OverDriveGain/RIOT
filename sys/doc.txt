@@ -22,6 +22,7 @@
  * See http://wiki.osdev.org/Stack_Smashing_Protector for a more detailed
  * description.
  */
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 
 /**
  * @defgroup    sys_math Math libraries and utilities
@@ -34,3 +35,5 @@
  * @ingroup     sys
  * @brief       Provides memory management implementations and utilities
  */
+====================================================================================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Fix dependencies, make javascript example run

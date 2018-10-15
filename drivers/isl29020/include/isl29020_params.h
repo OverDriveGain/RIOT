@@ -44,15 +44,10 @@ extern "C" {
 #define ISL29020_PARAM_MODE             (ISL29020_MODE_AMBIENT)
 #endif
 
-#ifndef ISL29020_PARAMS
-#define ISL29020_PARAMS                 { .i2c   = ISL29020_PARAM_I2C,   \
-                                          .addr  = ISL29020_PARAM_ADDR,  \
+#define ISL29020_PARAMS_DEFAULT         { .i2c   = ISL29020_PARAM_I2C, \
+                                          .addr  = ISL29020_PARAM_ADDR, \
                                           .range = ISL29020_PARAM_RANGE, \
-                                          .mode  = ISL29020_PARAM_MODE }
-#endif
-#ifndef ISL29020_SAUL_INFO
-#define ISL29020_SAUL_INFO              { .name = "isl29020" }
-#endif
+                                          .mode  = ISL29020_PARAM_MODE,}
 /**@}*/
 
 /**
@@ -60,7 +55,11 @@ extern "C" {
  */
 static const isl29020_params_t isl29020_params[] =
 {
-    ISL29020_PARAMS
+#ifdef ISL29020_PARAMS_CUSTOM
+    ISL29020_PARAMS_CUSTOM,
+#else
+    ISL29020_PARAMS_DEFAULT,
+#endif
 };
 
 /**
@@ -68,7 +67,7 @@ static const isl29020_params_t isl29020_params[] =
  */
 static const saul_reg_info_t isl29020_saul_info[] =
 {
-    ISL29020_SAUL_INFO
+    { .name = "isl29020" }
 };
 
 #ifdef __cplusplus

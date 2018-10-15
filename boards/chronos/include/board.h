@@ -7,7 +7,9 @@
  */
 
 /**
- * @ingroup     boards_chronos
+ * @defgroup    boards_chronos Chronos
+ * @ingroup     boards
+ * @brief       Support for the chronos board
  * @{
  *
  * @file
@@ -26,7 +28,7 @@ extern "C" {
 #endif
 
 /**
- * @brief   Define the CPU model for the <msp430.h>
+ * @name    Define the CPU model for the <msp430.h>
  */
 #ifndef __CC430F6137__
 #define __CC430F6137__

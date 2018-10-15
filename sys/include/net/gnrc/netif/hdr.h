@@ -70,21 +70,6 @@ extern "C" {
  *          this flag the same way it does @ref GNRC_NETIF_HDR_FLAGS_BROADCAST.
  */
 #define GNRC_NETIF_HDR_FLAGS_MULTICAST  (0x40)
-
-/**
- * @brief   More data will follow
- *
- * @details This flag signals that this packet is part of a burst of packets.
- *          The link layer implementation can choose to translate this flag into
- *          frame header bits to tell the remote node that more traffic will
- *          follow shortly. The most direct use case for this flag is to set it
- *          for fragmented packets in duty cycled networks to tell the remote
- *          node to keep its radio turned on after receiving the first fragment.
- *
- * @see     The corresponding bit in the IEEE 802.15.4 frame control field,
- *          @ref IEEE802154_FCF_FRAME_PEND
- */
-#define GNRC_NETIF_HDR_FLAGS_MORE_DATA  (0x10)
 /**
  * @}
  */
@@ -100,8 +85,8 @@ typedef struct {
     uint8_t dst_l2addr_len;     /**< length of l2 destination address in byte */
     kernel_pid_t if_pid;        /**< PID of network interface */
     uint8_t flags;              /**< flags as defined above */
+    uint8_t rssi;               /**< rssi of received packet (optional) */
     uint8_t lqi;                /**< lqi of received packet (optional) */
-    int16_t rssi;               /**< rssi of received packet in dBm (optional) */
 } gnrc_netif_hdr_t;
 
 /**

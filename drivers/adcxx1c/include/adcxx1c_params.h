@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     drivers_adcxx1c
+ * @ingroup     drivers_adcxx1x
  * @{
  *
  * @file
@@ -56,19 +56,14 @@ extern "C" {
 #define ADCXX1C_PARAM_HYSTERESIS (0)
 #endif
 
-#ifndef ADCXX1C_PARAMS
-#define ADCXX1C_PARAMS          { .i2c        = ADCXX1C_PARAM_I2C,        \
-                                  .addr       = ADCXX1C_PARAM_ADDR,       \
-                                  .bits       = ADCXX1C_PARAM_BITS,       \
-                                  .cycle      = ADCXX1C_PARAM_CYCLE,      \
-                                  .alert_pin  = ADCXX1C_PARAM_ALERT_PIN,  \
-                                  .low_limit  = ADCXX1C_PARAM_LOW_LIMIT,  \
+#define ADCXX1C_PARAMS_DEFAULT  { .i2c        = ADCXX1C_PARAM_I2C, \
+                                  .addr       = ADCXX1C_PARAM_ADDR, \
+                                  .bits       = ADCXX1C_PARAM_BITS, \
+                                  .cycle      = ADCXX1C_PARAM_CYCLE, \
+                                  .alert_pin  = ADCXX1C_PARAM_ALERT_PIN, \
+                                  .low_limit  = ADCXX1C_PARAM_LOW_LIMIT, \
                                   .high_limit = ADCXX1C_PARAM_HIGH_LIMIT, \
                                   .hysteresis = ADCXX1C_PARAM_HYSTERESIS }
-#endif
-#ifndef ADCXX1C_SAUL_INFO
-#define ADCXX1C_SAUL_INFO       { .name = "adcxx1c" }
-#endif
 /** @} */
 
 /**
@@ -76,7 +71,11 @@ extern "C" {
  */
 static const adcxx1c_params_t adcxx1c_params[] =
 {
-    ADCXX1C_PARAMS
+#ifdef ADCXX1C_PARAMS_BOARD
+    ADCXX1C_PARAMS_BOARD,
+#else
+    ADCXX1C_PARAMS_DEFAULT,
+#endif
 };
 
 
@@ -85,7 +84,9 @@ static const adcxx1c_params_t adcxx1c_params[] =
  */
 static const saul_reg_info_t adcxx1c_saul_info[] =
 {
-    ADCXX1C_SAUL_INFO
+    {
+        .name = "adcxx1c",
+    },
 };
 
 #ifdef __cplusplus

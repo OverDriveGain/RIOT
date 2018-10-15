@@ -8,8 +8,7 @@
  */
 
 /**
- * @ingroup sys_xtimer
- *
+ * @ingroup xtimer
  * @{
  * @file
  * @brief xtimer convenience functionality

@@ -1,9 +1,4 @@
-MODULE = mips32r2_common
-
-DIRS = periph
-
-ifneq (,$(filter newlib_syscalls_mips_uhi,$(USEMODULE)))
-  DIRS += newlib_syscalls_mips_uhi
-endif
+MODULE = cpu
+DIRS = periph newlib_syscalls_mips_uhi
 
 include $(RIOTBASE)/Makefile.base

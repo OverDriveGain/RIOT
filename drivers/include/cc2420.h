@@ -62,11 +62,6 @@ extern "C" {
 /** @} */
 
 /**
- * @brief   RSSI offset
- */
-#define CC2420_RSSI_OFFSET      (-45)
-
-/**
  * @brief   A couple of return values used in this driver
  */
 enum {
@@ -263,12 +258,13 @@ netopt_state_t cc2420_get_state(cc2420_t *dev);
  * @note This function ignores the PRELOADING option
  *
  * @param[in] dev           device to use for sending
- * @param[in] iolist        data to send (must include IEEE802.15.4 header)
+ * @param[in] data          data to send (must include IEEE802.15.4 header)
+ * @param[in] count         length of @p data
  *
  * @return                  number of bytes that were actually send
  * @return                  0 on error
  */
-size_t cc2420_send(cc2420_t *dev, const iolist_t *iolist);
+size_t cc2420_send(cc2420_t *dev, const struct iovec *data, unsigned count);
 
 /**
  * @brief   Prepare for sending of data
@@ -277,9 +273,10 @@ size_t cc2420_send(cc2420_t *dev, const iolist_t *iolist);
  * data is possible after it was called.
  *
  * @param[in] dev           device to prepare for sending
- * @param[in] iolist        data to prepare (must include IEEE802.15.4 header)
+ * @param[in] data          data to prepare (must include IEEE802.15.4 header)
+ * @param[in] count         length of @p data
  */
-size_t cc2420_tx_prepare(cc2420_t *dev, const iolist_t *iolist);
+size_t cc2420_tx_prepare(cc2420_t *dev, const struct iovec *data, unsigned count);
 
 /**
  * @brief   Trigger sending of data previously loaded into transmit buffer

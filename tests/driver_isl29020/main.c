@@ -18,21 +18,30 @@
  * @}
  */
 
+#ifndef TEST_ISL29020_I2C
+#error "TEST_ISL29020_I2C not defined"
+#endif
+#ifndef TEST_ISL29020_ADDR
+#error "TEST_ISL29020_ADDR not defined"
+#endif
+
 #include <stdio.h>
 
 #include "xtimer.h"
 #include "isl29020.h"
-#include "isl29020_params.h"
 
+#define MODE        ISL29020_MODE_AMBIENT
+#define RANGE       ISL29020_RANGE_16K
 #define SLEEP       (250 * 1000U)
 
 int main(void)
 {
     isl29020_t dev;
+    int value;
 
     puts("ISL29020 light sensor test application\n");
-    puts("Initializing ISL29020 sensor");
-    if (isl29020_init(&dev, &isl29020_params[0]) == 0) {
+    printf("Initializing ISL29020 sensor at I2C_%i... ", TEST_ISL29020_I2C);
+    if (isl29020_init(&dev, TEST_ISL29020_I2C, TEST_ISL29020_ADDR, RANGE, MODE) == 0) {
         puts("[OK]\n");
     }
     else {
@@ -41,7 +50,8 @@ int main(void)
     }
 
     while (1) {
-        printf("Light value: %5i LUX\n", isl29020_read(&dev));
+        value = isl29020_read(&dev);
+        printf("Light value: %5i LUX\n", value);
         xtimer_usleep(SLEEP);
     }
 

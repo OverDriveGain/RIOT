@@ -65,13 +65,13 @@ static uint32_t runqueue_bitcache = 0;
 #endif
 
 FORCE_USED_SECTION
-const uint8_t max_threads = sizeof(sched_threads) / sizeof(thread_t*);
+uint8_t max_threads = sizeof(sched_threads) / sizeof(thread_t*);
 
 #ifdef DEVELHELP
 /* OpenOCD can't determine struct offsets and additionally this member is only
  * available if compiled with DEVELHELP */
 FORCE_USED_SECTION
-const uint8_t _tcb_name_offset = offsetof(thread_t, name);
+uint8_t _tcb_name_offset = offsetof(thread_t, name);
 #endif
 
 #ifdef MODULE_SCHEDSTATISTICS
@@ -92,7 +92,7 @@ int __attribute__((used)) sched_run(void)
     thread_t *next_thread = container_of(sched_runqueues[nextrq].next->next, thread_t, rq_entry);
 
     DEBUG("sched_run: active thread: %" PRIkernel_pid ", next thread: %" PRIkernel_pid "\n",
-          (kernel_pid_t)((active_thread == NULL) ? KERNEL_PID_UNDEF : active_thread->pid),
+          (active_thread == NULL) ? KERNEL_PID_UNDEF : active_thread->pid,
           next_thread->pid);
 
     if (active_thread == next_thread) {
@@ -162,7 +162,7 @@ void sched_set_status(thread_t *process, unsigned int status)
 {
     if (status >= STATUS_ON_RUNQUEUE) {
         if (!(process->status >= STATUS_ON_RUNQUEUE)) {
-            DEBUG("sched_set_status: adding thread %" PRIkernel_pid " to runqueue %" PRIu8 ".\n",
+            DEBUG("sched_set_status: adding thread %" PRIkernel_pid " to runqueue %" PRIu16 ".\n",
                   process->pid, process->priority);
             clist_rpush(&sched_runqueues[process->priority], &(process->rq_entry));
             runqueue_bitcache |= 1 << process->priority;
@@ -170,7 +170,7 @@ void sched_set_status(thread_t *process, unsigned int status)
     }
     else {
         if (process->status >= STATUS_ON_RUNQUEUE) {
-            DEBUG("sched_set_status: removing thread %" PRIkernel_pid " to runqueue %" PRIu8 ".\n",
+            DEBUG("sched_set_status: removing thread %" PRIkernel_pid " to runqueue %" PRIu16 ".\n",
                   process->pid, process->priority);
             clist_lpop(&sched_runqueues[process->priority]);
 

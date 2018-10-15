@@ -87,3 +87,6 @@ else
 	    echo "No report found"; \
 	  fi
 endif
+
+# Reset the default goal.
+.DEFAULT_GOAL :=

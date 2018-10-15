@@ -9,7 +9,9 @@
  */
 
 /**
- * @ingroup     boards_mips-malta
+ * @defgroup    boards_mips-malta MIPS MALTA
+ * @ingroup     boards
+ * @brief       Board specific files for the MIPS Malta FPGA system
  * @{
  *
  * @file

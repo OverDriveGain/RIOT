@@ -1,1 +1,1 @@
-include $(RIOTBOARD)/common/msba2/Makefile.dep
+include $(RIOTBOARD)/msba2-common/Makefile.dep

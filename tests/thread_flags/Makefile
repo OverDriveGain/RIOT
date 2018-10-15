@@ -1,10 +1,9 @@
+APPLICATION = thread_flags
 include ../Makefile.tests_common
 
-BOARD_INSUFFICIENT_MEMORY := nucleo-f031k6
+BOARD_INSUFFICIENT_MEMORY := nucleo32-f031
 
 USEMODULE += core_thread_flags
 USEMODULE += xtimer
-
-TEST_ON_CI_WHITELIST += all
 
 include $(RIOTBASE)/Makefile.include
