@@ -23,12 +23,20 @@ void event_queue_init(event_queue_t *queue)
 
 void event_post(event_queue_t *queue, event_t *event)
 {
+<<<<<<< HEAD
     assert(queue && queue->waiter && event);
 
     unsigned state = irq_disable();
     if (!event->list_node.next) {
         clist_rpush(&queue->event_list, &event->list_node);
     }
+=======
+    assert(!event->list_node.next);
+    assert(queue->waiter);
+
+    unsigned state = irq_disable();
+    clist_rpush(&queue->event_list, &event->list_node);
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
     irq_restore(state);
 
     thread_flags_set(queue->waiter, THREAD_FLAG_EVENT);
@@ -49,7 +57,10 @@ event_t *event_get(event_queue_t *queue)
 {
     unsigned state = irq_disable();
     event_t *result = (event_t *) clist_lpop(&queue->event_list);
+<<<<<<< HEAD
 
+=======
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
     irq_restore(state);
     if (result) {
         result->list_node.next = NULL;
@@ -73,8 +84,12 @@ event_t *event_wait(event_queue_t *queue)
 void event_loop(event_queue_t *queue)
 {
     event_t *event;
+<<<<<<< HEAD
 
     while ((event = event_wait(queue))) {
+=======
+    while((event = event_wait(queue))) {
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
         event->handler(event);
     }
 }

@@ -123,6 +123,7 @@ int sock_urlsplit(const char *url, char *hostport, char *urlpath)
 
     char *pathstart = _find_pathstart(hoststart);
 
+<<<<<<< HEAD
     size_t hostlen = pathstart - hoststart;
     /* hostlen must be smaller SOCK_HOSTPORT_MAXLEN to have space for the null
      * terminator */
@@ -131,15 +132,25 @@ int sock_urlsplit(const char *url, char *hostport, char *urlpath)
     }
     memcpy(hostport, hoststart, hostlen);
     *(hostport + hostlen) = '\0';
+=======
+    unsigned hostportlen = pathstart - hoststart;
+    memcpy(hostport, hoststart, hostportlen);
+    hostport[hostportlen] = '\0';
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
 
-    size_t pathlen = strlen(pathstart);
+    unsigned pathlen = strlen(pathstart);
     if (pathlen) {
         if (pathlen > SOCK_URLPATH_MAXLEN - 1) {
             return -EOVERFLOW;
         }
         memcpy(urlpath, pathstart, pathlen);
     }
+<<<<<<< HEAD
     *(urlpath + pathlen) = '\0';
+=======
+    urlpath[pathlen] = '\0';
+
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
     return 0;
 }
 

@@ -221,7 +221,12 @@
 #define NET_GCOAP_H
 
 #include <stdint.h>
+<<<<<<< HEAD
 
+=======
+#include <stdatomic.h>
+#include "clist.h"
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
 #include "net/ipv6/addr.h"
 #include "net/sock/udp.h"
 #include "net/nanocoap.h"
@@ -419,6 +424,7 @@ extern "C" {
  * @brief Stack size for module thread
  */
 #ifndef GCOAP_STACK_SIZE
+<<<<<<< HEAD
 #define GCOAP_STACK_SIZE (THREAD_STACKSIZE_DEFAULT + DEBUG_EXTRA_STACKSIZE \
                           + sizeof(coap_pkt_t))
 #endif
@@ -428,16 +434,27 @@ extern "C" {
  */
 #ifndef GCOAP_RESEND_BUFS_MAX
 #define GCOAP_RESEND_BUFS_MAX      (1)
+=======
+#define GCOAP_STACK_SIZE (THREAD_STACKSIZE_DEFAULT + GCOAP_PDU_BUF_SIZE + \
+                          DEBUG_EXTRA_STACKSIZE)
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
 #endif
 
 /**
  * @brief   A modular collection of resources for a server
  */
 typedef struct gcoap_listener {
+<<<<<<< HEAD
     const coap_resource_t *resources;   /**< First element in the array of
                                          *   resources; must order alphabetically */
     size_t resources_len;               /**< Length of array */
     struct gcoap_listener *next;        /**< Next listener in list */
+=======
+    coap_resource_t *resources;     /**< First element in the array of
+                                     *   resources; must order alphabetically */
+    size_t resources_len;           /**< Length of array */
+    clist_node_t next;              /**< Next listener in list */
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
 } gcoap_listener_t;
 
 /**
@@ -487,6 +504,27 @@ typedef struct {
 } gcoap_observe_memo_t;
 
 /**
+<<<<<<< HEAD
+=======
+ * @brief   Container for the state of gcoap itself
+ */
+typedef struct {
+    mutex_t lock;                       /**< Shares state attributes safely */
+    clist_node_t listeners;             /**< List of registered listeners */
+    gcoap_request_memo_t open_reqs[GCOAP_REQ_WAITING_MAX];
+                                        /**< Storage for open requests; if first
+                                             byte of an entry is zero, the entry
+                                             is available */
+    atomic_uint next_message_id;        /**< Next message ID to use */
+    sock_udp_ep_t observers[GCOAP_OBS_CLIENTS_MAX];
+                                        /**< Observe clients; allows reuse for
+                                             observe memos */
+    gcoap_observe_memo_t observe_memos[GCOAP_OBS_REGISTRATIONS_MAX];
+                                        /**< Observed resource registrations */
+} gcoap_state_t;
+
+/**
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
  * @brief   Initializes the gcoap thread and device
  *
  * Must call once before first use.
@@ -503,6 +541,13 @@ kernel_pid_t gcoap_init(void);
  * @param[in] listener  Listener containing the resources.
  */
 void gcoap_register_listener(gcoap_listener_t *listener);
+
+/**
+ * @brief   Stops listening for resource paths
+ *
+ * @param[in] listener  Listener containing the resources.
+ */
+void gcoap_unregister_listener(gcoap_listener_t *listener);
 
 /**
  * @brief   Initializes a CoAP request PDU on a buffer.

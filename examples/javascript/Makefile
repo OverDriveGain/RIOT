@@ -29,11 +29,31 @@ DEVELHELP ?= 1
 
 ifneq ($(BOARD),native)
 # Set stack size to something (conservatively) enormous
+<<<<<<< HEAD
 CFLAGS += -DTHREAD_STACKSIZE_MAIN=9092
 endif
 
 # Add the package for Jerryscript
 USEPKG += jerryscript
+=======
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096 -g 
+#-DGCOAP_STACK_SIZE=2560
+export JERRYHEAP=9
+
+USEMODULE += js
+USEMODULE += shell_commands
+
+USEMODULE += gnrc_netdev_default
+USEMODULE += auto_init_gnrc_netif
+# Specify the mandatory networking modules for IPv6 and UDP
+USEMODULE += gnrc_ipv6_router_default
+# Additional networking modules that can be dropped if not needed
+USEMODULE += gnrc_icmpv6_echo
+USEMODULE += gcoap
+USEMODULE += sock_util
+
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=128 -DGNRC_PKTBUF_SIZE=2048
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
 
 include $(RIOTBASE)/Makefile.include
 

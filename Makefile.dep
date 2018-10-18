@@ -690,12 +690,15 @@ ifneq (,$(filter sock_dns,$(USEMODULE)))
   USEMODULE += sock_util
 endif
 
+<<<<<<< HEAD
 ifneq (,$(filter sock_util,$(USEMODULE)))
   USEMODULE += posix
   USEMODULE += fmt
   USEMODULE += sock_udp
 endif
 
+=======
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
 ifneq (,$(filter event_%,$(USEMODULE)))
   USEMODULE += event
 endif
@@ -731,6 +734,7 @@ ifneq (,$(filter gcoap,$(USEMODULE)))
   USEMODULE += sock_util
 endif
 
+<<<<<<< HEAD
 ifneq (,$(filter luid,$(USEMODULE)))
   FEATURES_OPTIONAL += periph_cpuid
 endif
@@ -794,6 +798,16 @@ FEATURES_OPTIONAL += periph_gpio
 # always select power management if available
 FEATURES_OPTIONAL += periph_pm
 
+=======
+ifneq (,$(filter js,$(USEMODULE)))
+  USEPKG += jerryscript
+  USEMODULE += xtimer
+  USEMODULE += event
+  USEMODULE += saul_reg
+  USEMODULE += saul_default
+endif
+
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
 # include package dependencies
 -include $(USEPKG:%=$(RIOTPKG)/%/Makefile.dep)
 

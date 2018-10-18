@@ -249,7 +249,11 @@ static void test_clist_foreach(void)
         clist_rpush(list, &tests_clist_buf[i]);
     }
 
+<<<<<<< HEAD
     res = clist_foreach(list, _foreach_test_trampoline, NULL);
+=======
+    clist_foreach(list, _foreach_test_trampoline, NULL);
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
 
     TEST_ASSERT(_foreach_called == _foreach_abort_after);
     TEST_ASSERT(res == &tests_clist_buf[_foreach_abort_after-1]);
@@ -260,10 +264,62 @@ static void test_clist_foreach(void)
     }
 
     _foreach_abort_after = (TEST_CLIST_LEN + 1);
+<<<<<<< HEAD
     res = clist_foreach(list, _foreach_test_trampoline, NULL);
+=======
+    clist_foreach(list, _foreach_test_trampoline, NULL);
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
 
     TEST_ASSERT(_foreach_called == TEST_CLIST_LEN);
     TEST_ASSERT(res == NULL);
+}
+
+static int _cmp(clist_node_t *a, clist_node_t *b)
+{
+    /* this comparison function will sort by the actual memory address of the
+     * list node (descending) */
+    return (uintptr_t)a - (uintptr_t) b;
+}
+
+static void test_clist_sort_empty(void)
+{
+    clist_node_t empty = { .next=NULL };
+    clist_sort(&empty, _cmp);
+
+    TEST_ASSERT(empty.next == NULL);
+}
+
+/*
+ * This test works by first adding all list nodes of tests_clist_buf to a new
+ * list. As the array is traversed in order, the memory addresses of the list
+ * nodes are naturally sorted ascending.
+ * The list is then rotated (using clist_lpoprpush()) a couple of times in
+ * order to create a somewhat arbitrary sorting.
+ * Then clist_sort() is run with a comparison function that just returns the
+ * difference (a-b), which effectively leads to a list sorted by descending
+ * list node addresses.
+ */
+static void test_clist_sort(void)
+{
+    clist_node_t *list = &test_clist;
+
+    for (int i = 0; i < TEST_CLIST_LEN; i++) {
+        clist_rpush(list, &tests_clist_buf[i]);
+    }
+
+    /* rotate the list a couple of times in order to mess up the sorting */
+    clist_lpoprpush(list);
+    clist_lpoprpush(list);
+    clist_lpoprpush(list);
+
+    /* sort list */
+    clist_sort(list, _cmp);
+
+    uintptr_t last = (uintptr_t) list->next;
+
+    for (int i = 0; i < TEST_CLIST_LEN; i++) {
+        TEST_ASSERT((uintptr_t) clist_rpop(list) <= last);
+    }
 }
 
 static int _cmp(clist_node_t *a, clist_node_t *b)

@@ -8,7 +8,11 @@
 
 #include "event/timeout.h"
 
+<<<<<<< HEAD
 static void _event_timeout_callback(void *arg)
+=======
+static void _event_timeout_callback(void* arg)
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
 {
     event_timeout_t *event_timeout = (event_timeout_t *)arg;
     event_post(event_timeout->queue, event_timeout->event);
@@ -26,8 +30,11 @@ void event_timeout_set(event_timeout_t *event_timeout, uint32_t timeout)
 {
     xtimer_set(&event_timeout->timer, timeout);
 }
+<<<<<<< HEAD
 
 void event_timeout_clear(event_timeout_t *event_timeout)
 {
     xtimer_remove(&event_timeout->timer);
 }
+=======
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791

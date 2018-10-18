@@ -11,6 +11,7 @@
  * @brief       Provides a callback-with-argument event type
  *
  * Example:
+<<<<<<< HEAD
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~ {.c}
  * void callback(void *arg)
@@ -22,6 +23,16 @@
  * event_callback_t event_callback = EVENT_CALLBACK_INIT(callback, 0x12345678);
  * event_post(&queue, &event_callback);
  * ~~~~~~~~~~~~~~~~~~~~~~~~
+=======
+ *     void callback(void *arg)
+ *     {
+ *         printf("%s called with arg %p\n", __func__, arg);
+ *     }
+ *
+ *     [...]
+ *     event_callback_t event_callback = EVENT_CALLBACK_INIT(callback, 0x12345678);
+ *     event_post(&queue, &event_callback);
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
  *
  * @{
  *
@@ -56,7 +67,11 @@ typedef struct {
  * @param[in]   callback        callback to set up
  * @param[in]   arg             callback argument to set up
  */
+<<<<<<< HEAD
 void event_callback_init(event_callback_t *event_callback, void (*callback)(void *), void *arg);
+=======
+void event_callback_init(event_callback_t *event_callback, void (*callback)(void*),  void *arg);
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
 
 /**
  * @brief   event callback handler function (used internally)
@@ -75,9 +90,15 @@ void _event_callback_handler(event_t *event);
  */
 #define EVENT_CALLBACK_INIT(_cb, _arg) \
     { \
+<<<<<<< HEAD
         .super.handler = _event_callback_handler, \
         .callback = _cb, \
         .arg = (void *)_arg \
+=======
+        .super.handler=_event_callback_handler, \
+        .callback=_cb, \
+        .arg=(void*)_arg \
+>>>>>>> d74552ae8de9d8b57bce6676d98c3205a040c791
     }
 
 #ifdef __cplusplus
