@@ -37,8 +37,10 @@
 static void _resp_handler(unsigned req_state, coap_pkt_t *pdu);
 
 static char lwm2m_resources[] = "<3/0>, <9/0>, <3303/0>, <3315/0>";
-static char lwm2m_server_addr[] = "2a05:d014:677:2900:9786:f713:6820:e17e";
-static char lwm2m_server_port[] = "6683";
+/* static char lwm2m_server_addr[] = "2a05:d014:677:2900:9786:f713:6820:e17e"; */
+static char lwm2m_server_addr[] = "2001:41d0:8:95ce::1";
+/* static char lwm2m_server_port[] = "6683"; */
+static char lwm2m_server_port[] = "5683";
 static char device_id[10];
 
 extern char script[];
@@ -128,7 +130,7 @@ static const coap_resource_t _resources[] = {
 };
 static gcoap_listener_t _listener = {
     (coap_resource_t *)&_resources[0],
-    sizeof(_resources) / sizeof(_resources[0])
+    sizeof(_resources) / sizeof(_resources[0]),{0}
 };
 
 /*
@@ -220,7 +222,6 @@ void lwm2m_register(void)
     if (!_send(&buf[0], len, lwm2m_server_addr, lwm2m_server_port)) {
         puts("lwm2m registration: msg send failed");
     }
-
 }
 
 void lwm2m_init(void)
