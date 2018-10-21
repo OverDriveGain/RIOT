@@ -60,7 +60,6 @@ typedef struct {
  */
 void event_timeout_init(event_timeout_t *event_timeout, event_queue_t *queue,
                         event_t *event);
-
 /**
  * @brief   Set a timeout
  *

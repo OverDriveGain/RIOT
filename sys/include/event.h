@@ -103,13 +103,19 @@ extern "C" {
 /**
  * @brief   Thread flag use to notify available events in an event queue
  */
+
 #define THREAD_FLAG_EVENT   (0x1)
+
 #endif
 
 /**
  * @brief   event_queue_t static initializer
  */
+
 #define EVENT_QUEUE_INIT    { .waiter = (thread_t *)sched_active_thread }
+
+
+
 
 /**
  * @brief   event structure forward declaration
@@ -119,7 +125,9 @@ typedef struct event event_t;
 /**
  * @brief   event handler type definition
  */
+
 typedef void (*event_handler_t)(event_t *);
+
 
 /**
  * @brief   event structure
@@ -142,7 +150,11 @@ typedef struct {
  *
  * This will set the calling thread as owner of @p queue.
  *
+<<<<<<< HEAD
  * @param[out]  queue   event queue object to initialize
+=======
+ * @param[in,out]   queue   event queue object to initialize
+>>>>>>> sys/event: initial commit of handler-based event system
  */
 void event_queue_init(event_queue_t *queue);
 

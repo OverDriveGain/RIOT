@@ -303,7 +303,7 @@ void auto_init(void)
 
 #ifdef MODULE_AUTO_INIT_SAUL
     DEBUG("auto_init SAUL\n");
-
+#endif
 #ifdef MODULE_SAUL_ADC
     extern void auto_init_adc(void);
     auto_init_adc();
@@ -312,9 +312,19 @@ void auto_init(void)
     extern void auto_init_gpio(void);
     auto_init_gpio();
 #endif
+//#MZTODO REBASE VARIABLES
 #ifdef MODULE_ADCXX1C
     extern void auto_init_adcxx1c(void);
     auto_init_adcxx1c();
+
+#ifdef MODULE_SAUL_PWM
+    extern void auto_init_pwm(void);
+    auto_init_pwm();
+#endif
+#ifdef MODULE_SAUL_ADC
+    extern void auto_init_adc(void);
+    auto_init_adc();
+
 #endif
 #ifdef MODULE_ADS101X
     extern void auto_init_ads101x(void);

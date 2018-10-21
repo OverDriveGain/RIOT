@@ -722,6 +722,7 @@ ifneq (,$(filter gcoap,$(USEMODULE)))
   USEMODULE += sock_util
 endif
 
+
 ifneq (,$(filter luid,$(USEMODULE)))
   FEATURES_OPTIONAL += periph_cpuid
 endif
@@ -797,6 +798,16 @@ FEATURES_OPTIONAL += periph_gpio
 
 # always select power management if available
 FEATURES_OPTIONAL += periph_pm
+
+# MZTODO REBASE VARIABLE
+ifneq (,$(filter js,$(USEMODULE)))
+  USEPKG += jerryscript
+  USEMODULE += xtimer
+  USEMODULE += event
+  USEMODULE += saul_reg
+  USEMODULE += saul_default
+endif
+
 
 # include package dependencies
 -include $(USEPKG:%=$(RIOTPKG)/%/Makefile.dep)

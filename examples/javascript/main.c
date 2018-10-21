@@ -20,16 +20,21 @@
  * @}
  */
 
+#include "shell.h"
 #include <stdio.h>
 #include <string.h>
 
-#include "jerryscript.h"
-#include "jerryscript-ext/handler.h"
+#include "msg.h"
+#include "xtimer.h"
+#include "lwm2m.h"
+#include "js.h"
 
-/* include header generated from main.js */
-#include "main.js.h"
+/* include headers generated from *.js */
+#include "lib.js.h"
+#include "local.js.h"
 
-int js_run(const jerry_char_t *script, size_t script_size)
+// MZTODO REBASE VARIABLE
+int js_run_local(const jerry_char_t *script, size_t script_size)
 {
 
     jerry_value_t parsed_code, ret_value;
@@ -66,14 +71,88 @@ int js_run(const jerry_char_t *script, size_t script_size)
     return res;
 }
 
+static event_queue_t event_queue;
+
+
+char script[2048];
+
+
+#define MAIN_QUEUE_SIZE (4)
+static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
+
+/* import "ifconfig" shell command, used for printing addresses */
+extern int _gnrc_netif_config(int argc, char **argv);
+
+void js_start(event_t *unused)
+{
+    (void)unused;
+
+    size_t script_len = strlen(script);
+    if (script_len) {
+        puts("(re)initializing jerryscript engine...");
+        js_init();
+        js_run_local(lib_js, lib_js_len);
+        js_run_local(local_js, local_js_len);
+
+        puts("Executing script...");
+        js_run_local((jerry_char_t*)script, script_len);
+    }
+    else {
+        puts("Emtpy script, nothing to execute yet.");
+    }
+}
+
+static event_t js_start_event = { .handler=js_start };
+
+void js_restart(void)
+{
+    js_shutdown(&js_start_event);
+}
+
+
+
+
+
+//int starter(int argc, char **argv)
+int starter(void)
+{
+    msg_init_queue(_main_msg_queue, MAIN_QUEUE_SIZE);
+//    printf("Printing unused valuse :) %i %s" , argc, argv[0]);
+    puts("waiting for network config");
+        
+    xtimer_sleep(3);
+
+    /* print network addresses */
+    puts("Configured network interfaces:");
+    _gnrc_netif_config(0, NULL);
+
+    /* register to LWM2M server */
+    puts("initializing coap, registering at lwm2m server");
+    lwm2m_init();
+    lwm2m_register();
+
+    puts("setting up event queue");
+    event_queue_init(&event_queue);
+    js_event_queue = &event_queue;
+
+    puts("Entering event loop...");
+    event_loop(&event_queue);
+    return 0 ;
+}
+
+
+//static const shell_command_t commands[] = {
+//    { "w", "command description", starter },
+//    { NULL, NULL, NULL }
+//};
 int main(void)
 {
     printf("You are running RIOT on a(n) %s board.\n", RIOT_BOARD);
     printf("This board features a(n) %s MCU.\n", RIOT_MCU);
-
-    printf("Executing main.js:\n");
-
-    js_run(main_js, main_js_len);
-
-    return 0;
+    char target[]= "this is our target array, we wanna read this."; 
+//    char line_buf[SHELL_DEFAULT_BUFSIZE];
+    starter();
+    //   shell_run(commands, line_buf, SHELL_DEFAULT_BUFSIZE);
+    printf("%s\n", target);
+    return 0;    
 }

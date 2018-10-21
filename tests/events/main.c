@@ -90,6 +90,7 @@ int main(void)
     puts("[START] event test application.\n");
 
     event_queue_t queue = { .waiter = (thread_t *)sched_active_thread };
+
     printf("posting 0x%08x\n", (unsigned)&event);
     event_post(&queue, &event);
 
@@ -97,6 +98,7 @@ int main(void)
     event_post(&queue, &event2);
     printf("canceling 0x%08x\n", (unsigned)&event2);
     event_cancel(&queue, &event2);
+
 
     puts("posting custom event");
     event_post(&queue, (event_t *)&custom_event);
@@ -116,7 +118,6 @@ int main(void)
     event_timeout_set(&event_timeout_canceled, 500 * US_PER_MS);
     event_timeout_clear(&event_timeout_canceled);
 
-    puts("launching event queue");
     event_loop(&queue);
 
     return 0;

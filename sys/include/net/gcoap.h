@@ -466,7 +466,7 @@ typedef struct {
                                              GCOAP_SEND_LIMIT_NON if non-confirmable */
     union {
         uint8_t hdr_buf[GCOAP_HEADER_MAXLEN];
-                                        /**< Copy of PDU header, if no resends */
+        /**< Copy of PDU header, if no resends */
         gcoap_resend_t data;            /**< Endpoint and PDU buffer, for resend */
     } msg;                              /**< Request message data; if confirmable,
                                              supports resending message */
@@ -554,8 +554,8 @@ static inline ssize_t gcoap_request(coap_pkt_t *pdu, uint8_t *buf, size_t len,
                                     unsigned code, char *path)
 {
     return (gcoap_req_init(pdu, buf, len, code, path) == 0)
-                ? gcoap_finish(pdu, 0, COAP_FORMAT_NONE)
-                : -1;
+           ? gcoap_finish(pdu, 0, COAP_FORMAT_NONE)
+           : -1;
 }
 
 /**
@@ -620,8 +620,8 @@ static inline ssize_t gcoap_response(coap_pkt_t *pdu, uint8_t *buf,
                                      size_t len, unsigned code)
 {
     return (gcoap_resp_init(pdu, buf, len, code) == 0)
-                ? gcoap_finish(pdu, 0, COAP_FORMAT_NONE)
-                : -1;
+           ? gcoap_finish(pdu, 0, COAP_FORMAT_NONE)
+           : -1;
 }
 
 /**

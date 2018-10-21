@@ -26,16 +26,59 @@ BOARD_BLACKLIST := arduino-duemilanove arduino-mega2560 arduino-uno chronos \
 # which is not needed in a production environment but helps in the
 # development process:
 DEVELHELP ?= 1
-
-ifneq ($(BOARD),native)
+#MZTODO CHECK REBASE VARIABLE CHECK
+#ifneq ($(BOARD),native)
 # Set stack size to something (conservatively) enormous
-CFLAGS += -DTHREAD_STACKSIZE_MAIN=9092
-endif
 
-# Add the package for Jerryscript
-USEPKG += jerryscript
+
+
+
+#CFLAGS += -DTHREAD_STACKSIZE_MAIN=9092
+#endif
+
+#USEMODULE += js
+
+
+
+
+#CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096 -g -fstack-usage -DGCOAP_STACK_SIZE=2048
+
+#export JERRYHEAP=8
+
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096 -g -DGCOAP_STACK_SIZE=2560
+export JERRYHEAP=7
+
+
+
+
+
+
+
+USEMODULE += js
+USEMODULE += shell_commands
+#USEPKG += jerryscript
+USEMODULE += gnrc_netdev_default
+USEMODULE += auto_init_gnrc_netif
+# Specify the mandatory networking modules for IPv6 and UDP
+USEMODULE += gnrc_ipv6_router_default
+# Additional networking modules that can be dropped if not needed
+USEMODULE += gnrc_icmpv6_echo
+USEMODULE += gcoap
+USEMODULE += sock_util
 
 include $(RIOTBASE)/Makefile.include
+
+
+
+
+
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=768 -DGNRC_PKTBUF_SIZE=2304
+#MZTODO THIS OR ONE IN LINE 39 above
+#include $(CURDIR)/../../Makefile.include
+
+#CFLAGS += -DGCOAP_PDU_BUF_SIZE=128 -DGNRC_PKTBUF_SIZE=2048
+#>>>>>>> examples/javascript/Makefile: use 128b CoAP mtu
+
 
 JS_PATH := $(BINDIR)/js/$(MODULE)
 # add directory of generated *.js.h files to include path
