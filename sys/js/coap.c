@@ -164,7 +164,7 @@ static void _js_coap_handler_freecb(void *native_p)
     js_coap_handler_t *js_coap_handler = (js_coap_handler_t *) native_p;
 
     if (js_coap_handler->listener.resources_len) {
-        gcoap_unregister_listener(&js_coap_handler->listener);
+    //    gcoap_unregister_listener(&js_coap_handler->listener);
     }
 
     free((void*)js_coap_handler->resource.path);
@@ -190,7 +190,7 @@ static JS_EXTERNAL_HANDLER(coap_handler_unregister)
         return jerry_create_undefined();
     }
 
-    gcoap_unregister_listener(&js_coap_handler->listener);
+    //gcoap_unregister_listener(&js_coap_handler->listener);
     js_coap_handler->listener.resources_len = 0;
     js_native_ref_rem(&js_coap_handler->ref);
     return 0;

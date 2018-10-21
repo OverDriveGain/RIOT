@@ -34,7 +34,7 @@
 #include "local.js.h"
 
 // MZTODO REBASE VARIABLE
-int js_run(const jerry_char_t *script, size_t script_size)
+int js_run_local(const jerry_char_t *script, size_t script_size)
 {
 
     jerry_value_t parsed_code, ret_value;
@@ -81,7 +81,7 @@ char script[2048];
 static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
 
 /* import "ifconfig" shell command, used for printing addresses */
-extern int _netif_config(int argc, char **argv);
+extern int _gnrc_netif_config(int argc, char **argv);
 
 void js_start(event_t *unused)
 {
@@ -91,11 +91,11 @@ void js_start(event_t *unused)
     if (script_len) {
         puts("(re)initializing jerryscript engine...");
         js_init();
-        js_run(lib_js, lib_js_len);
-        js_run(local_js, local_js_len);
+        js_run_local(lib_js, lib_js_len);
+        js_run_local(local_js, local_js_len);
 
         puts("Executing script...");
-        js_run((jerry_char_t*)script, script_len);
+        js_run_local((jerry_char_t*)script, script_len);
     }
     else {
         puts("Emtpy script, nothing to execute yet.");
@@ -124,7 +124,7 @@ int starter(void)
 
     /* print network addresses */
     puts("Configured network interfaces:");
-    _netif_config(0, NULL);
+    _gnrc_netif_config(0, NULL);
 
     /* register to LWM2M server */
     puts("initializing coap, registering at lwm2m server");
