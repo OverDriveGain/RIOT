@@ -38,7 +38,7 @@ DEVELHELP ?= 1
 
 #USEMODULE += js
 
-include $(RIOTBASE)/Makefile.include
+
 
 
 #CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096 -g -fstack-usage -DGCOAP_STACK_SIZE=2048
@@ -56,7 +56,7 @@ export JERRYHEAP=7
 
 USEMODULE += js
 USEMODULE += shell_commands
-
+#USEPKG += jerryscript
 USEMODULE += gnrc_netdev_default
 USEMODULE += auto_init_gnrc_netif
 # Specify the mandatory networking modules for IPv6 and UDP
@@ -66,21 +66,18 @@ USEMODULE += gnrc_icmpv6_echo
 USEMODULE += gcoap
 USEMODULE += sock_util
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+include $(RIOTBASE)/Makefile.include
+
+
 
 
 
 CFLAGS += -DGCOAP_PDU_BUF_SIZE=768 -DGNRC_PKTBUF_SIZE=2304
-=======
-CFLAGS += -DGCOAP_PDU_BUF_SIZE=1280 -DGNRC_PKTBUF_SIZE=2048
->>>>>>> REMOVEME: 1280b CoAP PDU tweaks
-
 #MZTODO THIS OR ONE IN LINE 39 above
 #include $(CURDIR)/../../Makefile.include
-=======
-CFLAGS += -DGCOAP_PDU_BUF_SIZE=128 -DGNRC_PKTBUF_SIZE=2048
->>>>>>> examples/javascript/Makefile: use 128b CoAP mtu
+
+#CFLAGS += -DGCOAP_PDU_BUF_SIZE=128 -DGNRC_PKTBUF_SIZE=2048
+#>>>>>>> examples/javascript/Makefile: use 128b CoAP mtu
 
 
 JS_PATH := $(BINDIR)/js/$(MODULE)
