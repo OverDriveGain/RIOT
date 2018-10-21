@@ -73,13 +73,13 @@ static void _js_coap_handler_event_cb(event_t *event)
     js_coap_handler_t *js_coap_handler = (js_coap_handler_t *) event;
 
     object = jerry_create_object();
-    if (jerry_value_has_error_flag(object)) {
+    if (jerry_value_is_error(object)) {
         DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
         goto error;
     }
 
     methods_val = jerry_create_number(coap_method2flag(coap_get_code_detail(_gcoap_req.pkt)));
-    if (jerry_value_has_error_flag(methods_val)) {
+    if (jerry_value_is_error(methods_val)) {
         DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
         goto error;
     }
@@ -91,7 +91,7 @@ static void _js_coap_handler_event_cb(event_t *event)
         }
 
         payload_val = jerry_create_string_sz((jerry_char_t *)_gcoap_req.pkt->payload, _gcoap_req.pkt->payload_len);
-        if (jerry_value_has_error_flag(payload_val)) {
+        if (jerry_value_is_error(payload_val)) {
             DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
             goto error;
         }
@@ -104,7 +104,7 @@ static void _js_coap_handler_event_cb(event_t *event)
     jerry_value_t args[] = { methods_val, payload_val };
     ret_val = jerry_call_function(js_coap_handler->callback, object, args, payload_val ? 2 : 1);
 
-    if (jerry_value_has_error_flag(ret_val)) {
+    if (jerry_value_is_error(ret_val)) {
         DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
         goto error;
     }

@@ -107,7 +107,7 @@ void js_call_function(jerry_value_t function)
         jerry_value_t this_val = jerry_create_undefined();
         jerry_value_t ret_val = jerry_call_function(function, this_val, NULL, 0);
 
-        if (!jerry_value_has_error_flag(ret_val)) {
+        if (!jerry_value_is_error(ret_val)) {
             DEBUG("%s():l%u %s\n", __FILE__, __LINE__, __func__);
         }
         else {
@@ -127,16 +127,15 @@ int js_run(const jerry_char_t *script, size_t script_size)
     jerry_value_t ret_value;
 
     /* Setup Global scope code */
-    ret_value = jerry_parse(script, script_size, false);
-
-    if (!jerry_value_has_error_flag(ret_value)) {
+    ret_value = jerry_parse(NULL, 0, script, script_size, JERRY_PARSE_NO_OPTS);
+    if (!jerry_value_is_error(ret_value)) {
         /* Execute the parsed source code in the Global scope */
         ret_value = jerry_run(ret_value);
     }
 
     int res = 0;
 
-    if (jerry_value_has_error_flag(ret_value)) {
+    if (jerry_value_is_error(ret_value)) {
         puts("js_run(): Script Error!");
         res = -1;
     }
