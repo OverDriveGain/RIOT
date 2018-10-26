@@ -4,11 +4,11 @@ PSEUDOMODULES += can_mbox
 PSEUDOMODULES += can_pm
 PSEUDOMODULES += can_raw
 PSEUDOMODULES += ccn-lite-utils
-PSEUDOMODULES += cbor_ctime
-PSEUDOMODULES += cbor_float
-PSEUDOMODULES += cbor_semantic_tagging
 PSEUDOMODULES += conn_can_isotp_multi
+PSEUDOMODULES += cord_ep_standalone
+PSEUDOMODULES += cord_epsim_standalone
 PSEUDOMODULES += core_%
+PSEUDOMODULES += ecc_%
 PSEUDOMODULES += emb6_router
 PSEUDOMODULES += event_%
 PSEUDOMODULES += gnrc_ipv6_default
@@ -38,19 +38,6 @@ PSEUDOMODULES += lis2dh12_spi
 PSEUDOMODULES += log
 PSEUDOMODULES += log_printfnoformat
 PSEUDOMODULES += lora
-PSEUDOMODULES += lwip_arp
-PSEUDOMODULES += lwip_autoip
-PSEUDOMODULES += lwip_dhcp
-PSEUDOMODULES += lwip_ethernet
-PSEUDOMODULES += lwip_igmp
-PSEUDOMODULES += lwip_ipv6_autoconfig
-PSEUDOMODULES += lwip_ipv6_mld
-PSEUDOMODULES += lwip_raw
-PSEUDOMODULES += lwip_sixlowpan
-PSEUDOMODULES += lwip_stats
-PSEUDOMODULES += lwip_tcp
-PSEUDOMODULES += lwip_udp
-PSEUDOMODULES += lwip_udplite
 PSEUDOMODULES += mpu_stack_guard
 PSEUDOMODULES += nanocoap_%
 PSEUDOMODULES += netdev_default
@@ -67,7 +54,6 @@ PSEUDOMODULES += pktqueue
 PSEUDOMODULES += printf_float
 PSEUDOMODULES += prng
 PSEUDOMODULES += prng_%
-PSEUDOMODULES += rdcli_simple_standalone
 PSEUDOMODULES += saul_adc
 PSEUDOMODULES += saul_default
 PSEUDOMODULES += saul_gpio
@@ -116,6 +102,11 @@ PSEUDOMODULES += si7021
 # include variants of RN2XX3 drivers as pseudo modules
 PSEUDOMODULES += rn2483
 PSEUDOMODULES += rn2903
+
+# include variants of VCNL40x0 drivers as pseudo modules
+PSEUDOMODULES += vcnl4010
+PSEUDOMODULES += vcnl4020
+PSEUDOMODULES += vcnl4040
 
 # add all pseudo random number generator variants as pseudomodules
 PSEUDOMODULES += prng_%

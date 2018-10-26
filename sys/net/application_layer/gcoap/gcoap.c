@@ -21,9 +21,11 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdatomic.h>
+#include <string.h>
 
 #include "assert.h"
 #include "net/gcoap.h"
+#include "net/sock/util.h"
 #include "mutex.h"
 #include "random.h"
 #include "thread.h"
@@ -45,7 +47,6 @@ static size_t _handle_req(coap_pkt_t *pdu, uint8_t *buf, size_t len,
                                                          sock_udp_ep_t *remote);
 static ssize_t _finish_pdu(coap_pkt_t *pdu, uint8_t *buf, size_t len);
 static void _expire_request(gcoap_request_memo_t *memo);
-static bool _endpoints_equal(const sock_udp_ep_t *ep1, const sock_udp_ep_t *ep2);
 static void _find_req_memo(gcoap_request_memo_t **memo_ptr, coap_pkt_t *pdu,
                            const sock_udp_ep_t *remote);
 static int _find_resource(coap_pkt_t *pdu, const coap_resource_t **resource_ptr,
@@ -298,7 +299,7 @@ static size_t _handle_req(coap_pkt_t *pdu, uint8_t *buf, size_t len,
                 }
                 /* otherwise OK to re-register resource with the same token */
             }
-            else if (_endpoints_equal(remote, resource_memo->observer)) {
+            else if (sock_udp_ep_equal(remote, resource_memo->observer)) {
                 /* accept new token for resource */
                 memo = resource_memo;
             }
@@ -477,7 +478,7 @@ static void _find_req_memo(gcoap_request_memo_t **memo_ptr, coap_pkt_t *src_pdu,
         if (coap_get_token_len(memo_pdu) == cmplen) {
             memo_pdu->token = &memo_pdu->hdr->data[0];
             if ((memcmp(src_pdu->token, memo_pdu->token, cmplen) == 0)
-                    && _endpoints_equal(&memo->remote_ep, remote)) {
+                    && sock_udp_ep_equal(&memo->remote_ep, remote)) {
                 *memo_ptr = memo;
                 break;
             }
@@ -591,24 +592,6 @@ static ssize_t _write_options(coap_pkt_t *pdu, uint8_t *buf, size_t len)
     return bufpos - buf;
 }
 
-static bool _endpoints_equal(const sock_udp_ep_t *ep1, const sock_udp_ep_t *ep2)
-{
-    if (ep1->family != ep2->family) {
-        return false;
-    }
-    if (ep1->port != ep2->port) {
-        return false;
-    }
-
-    switch (ep1->family) {
-    case AF_INET6:
-        return memcmp(&ep1->addr.ipv6[0], &ep2->addr.ipv6[0], 16) == 0;
-    case AF_INET:
-        return ep1->addr.ipv4_u32 == ep2->addr.ipv4_u32;
-    }
-    return false;
-}
-
 /*
  * Find registered observer for a remote address and port.
  *
@@ -627,7 +610,7 @@ static int _find_observer(sock_udp_ep_t **observer, sock_udp_ep_t *remote)
         if (_coap_state.observers[i].family == AF_UNSPEC) {
             empty_slot = i;
         }
-        else if (_endpoints_equal(&_coap_state.observers[i], remote)) {
+        else if (sock_udp_ep_equal(&_coap_state.observers[i], remote)) {
             *observer = &_coap_state.observers[i];
             break;
         }
@@ -998,7 +981,7 @@ uint8_t gcoap_op_state(void)
 int gcoap_get_resource_list(void *buf, size_t maxlen, uint8_t cf)
 {
     (void)cf; /* only used in the assert below. */
-    assert(cf == COAP_CT_LINK_FORMAT);
+    assert(cf == COAP_FORMAT_LINK);
 
     /* skip the first listener, gcoap itself (we skip /.well-known/core) */
     gcoap_listener_t *listener = _coap_state.listeners->next;

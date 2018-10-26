@@ -64,7 +64,7 @@ but not limited to:
 * CoAP
 * CCN-Lite
 * Sigfox
-* LoRaWAN (Experimental)
+* LoRaWAN
 
 
 ## GETTING STARTED
@@ -94,9 +94,8 @@ To create a bridge and two (or `count` at your option) tap interfaces:
 
 ## CONTRIBUTE
 
-To contribute something to RIOT, please refer to the [development
-procedures](https://github.com/RIOT-OS/RIOT/wiki/Development-procedures) and
-read all notes for best practice.
+To contribute something to RIOT, please refer to our
+[contributing document](CONTRIBUTING.md).
 
 ## MAILING LISTS
 * RIOT OS kernel developers list
@@ -124,6 +123,6 @@ http://www.riot-os.org
 
 
 [master-ci-badge]: https://ci.riot-os.org/RIOT-OS/RIOT/master/latest/badge.svg
-[master-ci-link]: https://ci.riot-os.org/RIOT-OS/RIOT/master/latest/output.html
+[master-ci-link]: https://ci.riot-os.org/nightlies.html#master
 [irc-badge]: https://img.shields.io/badge/IRC-join%20chat%20%E2%86%92-blue.svg
 [irc-link]: http://webchat.freenode.net?channels=%23riot-os

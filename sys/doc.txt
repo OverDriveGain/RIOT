@@ -28,3 +28,15 @@
  * @ingroup     sys
  * @brief       Provides math libraries and utilities for RIOT
  */
+
+/**
+ * @defgroup    sys_memory_management Memory management
+ * @ingroup     sys
+ * @brief       Provides memory management implementations and utilities
+ */
+
+/**
+ * @defgroup    sys_serialization Serialization
+ * @ingroup     sys
+ * @brief       Utilities for data serialization
+ */
